@@ -1,0 +1,244 @@
+import httpStatus from 'http-status'
+import AppError from '../../errors/AppError'
+import { TUser } from './user.interface'
+import { User } from './user.model'
+import QueryBuilder from '../../builder/QueryBuilder'
+import { USER_ROLE } from './user.constant'
+import {
+  sendUserStatusNotifYToAdmin,
+  sendUserStatusNotifYToUser,
+} from './user.utils'
+
+const generateLocationUrl = (lat: number, lng: number) => {
+  return `https://www.google.com/maps?q=${lat},${lng}`
+}
+
+const registerUserIntoDB = async (payload: TUser) => {
+  // ❌ Prevent admin creation directly
+  if (payload.role === USER_ROLE.admin) {
+    throw new AppError(
+      httpStatus.FORBIDDEN,
+      'You cannot directly assign admin role',
+    )
+  }
+
+  /* =========================================================
+     ✅ Existing user check
+     ========================================================= */
+  const existingUser = await User.findOne({ email: payload.email })
+
+  if (existingUser) {
+    // 🟡 Soft-deleted user → restore
+    if (existingUser.isDeleted) {
+      existingUser.set({
+        ...payload,
+        isDeleted: false,
+      })
+      return await existingUser.save()
+    }
+
+    // 🟡 Unverified user → update & reuse
+    if (!existingUser.verification?.status) {
+      existingUser.set(payload)
+      return await existingUser.save()
+    }
+
+    // 🔴 Active user already exists
+    throw new AppError(
+      httpStatus.CONFLICT,
+      'User already exists with this email',
+    )
+  }
+
+  /* =========================================================
+     ✅ Create new user
+     ========================================================= */
+  if (!payload.password) {
+    throw new AppError(httpStatus.BAD_REQUEST, 'Password is required')
+  }
+
+  const newUser = await User.create(payload)
+  return newUser
+}
+
+const getAllUsersFromDB = async (query: Record<string, unknown>) => {
+  const usersQuery = new QueryBuilder(
+    User.find({ isDeleted: false, role: { $ne: USER_ROLE.admin } }).select(
+      '_id id name email photoUrl address contractNumber status createdAt',
+    ),
+    query,
+  )
+    .search(['name'])
+    .filter()
+    .sort()
+    .paginate()
+    .fields()
+
+  const result = await usersQuery.modelQuery
+  const meta = await usersQuery.countTotal()
+
+  return {
+    meta,
+    result,
+  }
+}
+
+const geUserByIdFromDB = async (id: string) => {
+  const user = await User.findById(id).select(
+    '_id id name email photoUrl address contractNumber businessType dealLimitType bio categories website instagram location locationUrl status createdAt',
+  )
+  if (!user || user?.isDeleted) {
+    throw new AppError(httpStatus.NOT_FOUND, 'User not found!')
+  }
+
+  return user
+}
+
+const changeUserStatusFromDB = async (payload: any) => {
+  const { userId, status } = payload
+
+  //* if the user is is not exist
+  const user = await User.findById(userId)
+  if (!user || user?.isDeleted) {
+    throw new AppError(httpStatus.NOT_FOUND, 'User not found!')
+  }
+
+  const updateUserStatus = await User.findByIdAndUpdate(
+    userId,
+    { status },
+    { new: true },
+  ).select('_id id name email photoUrl contactNumber status')
+  if (!updateUserStatus) {
+    throw new AppError(
+      httpStatus.NOT_FOUND,
+      'User not found and failed to update status!',
+    )
+  }
+
+  // Send notification to both user and admin
+  await sendUserStatusNotifYToUser(status, updateUserStatus)
+  await sendUserStatusNotifYToAdmin(status, updateUserStatus)
+
+  return updateUserStatus
+}
+
+const changeUserNotifyFromDB = async (payload: any, userId: string) => {
+  //* if the user is is not exist
+  const user = await User.findById(userId)
+  if (!user || user?.isDeleted) {
+    throw new AppError(httpStatus.NOT_FOUND, 'User not found!')
+  }
+
+  const result = await User.findByIdAndUpdate(
+    user._id,
+    { payload },
+    { new: true },
+  ).select('_id id name email photoUrl contactNumber status')
+  if (!result) {
+    throw new AppError(
+      httpStatus.NOT_FOUND,
+      'User notify update failed!',
+    )
+  }
+
+  return result
+}
+
+const updateUserInfoFromDB = async (
+  userId: string,
+  payload: Partial<TUser> & {
+    latitude?: number
+    longitude?: number
+  },
+) => {
+  const user = await User.findById(userId)
+  if (!user || user.isDeleted) {
+    throw new AppError(httpStatus.NOT_FOUND, 'User not found')
+  }
+
+  const updateData: Partial<TUser> = { ...payload }
+
+  /* =======================
+     MAIN BUSINESS LOCATION
+  ======================= */
+  if (payload.latitude && payload.longitude) {
+    updateData.location = {
+      type: 'Point',
+      coordinates: [payload.longitude, payload.latitude],
+    }
+
+    updateData.locationUrl = generateLocationUrl(
+      payload.latitude,
+      payload.longitude,
+    )
+
+    delete (updateData as any).latitude
+    delete (updateData as any).longitude
+  }
+
+  return await User.findByIdAndUpdate(userId, updateData, {
+    new: true,
+  })
+}
+
+const updateLocationFromDB = async (
+  userId: string,
+  payload: { longitude: number; latitude: number },
+) => {
+  const { longitude, latitude } = payload
+
+  //* if the user is is not exist
+  const user = await User.findById(userId)
+  if (!user || user?.isDeleted) {
+    throw new AppError(httpStatus.NOT_FOUND, 'User not found!')
+  }
+
+  if (!longitude || !latitude) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      'Longitude and latitude are required',
+    )
+  }
+
+  const updatedUser = await User.findByIdAndUpdate(
+    userId,
+    {
+      location: { type: 'Point', coordinates: [longitude, latitude] },
+    },
+    { new: true },
+  )
+
+  return updatedUser
+}
+
+const deleteAUserFromDB = async (userId: string) => {
+  //* Check if the user exists
+  const user = await User.findById(userId).select('_id')
+  if (!user || user?.isDeleted) {
+    throw new AppError(httpStatus.NOT_FOUND, 'User not found!')
+  }
+
+  // Use `Promise.all` to execute updates in parallel
+  const updatedUser = await User.findByIdAndUpdate(
+    userId,
+    { isDeleted: true },
+    { new: true },
+  ).select('_id id name email photoUrl contactNumber status isDeleted')
+
+  if (!updatedUser) {
+    throw new AppError(httpStatus.NOT_FOUND, 'Failed to update user status!')
+  }
+
+  return updatedUser
+}
+
+export const UserService = {
+  registerUserIntoDB,
+  getAllUsersFromDB,
+  geUserByIdFromDB,
+  changeUserStatusFromDB,
+  changeUserNotifyFromDB,
+  updateUserInfoFromDB,
+  updateLocationFromDB,
+  deleteAUserFromDB,
+}
