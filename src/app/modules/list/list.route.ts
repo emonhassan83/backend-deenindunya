@@ -1,42 +1,42 @@
 import { Router } from 'express'
-import { RoomController } from './room.controller'
+import { ListController } from './list.controller'
 import auth from '../../middleware/auth'
 import { USER_ROLE } from '../user/user.constant'
 import zodValidationRequest from '../../middleware/validateRequest'
-import { RoomValidation } from './room.validation'
+import { ListValidation } from './list.validation'
 
 const router = Router()
 
 router.post(
   '/',
   auth(USER_ROLE.user),
-  zodValidationRequest(RoomValidation.createValidationSchema),
-  RoomController.insertIntoDB,
+  zodValidationRequest(ListValidation.createValidationSchema),
+  ListController.insertIntoDB,
 )
 
 router.put(
   '/:id',
   auth(USER_ROLE.user),
-  zodValidationRequest(RoomValidation.updateValidationSchema),
-  RoomController.updateIntoDB,
+  zodValidationRequest(ListValidation.updateValidationSchema),
+  ListController.updateIntoDB,
 )
 
 router.get(
   '',
   auth(USER_ROLE.user),
-  RoomController.getAllIntoDB,
+  ListController.getAllIntoDB,
 )
 
 router.get(
   '/:id',
   auth(USER_ROLE.user),
-  RoomController.getAIntoDB,
+  ListController.getAIntoDB,
 )
 
 router.delete(
   '/:id',
   auth(USER_ROLE.user),
-  RoomController.deleteAIntoDB,
+  ListController.deleteAIntoDB,
 )
 
-export const RoomRoutes = router
+export const ListRoutes = router
