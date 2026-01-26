@@ -119,7 +119,7 @@ const resendOtp = async (email: string) => {
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px;">
         <div style="text-align: left; padding: 10px 20px;">
           <h2 style="color: #333;">Your One-Time OTP</h2>
-          <p style="color: #555; margin-top: 10px;">Dear ${user?.firstName},</p>
+          <p style="color: #555; margin-top: 10px;">Dear ${user?.name},</p>
           <p style="color: #555;">Use the following One-Time Password (OTP) to proceed with your request. This OTP is valid for a limited time.</p>
           <div style="text-align: center; margin: 20px 0;">
             <span style="padding: 10px 20px; font-size: 18px; font-weight: bold; border-radius: 5px; display: inline-block;">
@@ -128,10 +128,10 @@ const resendOtp = async (email: string) => {
           </div>
           <p style="color: #555;">This OTP is valid until: <strong>${expiresAt.toLocaleString()}</strong></p>
           <p style="color: #555;">If you did not request this OTP, please ignore this email.</p>
-          <p style="color: #555;">Thank you,<br/>Save Key App Team</p>
+          <p style="color: #555;">Thank you,<br/>Deenindunya App Team</p>
         </div>
         <div style="text-align: center; margin-top: 20px; font-size: 12px; color: #999;">
-          <p>&copy; ${new Date().getFullYear()} Save Key App. All rights reserved.</p>
+          <p>&copy; ${new Date().getFullYear()} Deenindunya App. All rights reserved.</p>
         </div>
       </div>
     `,

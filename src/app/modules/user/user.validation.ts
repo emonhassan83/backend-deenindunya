@@ -4,43 +4,46 @@ import { USER_STATUS } from './user.constant'
 // Define the Zod validation schema
 const createValidationSchema = z.object({
   body: z.object({
-    firstName: z.string({
-      required_error: 'User first name is required!',
-    }),
-    lastName: z.string({
-      required_error: 'User first name is required!',
+    name: z.string({
+      required_error: 'User name is required!',
     }),
     email: z.string({
       required_error: 'Email is required!',
     }),
+    contractNumber: z.string({
+      required_error: 'contractNumber is required!',
+    }),
+    country: z.string({
+      required_error: 'Country is required!',
+    }),
+  }),
+})
+
+const setPasswordValidationSchema = z.object({
+  body: z.object({
     password: z
       .string({
         invalid_type_error: 'Password must be a string',
       })
       .min(6, { message: 'Password must be at least 6 characters' })
       .max(12, { message: 'Password cannot be more than 12 characters' }),
-    contractNumber: z.string({
-      required_error: 'contractNumber is required!',
-    }),
+    confirmPassword: z
+      .string({
+        invalid_type_error: 'Password must be a string',
+      })
+      .min(6, { message: 'Password must be at least 6 characters' })
+      .max(12, { message: 'Password cannot be more than 12 characters' }),
   }),
 })
 
 const updateValidationSchema = z.object({
   body: z.object({
-    firstName: z.string().optional(),
-    lastName: z.string().optional(),
+    name: z.string().optional(),
     contractNumber: z.string().optional(),
 
     // Address fields
-    address: z
-      .object({
-        street: z.string().optional(),
-        houseNo: z.string().optional(),
-        postalCode: z.number().optional(),
-        city: z.string().optional(),
-        country: z.string().optional(),
-      })
-      .optional(),
+    country: z.string().optional(),
+    address: z.string().optional(),
 
     // Main location
     latitude: z.number().optional(),
@@ -82,6 +85,7 @@ const updateLocationValidationSchema = z.object({
 
 export const UserValidation = {
   createValidationSchema,
+  setPasswordValidationSchema,
   updateValidationSchema,
   changeStatusValidationSchema,
   updateLocationValidationSchema,

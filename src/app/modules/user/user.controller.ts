@@ -10,14 +10,14 @@ import { USER_ROLE } from './user.constant'
 const registerUser = catchAsync(async (req, res) => {
   const result = await UserService.registerUserIntoDB(req?.body)
   const sendOtp = await otpServices.resendOtp(result?.email)
-  const { _id, id, firstName, lastName, email, contractNumber, status } = result
+  const { _id, id, name, email, contractNumber, status } = result
 
   sendResponse(res, {
     statusCode: httpStatus.CREATED,
     success: true,
     message: 'User registered successfully!',
     data: {
-      user: { _id, id, firstName, lastName, email, contractNumber, status },
+      user: { _id, id, name, email, contractNumber, status },
       otpToken: sendOtp,
     },
   })

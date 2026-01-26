@@ -85,7 +85,7 @@ const getAllUsersFromDB = async (query: Record<string, unknown>) => {
 
 const geUserByIdFromDB = async (id: string) => {
   const user = await User.findById(id).select(
-    '_id id name email photoUrl address contractNumber businessType dealLimitType bio categories website instagram location locationUrl status createdAt',
+    '_id id name email photoUrl address contractNumber location locationUrl status createdAt',
   )
   if (!user || user?.isDeleted) {
     throw new AppError(httpStatus.NOT_FOUND, 'User not found!')
