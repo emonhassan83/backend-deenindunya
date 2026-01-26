@@ -1,5 +1,5 @@
 import config from '../config'
-// import { Contents } from '../modules/contents/contents.models'
+import { Contents } from '../modules/contents/contents.models'
 import { USER_ROLE } from '../modules/user/user.constant'
 import { User } from '../modules/user/user.model'
 import { findAdmin } from '../utils/findAdmin'
@@ -10,7 +10,7 @@ const adminUser = {
   email: 'admin@deenindunya.gmail.com',
   password: config.admin_pass,
   role: USER_ROLE.admin,
-  contractNumber: "+876543345678",
+  contractNumber: '+876543345678',
   verification: {
     otp: '0',
     status: true,
@@ -29,25 +29,24 @@ const seedAdmin = async () => {
   }
 }
 
-// // Function to seed Contents
-// const seedContents = async () => {
-//   const admin = await findAdmin()
-//   const existingContents = await Contents.countDocuments()
+// Function to seed Contents
+const seedContents = async () => {
+  const admin = await findAdmin()
+  const existingContents = await Contents.countDocuments()
 
-//   if (existingContents === 0) {
-//     await Contents.create({
-//       aboutUs: '',
-//       termsAndConditions: '',
-//       privacyPolicy: '',
-//       popularSearch: [],
-//       createdBy: admin?._id,
-//     })
+  if (existingContents === 0) {
+    await Contents.create({
+      aboutUs: '',
+      termsAndConditions: '',
+      privacyPolicy: '',
+      createdBy: admin?._id,
+    })
 
-//     console.log('\n✅Default Contents seeded successfully!')
-//   }
-// }
+    console.log('\n✅Default Contents seeded successfully!')
+  }
+}
 
 export const seeder = {
-  // seedContents,
+  seedContents,
   seedAdmin,
 }
