@@ -5,6 +5,7 @@ import { otpRoutes } from '../modules/otp/otp.route'
 import { NotificationRoutes } from '../modules/notification/notification.route'
 import { contentsRoutes } from '../modules/contents/contents.route'
 import { TaskRoutes } from '../modules/task/task.route'
+import { RoomRoutes } from '../modules/room/room.route'
 
 const router = Router()
 
@@ -24,6 +25,10 @@ const moduleRoutes = [
   {
     path: '/tasks',
     route: TaskRoutes,
+  },
+  {
+    path: '/rooms',
+    route: RoomRoutes,
   },
   {
     path: '/notifications',
