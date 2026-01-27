@@ -1,24 +1,19 @@
+import { Types } from 'mongoose';
 import { z } from 'zod'
-import { List_TYPE } from './item.constants'
+
+const objectIdSchema = z.string().refine(val => Types.ObjectId.isValid(val), {
+  message: 'Invalid ObjectId',
+});
 
 const createValidationSchema = z.object({
   body: z.object({
-    name: z.string({
-      required_error: 'List name is required!',
-    }),
-    type: z.enum(Object.values(List_TYPE) as [string, ...string[]], {
-      required_error: 'List type is required!',
+    list: objectIdSchema,
+    title: z.string({
+      required_error: 'Item title is required!',
     }),
   }),
 })
 
-const updateValidationSchema = z.object({
-  body: z.object({
-    name: z.string().optional(),
-  }),
-})
-
-export const ListValidation = {
-  createValidationSchema,
-  updateValidationSchema,
+export const ItemValidation = {
+  createValidationSchema
 }

@@ -1,11 +1,10 @@
 import { Model, Types } from 'mongoose'
-import { TListType } from './item.constants'
 
-export interface TList {
+export interface TItem {
   _id?: string
-  user: Types.ObjectId
-  type: TListType
-  name: string
+  list: Types.ObjectId
+  title: string
+  isCompleted: boolean
 }
 
-export type TListModel = Model<TList, Record<string, unknown>>
+export type TItemModel = Model<TItem, Record<string, unknown>>

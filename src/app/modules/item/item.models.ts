@@ -1,25 +1,23 @@
 import { Schema, model } from "mongoose";
-import { TList, TListModel } from "./item.interface";
-import { List_TYPE } from "./item.constants";
+import { TItem, TItemModel } from "./item.interface";
 
-const listSchema = new Schema<TList>(
+const listSchema = new Schema<TItem>(
   {
-    user: {
+    list: {
       type: Schema.Types.ObjectId,
-      ref: "User",
+      ref: "List",
       required: true,
     },
-    name: {
+    title: {
       type: String,
       required: true,
     },
-    type: {
-      type: String,
-      enum: Object.values(List_TYPE),
-      required: true,
+    isCompleted: {
+      type: Boolean,
+      default: false,
     },
   },
   { timestamps: true }
 );
 
-export const List = model<TList, TListModel>("List", listSchema);
+export const Item = model<TItem, TItemModel>("Item", listSchema);

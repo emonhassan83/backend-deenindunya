@@ -1,94 +1,102 @@
 import httpStatus from 'http-status'
-import { TList } from './item.interface'
+import { TItem } from './item.interface'
 import AppError from '../../errors/AppError'
 import { User } from '../user/user.model'
-import { List } from './item.models'
+import { Item } from './item.models'
 import QueryBuilder from '../../builder/QueryBuilder'
 
-// Create a new Project
-const insertIntoDB = async (userId: string, payload: TList) => {
+// Create a new Item
+const insertIntoDB = async (userId: string, payload: TItem) => {
+  const { list: listId } = payload
+
+  // validate user existence
   const user = await User.findById(userId)
   if (!user || user?.isDeleted) {
     throw new AppError(httpStatus.NOT_FOUND, 'Your profile not found')
   }
 
-  // Assign the user to the List
-  payload.user = user._id
+  // validate list ownership
+  const list = await Item.findById(listId)
+  if (!list) {
+    throw new AppError(httpStatus.NOT_FOUND, 'List not found')
+  }
 
-  const result = await List.create(payload)
+  const result = await Item.create(payload)
   if (!result) {
-    throw new AppError(httpStatus.BAD_REQUEST, 'List creation failed')
+    throw new AppError(httpStatus.BAD_REQUEST, 'Item creation failed')
   }
 
   return result
 }
 
-// Get all assign project data
+// Get all item data
 const getAllIntoDB = async (query: Record<string, any>) => {
-  const listModel = new QueryBuilder(List.find(), query)
+  const itemModel = new QueryBuilder(Item.find(), query)
     .search([''])
     .filter()
     .paginate()
     .sort()
     .fields()
 
-  const data = await listModel.modelQuery
-  const meta = await listModel.countTotal()
+  const data = await itemModel.modelQuery
+  const meta = await itemModel.countTotal()
+
   return {
     data,
     meta,
   }
 }
 
-// Get Project by ID
+// Get Item by ID
 const getAIntoDB = async (id: string) => {
-  const result = await List.findById(id)
+  const result = await Item.findById(id)
   if (!result) {
-    throw new AppError(httpStatus.NOT_FOUND, 'Oops! List not found!')
+    throw new AppError(httpStatus.NOT_FOUND, 'Oops! Item not found!')
   }
 
   return result
 }
 
-// Toggle List status
-const updateIntoDB = async (id: string, payload: TList) => {
-  const list = await List.findById(id);
-  if (!list) {
-    throw new AppError(httpStatus.NOT_FOUND, "List not found!");
+// Toggle Item status
+const updateIntoDB = async (id: string, payload: TItem) => {
+  const item = await Item.findById(id)
+  if (!item) {
+    throw new AppError(httpStatus.NOT_FOUND, 'Item not found!')
   }
 
-  const result = await List.findByIdAndUpdate(
+  const updatedStatus = !item.isCompleted
+
+  const result = await Item.findByIdAndUpdate(
     id,
-    payload,
-    { new: true }
-  );
+    { isCompleted: updatedStatus },
+    { new: true },
+  )
   if (!result) {
     throw new AppError(
       httpStatus.INTERNAL_SERVER_ERROR,
-      "List record not updated!"
-    );
-  }
-
-  return result;
-};
-
-// Delete List
-const deleteAIntoDB = async (id: string) => {
-  const list = await List.findById(id)
-  if (!list) {
-    throw new AppError(httpStatus.NOT_FOUND, 'List not found!')
-  }
-
-  // todo: check dependencies before delete
-  const result = await List.findByIdAndDelete(id)
-  if (!result) {
-    throw new AppError(httpStatus.BAD_REQUEST, 'List deletion failed')
+      'Item record not updated!',
+    )
   }
 
   return result
 }
 
-export const ListService = {
+// Delete Item
+const deleteAIntoDB = async (id: string) => {
+  const item = await Item.findById(id)
+  if (!item) {
+    throw new AppError(httpStatus.NOT_FOUND, 'Item not found!')
+  }
+
+  const result = await Item.findByIdAndDelete(id)
+  if (!result) {
+    throw new AppError(httpStatus.BAD_REQUEST, 'Item deletion failed')
+  }
+
+  return result
+}
+
+export const ItemService = {
   insertIntoDB,
   getAllIntoDB,
   getAIntoDB,

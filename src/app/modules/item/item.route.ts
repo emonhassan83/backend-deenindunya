@@ -1,42 +1,41 @@
 import { Router } from 'express'
-import { ListController } from './item.controller'
+import { ItemController } from './item.controller'
 import auth from '../../middleware/auth'
 import { USER_ROLE } from '../user/user.constant'
 import zodValidationRequest from '../../middleware/validateRequest'
-import { ListValidation } from './item.validation'
+import { ItemValidation } from './item.validation'
 
 const router = Router()
 
 router.post(
   '/',
   auth(USER_ROLE.user),
-  zodValidationRequest(ListValidation.createValidationSchema),
-  ListController.insertIntoDB,
+  zodValidationRequest(ItemValidation.createValidationSchema),
+  ItemController.insertIntoDB,
 )
 
-router.put(
-  '/:id',
+router.patch(
+  '/status/:id',
   auth(USER_ROLE.user),
-  zodValidationRequest(ListValidation.updateValidationSchema),
-  ListController.updateIntoDB,
-)
-
-router.get(
-  '',
-  auth(USER_ROLE.user),
-  ListController.getAllIntoDB,
+  ItemController.updateIntoDB,
 )
 
 router.get(
+  '/',
+  auth(USER_ROLE.user),
+  ItemController.getAllIntoDB,
+)
+
+router.get(
   '/:id',
   auth(USER_ROLE.user),
-  ListController.getAIntoDB,
+  ItemController.getAIntoDB,
 )
 
 router.delete(
   '/:id',
   auth(USER_ROLE.user),
-  ListController.deleteAIntoDB,
+  ItemController.deleteAIntoDB,
 )
 
-export const ListRoutes = router
+export const ItemRoutes = router
