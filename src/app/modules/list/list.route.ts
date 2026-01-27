@@ -22,7 +22,7 @@ router.put(
 )
 
 router.get(
-  '',
+  '/',
   auth(USER_ROLE.user),
   ListController.getAllIntoDB,
 )

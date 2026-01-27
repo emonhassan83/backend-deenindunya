@@ -21,7 +21,7 @@ router.patch(
 )
 
 router.get(
-  '',
+  '/',
   auth(USER_ROLE.user),
   TaskController.getAllIntoDB,
 )

@@ -1,9 +1,11 @@
+import mongoose from 'mongoose'
 import httpStatus from 'http-status'
 import { TList } from './list.interface'
 import AppError from '../../errors/AppError'
 import { User } from '../user/user.model'
 import { List } from './list.models'
 import QueryBuilder from '../../builder/QueryBuilder'
+import { Item } from '../item/item.models'
 
 // Create a new Project
 const insertIntoDB = async (userId: string, payload: TList) => {
@@ -52,40 +54,52 @@ const getAIntoDB = async (id: string) => {
 
 // Toggle List status
 const updateIntoDB = async (id: string, payload: TList) => {
-  const list = await List.findById(id);
-  if (!list) {
-    throw new AppError(httpStatus.NOT_FOUND, "List not found!");
-  }
-
-  const result = await List.findByIdAndUpdate(
-    id,
-    payload,
-    { new: true }
-  );
-  if (!result) {
-    throw new AppError(
-      httpStatus.INTERNAL_SERVER_ERROR,
-      "List record not updated!"
-    );
-  }
-
-  return result;
-};
-
-// Delete List
-const deleteAIntoDB = async (id: string) => {
   const list = await List.findById(id)
   if (!list) {
     throw new AppError(httpStatus.NOT_FOUND, 'List not found!')
   }
 
-  // todo: check dependencies before delete
-  const result = await List.findByIdAndDelete(id)
+  const result = await List.findByIdAndUpdate(id, payload, { new: true })
   if (!result) {
-    throw new AppError(httpStatus.BAD_REQUEST, 'List deletion failed')
+    throw new AppError(
+      httpStatus.INTERNAL_SERVER_ERROR,
+      'List record not updated!',
+    )
   }
 
   return result
+}
+
+// Delete List
+const deleteAIntoDB = async (id: string) => {
+  const session = await mongoose.startSession()
+
+  try {
+    session.startTransaction()
+
+    const list = await List.findById(id).session(session)
+    if (!list) {
+      throw new AppError(httpStatus.NOT_FOUND, 'List not found!')
+    }
+
+    // 🧹 Delete all items under this list
+    await Item.deleteMany({ list: id }).session(session)
+
+    // 🗑️ Delete the list
+    const result = await List.findByIdAndDelete(id).session(session)
+    if (!result) {
+      throw new AppError(httpStatus.BAD_REQUEST, 'List deletion failed')
+    }
+
+    await session.commitTransaction()
+    session.endSession()
+
+    return result
+  } catch (error) {
+    await session.abortTransaction()
+    session.endSession()
+    throw error
+  }
 }
 
 export const ListService = {
