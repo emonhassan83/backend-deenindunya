@@ -26,7 +26,7 @@ const userSchema = new Schema<TUser>(
     fcmToken: { type: String, default: null },
     photoUrl: { type: String, default: null },
     contractNumber: { type: String, default: null },
-    country: { type: String, required: true },
+    country: { type: String, required: false },
     address: { type: String, default: null },
     latitude: { type: Number, default: 0 },
     longitude: { type: Number, default: 0 },

@@ -12,6 +12,14 @@ const contentsSchema = new Schema<TContents>(
     privacyPolicy: {
       type: String,
     },
+    moodLogs: {
+      type: [String],
+      default: [],
+    },
+    waterIntake: {
+      type: [String],
+      default: [],
+    },
     isDeleted: {
       type: Boolean,
       default: false,

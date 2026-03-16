@@ -5,12 +5,10 @@ import { User } from '../modules/user/user.model'
 import { findAdmin } from '../utils/findAdmin'
 
 const adminUser = {
-  firstName: 'deenindunya',
-  lastName: ' ',
+  name: 'deenindunya',
   email: 'admin@deenindunya.gmail.com',
   password: config.admin_pass,
   role: USER_ROLE.admin,
-  contractNumber: '+876543345678',
   verification: {
     otp: '0',
     status: true,
@@ -39,6 +37,30 @@ const seedContents = async () => {
       aboutUs: '',
       termsAndConditions: '',
       privacyPolicy: '',
+      moodLogs: [
+        'Happy',
+        'Sad',
+        'Angry',
+        'Anxious',
+        'Calm',
+        'Excited',
+        'Tired',
+        'Energetic',
+        'Confused',
+        'Content',
+        'Work',
+        'Exercise',
+        'Sleep',
+      ],
+      waterIntake: [
+        '250ml',
+        '500ml',
+        '1000ml',
+        '1500ml',
+        '2000ml',
+        '2500ml',
+        '3000ml',
+      ],
       createdBy: admin?._id,
     })
 

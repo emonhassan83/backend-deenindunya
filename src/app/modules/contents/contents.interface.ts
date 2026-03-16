@@ -5,6 +5,8 @@ export interface TContents {
   aboutUs?: string
   termsAndConditions?: string
   privacyPolicy?: string
+  moodLogs?: string[]
+  waterIntake?: string[]
   createdBy: Types.ObjectId
   isDeleted?: boolean
 }
