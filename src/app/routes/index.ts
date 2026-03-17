@@ -9,6 +9,7 @@ import { ListRoutes } from '../modules/list/list.route'
 import { ItemRoutes } from '../modules/item/item.route'
 import { CategoriesRoutes } from '../modules/category/category.route'
 import { DuasRoutes } from '../modules/duas/duas.route'
+import { AffirmationRoutes } from '../modules/affirmations/affirmations.route'
 
 const router = Router()
 
@@ -32,6 +33,10 @@ const moduleRoutes = [
   {
     path: '/duas',
     route: DuasRoutes,
+  },
+  {
+    path: '/affirmations',
+    route: AffirmationRoutes,
   },
   {
     path: '/tasks',
