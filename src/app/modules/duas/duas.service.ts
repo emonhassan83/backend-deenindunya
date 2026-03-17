@@ -48,7 +48,7 @@ const getAllFromDB = async (query: Record<string, unknown>) => {
   const skip = (Number(page) - 1) * Number(limit)
 
   const result = await Duas.find(filter)
-    .populate('category', 'title type')
+    .populate('category', 'title')
     .select('-isDeleted')
     .skip(skip)
     .limit(Number(limit))
@@ -70,7 +70,7 @@ const getAllFromDB = async (query: Record<string, unknown>) => {
 
 const getSingleFromDB = async (id: string): Promise<TDuas> => {
   const result = await Duas.findById(id)
-    .populate('category', 'title type')
+    .populate('category', 'title')
     .select('-isDeleted')
     .lean()
 
@@ -120,7 +120,7 @@ const updateIntoDB = async (
     new: true,
     runValidators: true,
   })
-    .populate('category', 'title type')
+    .populate('category', 'title')
     .lean()
 
   if (!updated) {

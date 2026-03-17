@@ -8,6 +8,11 @@ const duasSchema = new Schema<TDuas>(
       ref: 'Category',
       required: [true, 'Category is required'],
     },
+    banner: {
+      type: String,
+      required: [true, 'Banner is required'],
+      trim: true,
+    },
     arabic_text: {
       type: String,
       required: [true, 'Arabic text is required'],
