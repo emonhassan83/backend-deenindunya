@@ -8,6 +8,7 @@ import { TaskRoutes } from '../modules/task/task.route'
 import { ListRoutes } from '../modules/list/list.route'
 import { ItemRoutes } from '../modules/item/item.route'
 import { CategoriesRoutes } from '../modules/category/category.route'
+import { DuasRoutes } from '../modules/duas/duas.route'
 
 const router = Router()
 
@@ -27,6 +28,10 @@ const moduleRoutes = [
   {
     path: '/categories',
     route: CategoriesRoutes,
+  },
+  {
+    path: '/duas',
+    route: DuasRoutes,
   },
   {
     path: '/tasks',
