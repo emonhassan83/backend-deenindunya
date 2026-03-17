@@ -1,39 +1,39 @@
 import express from 'express'
 import auth from '../../middleware/auth'
 import { USER_ROLE } from '../user/user.constant'
-import { DuasControllers } from './duas.controller'
+import { AffirmationControllers } from './affirmations.controller'
 import zodValidationRequest from '../../middleware/validateRequest'
-import { DuasValidation } from './duas.validation'
+import { AffirmationValidation } from './affirmations.validation'
 
 const router = express.Router()
 
-// Create dua (Admin only)
+// Create affirmation (Admin only)
 router.post(
   '/',
   auth(USER_ROLE.admin),
-  zodValidationRequest(DuasValidation.createValidationSchema),
-  DuasControllers.insertIntoDB
+  zodValidationRequest(AffirmationValidation.createValidationSchema),
+  AffirmationControllers.insertIntoDB
 )
 
-// Update dua (Admin only)
+// Update affirmation (Admin only)
 router.put(
   '/:id',
   auth(USER_ROLE.admin),
-  zodValidationRequest(DuasValidation.updateValidationSchema),
-  DuasControllers.updateDua
+  zodValidationRequest(AffirmationValidation.updateValidationSchema),
+  AffirmationControllers.updateAffirmation
 )
 
-// Delete dua (Admin only)
+// Delete affirmation (Admin only)
 router.delete(
   '/:id',
   auth(USER_ROLE.admin),
-  DuasControllers.deleteDua
+  AffirmationControllers.deleteAffirmation
 )
 
-// Get all duas (Public - with filters)
-router.get('/', DuasControllers.getAllDuas)
+// Get all affirmations (Public)
+router.get('/', AffirmationControllers.getAllAffirmations)
 
-// Get single dua (Public)
-router.get('/:id', DuasControllers.getSingleDua)
+// Get single affirmation (Public)
+router.get('/:id', AffirmationControllers.getSingleAffirmation)
 
-export const DuasRoutes = router
+export const AffirmationRoutes = router
