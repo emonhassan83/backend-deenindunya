@@ -12,6 +12,7 @@ import { DuasRoutes } from '../modules/duas/duas.route'
 import { AffirmationRoutes } from '../modules/affirmations/affirmations.route'
 import { AmbitionRoutes } from '../modules/ambitions/ambitions.route'
 import { GratitudeLogsRoutes } from '../modules/gratitudeLogs/gratitudeLogs.route'
+import { ExerciseRoutes } from '../modules/exercises/exercises.route'
 
 const router = Router()
 
@@ -47,6 +48,10 @@ const moduleRoutes = [
   {
     path: '/gratitude-logs',
     route: GratitudeLogsRoutes,
+  },
+  {
+    path: '/exercises',
+    route: ExerciseRoutes,
   },
   {
     path: '/tasks',
