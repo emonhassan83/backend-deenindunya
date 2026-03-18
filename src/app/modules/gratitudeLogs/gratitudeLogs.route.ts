@@ -1,39 +1,40 @@
 import express from 'express'
 import auth from '../../middleware/auth'
 import { USER_ROLE } from '../user/user.constant'
-import { AmbitionControllers } from './ambitions.controller'
+import { GratitudeLogsControllers } from './gratitudeLogs.controller'
 import zodValidationRequest from '../../middleware/validateRequest'
-import { AmbitionValidation } from './ambitions.validation'
+import { GratitudeLogsValidation } from './gratitudeLogs.validation'
 
 const router = express.Router()
 
-// Create ambition (Authenticated users)
+// Create gratitude log (Authenticated users)
 router.post(
   '/',
   auth(USER_ROLE.user, USER_ROLE.admin),
-  zodValidationRequest(AmbitionValidation.createValidationSchema),
-  AmbitionControllers.insertIntoDB
+  zodValidationRequest(GratitudeLogsValidation.createValidationSchema),
+  GratitudeLogsControllers.insertIntoDB
 )
 
-// Toggle completion status (Authenticated users)
-router.patch(
-  '/toggle/:id',
+// Update gratitude log (Authenticated users)
+router.put(
+  '/:id',
   auth(USER_ROLE.user, USER_ROLE.admin),
-  AmbitionControllers.toggleComplete
+  zodValidationRequest(GratitudeLogsValidation.updateValidationSchema),
+  GratitudeLogsControllers.updateGratitudeLog
 )
 
-// Delete ambition (Authenticated users)
+// Delete gratitude log (Authenticated users)
 router.delete(
   '/:id',
   auth(USER_ROLE.user, USER_ROLE.admin),
-  AmbitionControllers.deleteAmbition
+  GratitudeLogsControllers.deleteGratitudeLog
 )
 
-// Get all user ambitions (Authenticated users)
+// Get all user gratitude logs (Authenticated users)
 router.get(
   '/',
-  auth(USER_ROLE.user),
-  AmbitionControllers.getAllAmbitions
+  auth(USER_ROLE.user, USER_ROLE.admin),
+  GratitudeLogsControllers.getAllGratitudeLogs
 )
 
-export const AmbitionRoutes = router
+export const GratitudeLogsRoutes = router

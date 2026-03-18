@@ -1,44 +1,32 @@
 import { z } from 'zod'
-import { AmbitionsType } from './ambitions.constant'
+import { GratitudeType } from './gratitudeLogs.constant'
 
 const createValidationSchema = z.object({
   body: z.object({
-    type: z.enum(Object.values(AmbitionsType) as [string, ...string[]], {
-      required_error: 'Ambition type is required',
+    type: z.enum(Object.values(GratitudeType) as [string, ...string[]], {
+      required_error: 'Gratitude type is required',
     }),
-    title: z
+    content: z
       .string({
-        required_error: 'Title is required',
+        required_error: 'Content is required',
       })
-      .min(1, 'Title cannot be empty')
-      .max(200, 'Title cannot exceed 200 characters'),
-    description: z
-      .string({
-        required_error: 'Description is required',
-      })
-      .min(1, 'Description cannot be empty')
-      .max(1000, 'Description cannot exceed 1000 characters'),
+      .min(5, 'Content must be at least 5 characters')
+      .max(500, 'Content cannot exceed 500 characters'),
   }),
 })
 
 const updateValidationSchema = z.object({
   body: z.object({
-    type: z.enum(Object.values(AmbitionsType) as [string, ...string[]]).optional(),
-    title: z
+    type: z.enum(Object.values(GratitudeType) as [string, ...string[]]).optional(),
+    content: z
       .string()
-      .min(1, 'Title cannot be empty')
-      .max(200, 'Title cannot exceed 200 characters')
+      .min(5, 'Content must be at least 5 characters')
+      .max(500, 'Content cannot exceed 500 characters')
       .optional(),
-    description: z
-      .string()
-      .min(1, 'Description cannot be empty')
-      .max(1000, 'Description cannot exceed 1000 characters')
-      .optional(),
-    isCompleted: z.boolean().optional(),
   }),
 })
 
-export const AmbitionValidation = {
+export const GratitudeLogsValidation = {
   createValidationSchema,
   updateValidationSchema,
 }

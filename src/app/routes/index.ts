@@ -11,6 +11,7 @@ import { CategoriesRoutes } from '../modules/category/category.route'
 import { DuasRoutes } from '../modules/duas/duas.route'
 import { AffirmationRoutes } from '../modules/affirmations/affirmations.route'
 import { AmbitionRoutes } from '../modules/ambitions/ambitions.route'
+import { GratitudeLogsRoutes } from '../modules/gratitudeLogs/gratitudeLogs.route'
 
 const router = Router()
 
@@ -42,6 +43,10 @@ const moduleRoutes = [
   {
     path: '/ambitions',
     route: AmbitionRoutes,
+  },
+  {
+    path: '/gratitude-logs',
+    route: GratitudeLogsRoutes,
   },
   {
     path: '/tasks',

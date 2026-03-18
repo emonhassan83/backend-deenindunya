@@ -1,62 +1,63 @@
 import catchAsync from '../../utils/catchAsync'
 import sendResponse from '../../utils/sendResponse'
-import { AmbitionService } from './ambitions.service'
+import { GratitudeLogsService } from './gratitudeLogs.service'
 
 const insertIntoDB = catchAsync(async (req, res) => {
   const userId = req.user.userId // From auth middleware
-  const result = await AmbitionService.insertIntoDB(req.body, userId)
+  const result = await GratitudeLogsService.insertIntoDB(req.body, userId)
 
   sendResponse(res, {
     success: true,
     statusCode: 201,
-    message: 'Ambition created successfully',
+    message: 'Gratitude log created successfully',
     data: result,
   })
 })
 
-const getAllAmbitions = catchAsync(async (req, res) => {
+const getAllGratitudeLogs = catchAsync(async (req, res) => {
   const userId = req.user.userId
-  const result = await AmbitionService.getAllFromDB(userId, req.query)
+  const result = await GratitudeLogsService.getAllFromDB(userId, req.query)
 
   sendResponse(res, {
     success: true,
     statusCode: 200,
-    message: 'Ambitions retrieved successfully',
+    message: 'Gratitude logs retrieved successfully',
     data: result.data,
     meta: result.meta,
   })
 })
 
-const toggleComplete = catchAsync(async (req, res) => {
+const updateGratitudeLog = catchAsync(async (req, res) => {
   const userId = req.user.userId
-  const result = await AmbitionService.toggleCompleteStatus(
+  const result = await GratitudeLogsService.updateIntoDB(
     req.params.id,
-    userId
+    userId,
+    req.body
   )
 
   sendResponse(res, {
     success: true,
     statusCode: 200,
-    message: `Ambition marked as ${result.isCompleted ? 'completed' : 'incomplete'}`,
+    message: 'Gratitude log updated successfully',
     data: result,
   })
 })
 
-const deleteAmbition = catchAsync(async (req, res) => {
+const deleteGratitudeLog = catchAsync(async (req, res) => {
   const userId = req.user.userId
-  const result = await AmbitionService.deleteFromDB(req.params.id, userId)
+  const result = await GratitudeLogsService.deleteFromDB(req.params.id, userId)
 
   sendResponse(res, {
     success: true,
     statusCode: 200,
-    message: 'Ambition deleted successfully',
+    message: 'Gratitude log deleted successfully',
     data: result,
   })
 })
 
-export const AmbitionControllers = {
+export const GratitudeLogsControllers = {
   insertIntoDB,
-  getAllAmbitions,
-  toggleComplete,
-  deleteAmbition,
+  getAllGratitudeLogs,
+  updateGratitudeLog,
+  deleteGratitudeLog,
 }
