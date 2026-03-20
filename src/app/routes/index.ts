@@ -13,6 +13,7 @@ import { AffirmationRoutes } from '../modules/affirmations/affirmations.route'
 import { AmbitionRoutes } from '../modules/ambitions/ambitions.route'
 import { GratitudeLogsRoutes } from '../modules/gratitudeLogs/gratitudeLogs.route'
 import { ExerciseRoutes } from '../modules/exercises/exercises.route'
+import { WaterIntakeRoutes } from '../modules/waterIntake/waterIntake.route'
 
 const router = Router()
 
@@ -52,6 +53,10 @@ const moduleRoutes = [
   {
     path: '/exercises',
     route: ExerciseRoutes,
+  },
+  {
+    path: '/water-intakes',
+    route: WaterIntakeRoutes,
   },
   {
     path: '/tasks',
