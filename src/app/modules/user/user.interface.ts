@@ -26,6 +26,7 @@ export interface TUser {
     type: 'Point'
     coordinates: [number, number] // [longitude, latitude]
   }
+  timezone: string
   role: TUserRole
   registerWith: string
   needsPasswordChange: boolean

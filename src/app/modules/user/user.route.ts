@@ -38,6 +38,13 @@ router.patch(
 )
 
 router.put(
+  '/set-password',
+  auth(USER_ROLE.user),
+  zodValidationRequest(UserValidation.setPasswordValidationSchema),
+  UserControllers.setUserPassword,
+)
+
+router.put(
   '/update-my-profile',
   auth(USER_ROLE.user, USER_ROLE.admin),
   upload.single('image'),

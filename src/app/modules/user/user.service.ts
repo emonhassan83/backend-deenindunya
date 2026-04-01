@@ -8,6 +8,7 @@ import {
   sendUserStatusNotifYToAdmin,
   sendUserStatusNotifYToUser,
 } from './user.utils'
+import bcrypt from 'bcrypt'
 
 const generateLocationUrl = (lat: number, lng: number) => {
   return `https://www.google.com/maps?q=${lat},${lng}`
@@ -53,12 +54,54 @@ const registerUserIntoDB = async (payload: TUser) => {
   /* =========================================================
      ✅ Create new user
      ========================================================= */
-  if (!payload.password) {
-    throw new AppError(httpStatus.BAD_REQUEST, 'Password is required')
-  }
+  // if (!payload.password) {
+  //   throw new AppError(httpStatus.BAD_REQUEST, 'Password is required')
+  // }
 
   const newUser = await User.create(payload)
   return newUser
+}
+
+const setUserPasswordFromDB = async (
+  userId: string,
+  payload: { password: string; confirmPassword: string },
+) => {
+  const { password, confirmPassword } = payload
+
+  if (password !== confirmPassword) {
+    throw new AppError(httpStatus.BAD_REQUEST, 'Password and confirm password do not match')
+  }
+
+  const user = await User.findById(userId)
+  if (!user || user?.isDeleted) {
+    throw new AppError(httpStatus.NOT_FOUND, 'User not found!')
+  }
+
+  if (!password || !confirmPassword) {
+    throw new AppError(httpStatus.BAD_REQUEST, 'Password and confirm password are required')
+  }
+
+  if (user.password) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      'Password already set. Please use change password instead',
+    )
+  }
+
+  // 🔑 পাসওয়ার্ড hash করা হচ্ছে
+  const hashedPassword = await bcrypt.hash(password, 10)
+
+  await User.findByIdAndUpdate(
+    userId,
+    {
+      password: hashedPassword,
+      needsPasswordChange: false,
+      passwordChangedAt: new Date(),
+    },
+    { new: true },
+  )
+
+  return 
 }
 
 const getAllUsersFromDB = async (query: Record<string, unknown>) => {
@@ -85,7 +128,7 @@ const getAllUsersFromDB = async (query: Record<string, unknown>) => {
 
 const geUserByIdFromDB = async (id: string) => {
   const user = await User.findById(id).select(
-    '_id id name email photoUrl address contractNumber location locationUrl status createdAt',
+    '_id id name email photoUrl country address contractNumber location locationUrl timezone status createdAt',
   )
   if (!user || user?.isDeleted) {
     throw new AppError(httpStatus.NOT_FOUND, 'User not found!')
@@ -135,10 +178,7 @@ const changeUserNotifyFromDB = async (payload: any, userId: string) => {
     { new: true },
   ).select('_id id name email photoUrl contactNumber status')
   if (!result) {
-    throw new AppError(
-      httpStatus.NOT_FOUND,
-      'User notify update failed!',
-    )
+    throw new AppError(httpStatus.NOT_FOUND, 'User notify update failed!')
   }
 
   return result
@@ -234,6 +274,7 @@ const deleteAUserFromDB = async (userId: string) => {
 
 export const UserService = {
   registerUserIntoDB,
+  setUserPasswordFromDB,
   getAllUsersFromDB,
   geUserByIdFromDB,
   changeUserStatusFromDB,

@@ -23,6 +23,16 @@ const registerUser = catchAsync(async (req, res) => {
   })
 })
 
+const setUserPassword = catchAsync(async (req: Request, res: Response) => {
+  const result = await UserService.setUserPasswordFromDB(req.user._id, req.body)
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'Set password successfully',
+    data: result,
+  })
+})
+
 const getAllUsers = catchAsync(async (req, res) => {
   req.query.role = USER_ROLE.user
   const result = await UserService.getAllUsersFromDB(req.query)
@@ -147,6 +157,7 @@ const deleteAUser = catchAsync(async (req, res) => {
 
 export const UserControllers = {
   registerUser,
+  setUserPassword,
   getAllUsers,
   getUserById,
   getMyProfile,

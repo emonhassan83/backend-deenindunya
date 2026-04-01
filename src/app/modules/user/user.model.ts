@@ -35,6 +35,7 @@ const userSchema = new Schema<TUser>(
       type: { type: String, enum: ['Point'], default: 'Point' },
       coordinates: { type: [Number], default: [0, 0] }, // [longitude, latitude]
     },
+    timezone: { type: String, default: null },
     role: {
       type: String,
       enum: Object.values(USER_ROLE),
