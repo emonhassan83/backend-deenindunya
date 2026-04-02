@@ -7,6 +7,7 @@ import {
 } from './prayer.interface'
 import axios from 'axios'
 import { calculateCurrentStreak, calculateLongestStreak } from './prayer.utils'
+import dayjs from 'dayjs'
 
 // Create 5 prayers for a specific date
 const createBulkPrayers = async (
@@ -128,16 +129,31 @@ const getPrayerTimes = async (
   userId: string,
   query: Record<string, any>
 ) => {
-  const user = await User.findById(userId)
+  const user = await User.findById(userId);
   if (!user || user?.isDeleted) {
-    throw new AppError(httpStatus.NOT_FOUND, 'Your profile not found')
+    throw new AppError(httpStatus.NOT_FOUND, 'Your profile not found');
   }
 
-  const { latitude, longitude, timezone } = user
-  const { date } = query
+  const { latitude, longitude, timezone } = user;
+  const { date } = query;
 
-  // Use current date if not provided
-  const targetDate = date || new Date().toISOString().split('T')[0]
+  // Validate location data
+  if (!latitude || !longitude) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      'Location not set. Please update your profile with latitude and longitude.',
+    );
+  }
+
+  // 🔥 FIX: Convert date to DD-MM-YYYY format (Aladhan API expects this)
+  let targetDate: string;
+  if (date) {
+    // If date provided, parse and format
+    targetDate = dayjs(date).format('DD-MM-YYYY');
+  } else {
+    // Use current date
+    targetDate = dayjs().format('DD-MM-YYYY');
+  }
 
   try {
     // Using Aladhan API for prayer times
@@ -145,40 +161,61 @@ const getPrayerTimes = async (
       `https://api.aladhan.com/v1/timings/${targetDate}`,
       {
         params: {
-          latitude,
-          longitude,
-          method: 2, // Islamic Society of North America (ISNA)
-          ...(timezone && { timezone }),
+          latitude: latitude,
+          longitude: longitude,
+          method: 2, // ISNA calculation method
+          ...(timezone && { timezonestring: timezone }),
         },
       },
-    )
+    );
 
     if (response.data.code !== 200) {
       throw new AppError(
         httpStatus.BAD_REQUEST,
-        'Failed to fetch prayer times',
-      )
+        'Failed to fetch prayer times from Aladhan API',
+      );
     }
 
-    const timings = response.data.data.timings
+    const timings = response.data.data.timings;
+    const dateInfo = response.data.data.date;
 
     const prayerTimes = {
       fajr: timings.Fajr,
+      sunrise: timings.Sunrise, // Bonus
       dhuhr: timings.Dhuhr,
       asr: timings.Asr,
       maghrib: timings.Maghrib,
       isha: timings.Isha,
-      date: targetDate,
+      date: {
+        readable: dateInfo.readable, // e.g., "25 Jan 2025"
+        gregorian: dateInfo.gregorian.date, // e.g., "25-01-2025"
+        hijri: dateInfo.hijri.date, // e.g., "24-07-1446"
+      },
+      location: {
+        latitude,
+        longitude,
+        timezone: timezone || 'UTC',
+      },
+    };
+
+    return prayerTimes;
+  } catch (error: any) {
+    console.error('Prayer Times Error:', {
+      message: error.message,
+      response: error.response?.data,
+      status: error.response?.status,
+    });
+
+    if (error instanceof AppError) {
+      throw error;
     }
 
-    return prayerTimes
-  } catch (error: any) {
     throw new AppError(
       httpStatus.INTERNAL_SERVER_ERROR,
       error.message || 'Failed to fetch prayer times',
-    )
+    );
   }
-}
+};
 
 export const PrayerService = {
   createBulkPrayers,

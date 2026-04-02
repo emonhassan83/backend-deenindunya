@@ -223,9 +223,9 @@ const updateUserInfoFromDB = async (
 
 const updateLocationFromDB = async (
   userId: string,
-  payload: { longitude: number; latitude: number },
+  payload: { longitude: number; latitude: number, address?: string, timezone?: string },
 ) => {
-  const { longitude, latitude } = payload
+  const { longitude, latitude, address, timezone } = payload
 
   //* if the user is is not exist
   const user = await User.findById(userId)
@@ -244,6 +244,10 @@ const updateLocationFromDB = async (
     userId,
     {
       location: { type: 'Point', coordinates: [longitude, latitude] },
+      ...(address && { address }),
+      ...(timezone && { timezone }),
+      ...(latitude && { latitude }),
+      ...(longitude && { longitude }),
     },
     { new: true },
   )
