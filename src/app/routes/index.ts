@@ -16,6 +16,7 @@ import { ExerciseRoutes } from '../modules/exercises/exercises.route'
 import { WaterIntakeRoutes } from '../modules/waterIntake/waterIntake.route'
 import { MoodLogsRoutes } from '../modules/moodLogs/moodLogs.route'
 import { ReminderRoutes } from '../modules/reminders/reminders.route'
+import { PrayerRoutes } from '../modules/prayer/prayer.route'
 
 const router = Router()
 
@@ -39,6 +40,10 @@ const moduleRoutes = [
   {
     path: '/reminders',
     route: ReminderRoutes,
+  },
+  {
+    path: '/prayers',
+    route: PrayerRoutes,
   },
   {
     path: '/duas',
