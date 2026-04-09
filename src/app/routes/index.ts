@@ -42,6 +42,18 @@ const moduleRoutes = [
     route: ReminderRoutes,
   },
   {
+    path: '/tasks',
+    route: TaskRoutes,
+  },
+  {
+    path: '/lists',
+    route: ListRoutes,
+  },
+  {
+    path: '/items',
+    route: ItemRoutes,
+  },
+  {
     path: '/prayers',
     route: PrayerRoutes,
   },
@@ -72,18 +84,6 @@ const moduleRoutes = [
   {
     path: '/mood-logs',
     route: MoodLogsRoutes,
-  },
-  {
-    path: '/tasks',
-    route: TaskRoutes,
-  },
-  {
-    path: '/lists',
-    route: ListRoutes,
-  },
-  {
-    path: '/items',
-    route: ItemRoutes,
   },
   {
     path: '/notifications',
