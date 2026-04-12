@@ -1,0 +1,36 @@
+import { Request, Response } from 'express'
+import catchAsync from '../../utils/catchAsync'
+import { SurahService } from './surah.service'
+import sendResponse from '../../utils/sendResponse'
+
+const getSurahs = catchAsync(async (req: Request, res: Response) => {
+  const result = await SurahService.getSurahs(req.query)
+
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: 'Surahs retrieved successfully!',
+    meta: result.meta,
+    data: result.data,
+  })
+})
+
+const getSurahVerses = catchAsync(async (req: Request, res: Response) => {
+  const result = await SurahService.getSurahVerses(
+    req.params.surahNumber,
+    req.query,
+  )
+
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: 'Surah verses fetched successfully',
+    meta: result.meta,
+    data: result.data,
+  })
+})
+
+export const SurahController = {
+  getSurahs,
+  getSurahVerses,
+}

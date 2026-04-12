@@ -17,6 +17,7 @@ import { WaterIntakeRoutes } from '../modules/waterIntake/waterIntake.route'
 import { MoodLogsRoutes } from '../modules/moodLogs/moodLogs.route'
 import { ReminderRoutes } from '../modules/reminders/reminders.route'
 import { PrayerRoutes } from '../modules/prayer/prayer.route'
+import { SurahRoutes } from '../modules/surah/surah.route'
 
 const router = Router()
 
@@ -56,6 +57,10 @@ const moduleRoutes = [
   {
     path: '/prayers',
     route: PrayerRoutes,
+  },
+  {
+    path: '/surahs',
+    route: SurahRoutes,
   },
   {
     path: '/duas',
