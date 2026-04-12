@@ -5,10 +5,13 @@ import { USER_ROLE } from '../user/user.constant'
 
 const router = Router()
 
-// Get prayer times based on location
+// memorize a Surah
+router.patch('/memorize/:id', auth(USER_ROLE.user), SurahController.memorizeSurah)
+
+// Get list of all Surahs
 router.get('/', SurahController.getSurahs)
 
-// Get prayers by date
+// Get verses of a specific Surah by surah number (1-114)
 router.get('/:surahNumber/verses', SurahController.getSurahVerses)
 
 export const SurahRoutes = router

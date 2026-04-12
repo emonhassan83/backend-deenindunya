@@ -30,7 +30,22 @@ const getSurahVerses = catchAsync(async (req: Request, res: Response) => {
   })
 })
 
+const memorizeSurah = catchAsync(async (req: Request, res: Response) => {
+  const result = await SurahService.memorizeSurah(
+    req.params.id,
+    req.user._id,
+  )
+
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: 'Surah memorized successfully',
+    data: result,
+  })
+})
+
 export const SurahController = {
   getSurahs,
   getSurahVerses,
+  memorizeSurah,
 }

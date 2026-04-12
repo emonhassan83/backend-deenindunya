@@ -16,5 +16,14 @@ export interface TSurahVerse {
   audioUrl: string
 }
 
+export interface TSurahProgress {
+  _id?: string
+  userId: Types.ObjectId
+  surahId: Types.ObjectId
+  isMemorized: boolean
+  memorizedAt?: Date
+}
+
 export type TSurahModel = Model<TSurah, Record<string, unknown>>
 export type TSurahVerseModel = Model<TSurahVerse, Record<string, unknown>>
+export type TSurahProgressModel = Model<TSurahProgress, Record<string, unknown>>
