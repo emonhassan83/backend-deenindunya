@@ -18,6 +18,7 @@ import { MoodLogsRoutes } from '../modules/moodLogs/moodLogs.route'
 import { ReminderRoutes } from '../modules/reminders/reminders.route'
 import { PrayerRoutes } from '../modules/prayer/prayer.route'
 import { SurahRoutes } from '../modules/surah/surah.route'
+import { SunnahRoutes } from '../modules/sunnah/sunnah.route'
 
 const router = Router()
 
@@ -61,6 +62,10 @@ const moduleRoutes = [
   {
     path: '/surahs',
     route: SurahRoutes,
+  },
+  {
+    path: '/sunnahs',
+    route: SunnahRoutes,
   },
   {
     path: '/duas',
