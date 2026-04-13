@@ -2,35 +2,62 @@ import httpStatus from 'http-status'
 import AppError from '../../errors/AppError'
 import QueryBuilder from '../../builder/QueryBuilder'
 import { Surah, SurahProgress, SurahVerse } from './surah.models'
+import { User } from '../user/user.model'
 
 /**
  * Get list of all Surahs with search, filter, pagination, sorting & field selection
  */
-const getSurahs = async (query: Record<string, any>) => {
+const getSurahs = async (query: Record<string, any>, userId: string) => {
+  const user = await User.findById(userId);
+  if (!user || user?.isDeleted) {
+    throw new AppError(httpStatus.NOT_FOUND, 'User not found');
+  }
+
   try {
     const surahQuery = new QueryBuilder(Surah.find(), query)
       .search(['name']) // Search by surah name
       .filter()
       .sort()
       .paginate()
-      .fields()
+      .fields();
 
-    const [data, meta] = await Promise.all([
+    const [surahs, meta, progress] = await Promise.all([
       surahQuery.modelQuery,
       surahQuery.countTotal(),
-    ])
+      SurahProgress.find({ userId }).lean(),
+    ]);
+
+    // progress কে surahId অনুযায়ী map করো
+    const progressMap = new Map(
+      progress.map((p) => [p.surahId.toString(), p])
+    );
+
+    // surah list enrich করো
+    const enrichedSurahs = surahs.map((s) => {
+      const prog = progressMap.get(s._id.toString());
+      return {
+        ...s.toObject(),
+        isMemorized: prog?.isMemorized || false,
+        memorizedAt: prog?.memorizedAt || null,
+      };
+    });
+
+    const totalMemorized = progress.filter((p) => p.isMemorized).length;
 
     return {
-      data,
+      data: {
+        totalMemorized,
+        surahLists: enrichedSurahs,
+      },
       meta,
-    }
+    };
   } catch (error: any) {
     throw new AppError(
       httpStatus.INTERNAL_SERVER_ERROR,
       error.message || 'Failed to fetch Surahs',
-    )
+    );
   }
-}
+};
 
 /**
  * Get verses of a specific Surah with pagination, sorting etc.

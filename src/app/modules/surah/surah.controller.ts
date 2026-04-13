@@ -4,7 +4,7 @@ import { SurahService } from './surah.service'
 import sendResponse from '../../utils/sendResponse'
 
 const getSurahs = catchAsync(async (req: Request, res: Response) => {
-  const result = await SurahService.getSurahs(req.query)
+  const result = await SurahService.getSurahs(req.query, req.user._id)
 
   sendResponse(res, {
     statusCode: 200,
