@@ -19,6 +19,7 @@ import { ReminderRoutes } from '../modules/reminders/reminders.route'
 import { PrayerRoutes } from '../modules/prayer/prayer.route'
 import { SurahRoutes } from '../modules/surah/surah.route'
 import { SunnahRoutes } from '../modules/sunnah/sunnah.route'
+import { EventRoutes } from '../modules/event/event.route'
 
 const router = Router()
 
@@ -54,6 +55,10 @@ const moduleRoutes = [
   {
     path: '/items',
     route: ItemRoutes,
+  },
+  {
+    path: '/events',
+    route: EventRoutes,
   },
   {
     path: '/prayers',

@@ -28,6 +28,6 @@ router.delete('/:id', auth(USER_ROLE.user), SunnahController.deleteAIntoDB)
 // User Logs
 router.post('/logs/:id', auth(USER_ROLE.user), SunnahController.toggleLogs)
 
-router.get('/user', auth(USER_ROLE.user), SunnahController.getUserSunnahs)
+router.get('/my-sunnah', auth(USER_ROLE.user), SunnahController.getUserSunnahs)
 
 export const SunnahRoutes = router
