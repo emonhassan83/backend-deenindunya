@@ -7,13 +7,6 @@ import { contentsValidation } from './contents.validation'
 
 const router = Router()
 
-router.post(
-  '/',
-  auth(USER_ROLE.admin),
-  zodValidationRequest(contentsValidation.createValidationSchema),
-  contentsController.createContents,
-)
-
 router.put(
   '/',
   auth(USER_ROLE.admin),
@@ -21,10 +14,6 @@ router.put(
   contentsController.updateContents,
 )
 
-router.get('/:id', contentsController.getContentsById)
-
-router.get('/', contentsController.getAllContents)
-
-router.delete('/:id', contentsController.deleteContents)
+router.get('/', contentsController.getContents)
 
 export const contentsRoutes = router
