@@ -17,6 +17,14 @@ export default {
   jwt_access_expires_in: process.env.JWT_ACCESS_EXPIRE_IN,
   jwt_refresh_expires_in: process.env.JWT_REFRESH_EXPIRE_IN,
   reset_pass_link: process.env.RESET_PASS_LINK,
+  firebase: {
+    project_id: process.env.FIREBASE_PROJECT_ID,
+    private_key_id: process.env.FIREBASE_PRIVATE_KEY_ID,
+    private_key: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+    client_email: process.env.FIREBASE_CLIENT_EMAIL,
+    client_id: process.env.FIREBASE_CLIENT_ID,
+    client_x509_cert_url: process.env.FIREBASE_CLIENT_CERT_URL,
+  },
   emailSender: {
     email: process.env.EMAIL,
     app_pass: process.env.APP_PASS,
@@ -32,6 +40,6 @@ export default {
     accessKeyId: process.env.S3_BUCKET_ACCESS_KEY,
     secretAccessKey: process.env.S3_BUCKET_SECRET_ACCESS_KEY,
     region: process.env.AWS_REGION,
-    bucket: process.env.AWS_BUCKET_NAME
+    bucket: process.env.AWS_BUCKET_NAME,
   },
 }

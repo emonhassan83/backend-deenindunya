@@ -5,7 +5,6 @@ import { otpRoutes } from '../modules/otp/otp.route'
 import { NotificationRoutes } from '../modules/notification/notification.route'
 import { contentsRoutes } from '../modules/contents/contents.route'
 import { TaskRoutes } from '../modules/task/task.route'
-import { ItemRoutes } from '../modules/item/item.route'
 import { CategoriesRoutes } from '../modules/category/category.route'
 import { DuasRoutes } from '../modules/duas/duas.route'
 import { AffirmationRoutes } from '../modules/affirmations/affirmations.route'
@@ -20,6 +19,7 @@ import { SurahRoutes } from '../modules/surah/surah.route'
 import { SunnahRoutes } from '../modules/sunnah/sunnah.route'
 import { EventRoutes } from '../modules/event/event.route'
 import { GroceryRoutes } from '../modules/grocery/grocery.route'
+import { RoomRoutes } from '../modules/room/room.route'
 
 const router = Router()
 
@@ -58,7 +58,7 @@ const moduleRoutes = [
   },
   {
     path: '/items',
-    route: ItemRoutes,
+    route: RoomRoutes,
   },
   {
     path: '/prayers',
