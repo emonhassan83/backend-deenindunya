@@ -2,7 +2,6 @@ import config from '../config'
 import { Contents } from '../modules/contents/contents.models'
 import { USER_ROLE } from '../modules/user/user.constant'
 import { User } from '../modules/user/user.model'
-import { findAdmin } from '../utils/findAdmin'
 
 const adminUser = {
   name: 'deenindunya',
@@ -29,29 +28,12 @@ const seedAdmin = async () => {
 
 // Function to seed Contents
 const seedContents = async () => {
-  const admin = await findAdmin()
   const existingContents = await Contents.countDocuments()
 
   if (existingContents === 0) {
     await Contents.create({
-      aboutUs: '',
       termsAndConditions: '',
       privacyPolicy: '',
-      moodLogs: [
-        'Happy',
-        'Sad',
-        'Angry',
-        'Anxious',
-        'Calm',
-        'Excited',
-        'Tired',
-        'Energetic',
-        'Confused',
-        'Content',
-        'Work',
-        'Exercise',
-        'Sleep',
-      ],
       waterIntake: [
         '250ml',
         '500ml',
@@ -61,7 +43,6 @@ const seedContents = async () => {
         '2500ml',
         '3000ml',
       ],
-      createdBy: admin?._id,
     })
 
     console.log('\n✅Default Contents seeded successfully!')
