@@ -2,7 +2,7 @@ import httpStatus from 'http-status'
 import AppError from '../../errors/AppError'
 import { TDuas } from './duas.interface'
 import { Duas } from './duas.model'
-import { Category } from '../category/category.model'
+import { Category } from '../meta/category.model'
 
 const insertIntoDB = async (payload: TDuas): Promise<TDuas> => {
   // Validate category exists

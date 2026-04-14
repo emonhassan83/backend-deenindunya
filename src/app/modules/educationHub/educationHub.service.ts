@@ -30,7 +30,7 @@ const getModules = async (query: Record<string, any>, userId: string) => {
     // Map lessonLogs by lessonId for quick lookup
     const logsMap = new Map<string, string>()
     lessonLogs.forEach(log => {
-      logsMap.set(log.lesson.toString(), log.readAt)
+      logsMap.set(log.lesson.toString(), log.readAt as any)
     })
 
     // Attach readAt info to each module (based on its lessons)
@@ -94,7 +94,7 @@ const getModuleLessons = async (
     // Map logs for quick lookup
     const logsMap = new Map<string, string>()
     lessonLogs.forEach(log => {
-      logsMap.set(log.lesson.toString(), log.readAt)
+      logsMap.set(log.lesson.toString(), log.readAt as any)
     })
 
     // Attach readAt to each lesson

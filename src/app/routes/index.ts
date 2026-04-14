@@ -5,7 +5,6 @@ import { otpRoutes } from '../modules/otp/otp.route'
 import { NotificationRoutes } from '../modules/notification/notification.route'
 import { contentsRoutes } from '../modules/contents/contents.route'
 import { TaskRoutes } from '../modules/task/task.route'
-import { CategoriesRoutes } from '../modules/category/category.route'
 import { DuasRoutes } from '../modules/duas/duas.route'
 import { AffirmationRoutes } from '../modules/affirmations/affirmations.route'
 import { AmbitionRoutes } from '../modules/ambitions/ambitions.route'
@@ -20,6 +19,7 @@ import { EventRoutes } from '../modules/event/event.route'
 import { GroceryRoutes } from '../modules/grocery/grocery.route'
 import { RoomRoutes } from '../modules/room/room.route'
 import { MoodsRoutes } from '../modules/moods/moods.route'
+import { metaRoutes } from '../modules/meta/meta.route'
 
 const router = Router()
 
@@ -35,10 +35,6 @@ const moduleRoutes = [
   {
     path: '/otp',
     route: otpRoutes,
-  },
-  {
-    path: '/categories',
-    route: CategoriesRoutes,
   },
   {
     path: '/reminders',
@@ -107,6 +103,10 @@ const moduleRoutes = [
   {
     path: '/contents',
     route: contentsRoutes,
+  },
+  {
+    path: '/meta',
+    route: metaRoutes,
   },
 ]
 
