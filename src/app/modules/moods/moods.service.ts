@@ -1,13 +1,34 @@
 import httpStatus from 'http-status'
 import AppError from '../../errors/AppError'
-import { TMoodLogs } from './moodLogs.interface'
-import { MoodLog } from './moodLogs.model'
+import { TMood, TMoodLogs } from './moods.interface'
+import { Mood, MoodLog } from './moods.model'
 import { User } from '../user/user.model'
-import { startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, subDays, format } from 'date-fns'
+import {
+  startOfDay,
+  endOfDay,
+  startOfWeek,
+  endOfWeek,
+  startOfMonth,
+  endOfMonth,
+  subDays,
+  format,
+} from 'date-fns'
 
-const insertIntoDB = async (
+const insertIntoDB = async (payload: TMood): Promise<TMood> => {
+  return await Mood.create(payload)
+}
+
+const getAllFromDB = async () => {
+  return await Mood.find({isDeleted: false}).select('title emoji')
+}
+
+const deleteAFromDB = async (id: string) => {
+  return await Mood.findByIdAndDelete(id)
+}
+
+const insertMoodLogs = async (
   payload: TMoodLogs,
-  userId: string
+  userId: string,
 ): Promise<TMoodLogs> => {
   // Validate user exists
   const userExists = await User.findById(userId)
@@ -19,8 +40,8 @@ const insertIntoDB = async (
   payload.user = userExists._id
 
   // If date is not provided, use current date
-  const logDate = payload.logDate ? new Date(payload.logDate) : new Date()
-  
+  const logDate = payload.logAt ? new Date(payload.logAt) : new Date()
+
   // Get start and end of the day for the log date
   const startOfLogDate = startOfDay(logDate)
   const endOfLogDate = endOfDay(logDate)
@@ -43,7 +64,7 @@ const insertIntoDB = async (
         mood: payload.mood,
         logDate: logDate, // Update with new timestamp
       },
-      { new: true }
+      { new: true },
     ).lean()
 
     if (!updated) {
@@ -58,7 +79,7 @@ const insertIntoDB = async (
   return result
 }
 
-const getAllFromDB = async (userId: string, query: Record<string, unknown>) => {
+const getAllMoodLogs = async (userId: string, query: Record<string, unknown>) => {
   const { dateFilter, startDate, endDate, page = 1, limit = 31 } = query
 
   const filter: Record<string, unknown> = {
@@ -138,8 +159,8 @@ const getAllFromDB = async (userId: string, query: Record<string, unknown>) => {
   let checkDate = startOfDay(new Date())
 
   for (const log of allLogs) {
-    const logDay = startOfDay(new Date(log.logDate))
-    
+    const logDay = startOfDay(new Date(log.logAt))
+
     if (logDay.getTime() === checkDate.getTime()) {
       currentStreak++
       checkDate = startOfDay(subDays(checkDate, 1))
@@ -164,7 +185,11 @@ const getAllFromDB = async (userId: string, query: Record<string, unknown>) => {
   }
 }
 
+
 export const MoodLogsService = {
   insertIntoDB,
+  insertMoodLogs,
+  deleteAFromDB,
   getAllFromDB,
+  getAllMoodLogs
 }
