@@ -1,8 +1,7 @@
 import { Schema, model } from "mongoose";
-import { TList, TListModel } from "./list.interface";
-import { List_TYPE } from "./list.constants";
+import { TGrocery, TGroceryModel } from "./grocery.interface";
 
-const listSchema = new Schema<TList>(
+const listSchema = new Schema<TGrocery>(
   {
     user: {
       type: Schema.Types.ObjectId,
@@ -13,13 +12,16 @@ const listSchema = new Schema<TList>(
       type: String,
       required: true,
     },
-    type: {
+    logAt: {
       type: String,
-      enum: Object.values(List_TYPE),
+      required: true,
+    },
+    isCompleted: {
+      type: Boolean,
       required: true,
     },
   },
   { timestamps: true }
 );
 
-export const List = model<TList, TListModel>("List", listSchema);
+export const Grocery = model<TGrocery, TGroceryModel>("Grocery", listSchema);

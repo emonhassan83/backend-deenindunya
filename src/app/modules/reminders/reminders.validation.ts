@@ -5,8 +5,8 @@ const createValidationSchema = z.object({
     title: z.string({
       required_error: 'Reminder title is required!',
     }),
-    date: z.string({
-      required_error: 'Reminder date is required!',
+    logAt: z.string({
+      required_error: 'Reminder log at time is required!',
     }),
   }),
 })

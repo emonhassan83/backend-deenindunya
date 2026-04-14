@@ -18,6 +18,10 @@ const taskSchema = new Schema<TTask>(
       type: String,
       required: true,
     },
+    logAt: {
+      type: String,
+      required: true,
+    },
     isCompleted: {
       type: Boolean,
       default: false,

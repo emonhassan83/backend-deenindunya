@@ -12,7 +12,7 @@ const reminderSchema = new Schema<TReminder>(
       type: String,
       required: true,
     },
-    date: {
+    logAt: {
       type: String,
       required: true,
     },

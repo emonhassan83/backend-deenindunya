@@ -6,6 +6,7 @@ export interface TTask {
   user: Types.ObjectId
   type: TTaskType
   title: string
+  logAt: string
   isCompleted: boolean
 }
 

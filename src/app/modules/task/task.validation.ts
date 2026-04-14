@@ -9,6 +9,9 @@ const createValidationSchema = z.object({
     title: z.string({
       required_error: 'Task title is required',
     }),
+    logAt: z.string({
+      required_error: 'Task log at time is required!',
+    }),
   }),
 })
 

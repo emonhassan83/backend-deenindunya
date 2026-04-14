@@ -4,7 +4,7 @@ export interface TReminder {
   _id?: string
   user: Types.ObjectId
   title: string
-  date: string
+  logAt: string
   isCompleted: boolean
 }
 
