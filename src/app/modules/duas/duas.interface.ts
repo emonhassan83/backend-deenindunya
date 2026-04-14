@@ -2,7 +2,7 @@ import { Model, Types } from 'mongoose'
 
 export type TDuas = {
   __id?: string
-  category: Types.ObjectId
+  category: string
   banner: string
   arabic_text: string
   transliteration: string

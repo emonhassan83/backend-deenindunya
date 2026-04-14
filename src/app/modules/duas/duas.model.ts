@@ -4,8 +4,7 @@ import { TDuas, TDuasModel } from './duas.interface'
 const duasSchema = new Schema<TDuas>(
   {
     category: {
-      type: Schema.Types.ObjectId,
-      ref: 'Category',
+      type: String,
       required: [true, 'Category is required'],
     },
     banner: {

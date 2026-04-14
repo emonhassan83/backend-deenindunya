@@ -2,15 +2,8 @@ import httpStatus from 'http-status'
 import AppError from '../../errors/AppError'
 import { TDuas } from './duas.interface'
 import { Duas } from './duas.model'
-import { Category } from '../meta/category.model'
 
 const insertIntoDB = async (payload: TDuas): Promise<TDuas> => {
-  // Validate category exists
-  const categoryExists = await Category.findById(payload.category)
-  if (!categoryExists || categoryExists.isDeleted) {
-    throw new AppError(httpStatus.NOT_FOUND, 'Category not found!')
-  }
-
   // Check if dua with same arabic text already exists in this category
   const existing = await Duas.findOne({
     category: payload.category,
@@ -89,14 +82,6 @@ const updateIntoDB = async (
   const existing = await Duas.findById(id)
   if (!existing || existing.isDeleted) {
     throw new AppError(httpStatus.NOT_FOUND, 'Dua not found!')
-  }
-
-  // If category is being updated, validate it exists
-  if (payload.category) {
-    const categoryExists = await Category.findById(payload.category)
-    if (!categoryExists || categoryExists.isDeleted) {
-      throw new AppError(httpStatus.NOT_FOUND, 'Category not found!')
-    }
   }
 
   // If arabic_text is being updated, check for duplicates
