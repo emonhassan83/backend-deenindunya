@@ -20,6 +20,7 @@ import { GroceryRoutes } from '../modules/grocery/grocery.route'
 import { RoomRoutes } from '../modules/room/room.route'
 import { MoodsRoutes } from '../modules/moods/moods.route'
 import { metaRoutes } from '../modules/meta/meta.route'
+import { PackageRoutes } from '../modules/package/package.route'
 
 const router = Router()
 
@@ -103,6 +104,10 @@ const moduleRoutes = [
   {
     path: '/contents',
     route: contentsRoutes,
+  },
+  {
+    path: '/packages',
+    route: PackageRoutes,
   },
   {
     path: '/meta',
