@@ -22,6 +22,7 @@ import { MoodsRoutes } from '../modules/moods/moods.route'
 import { metaRoutes } from '../modules/meta/meta.route'
 import { PackageRoutes } from '../modules/package/package.route'
 import { SubscriptionRoutes } from '../modules/subscription/subscription.route'
+import { paymentsRoutes } from '../modules/payments/payments.route'
 
 const router = Router()
 
@@ -113,6 +114,10 @@ const moduleRoutes = [
   {
     path: '/subscriptions',
     route: SubscriptionRoutes,
+  },
+  {
+    path: '/payments',
+    route: paymentsRoutes,
   },
   {
     path: '/meta',

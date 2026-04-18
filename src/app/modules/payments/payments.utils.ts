@@ -1,0 +1,124 @@
+import Stripe from 'stripe'
+import config from '../../config'
+import { findAdmin } from '../../utils/findAdmin'
+import { messages } from '../notification/notification.constant'
+import { NotificationService } from '../notification/notification.service'
+import { modeType } from '../notification/notification.interface'
+import { Types } from 'mongoose'
+
+const stripe: Stripe = new Stripe(config.stripe?.stripe_api_secret as string, {
+  apiVersion: '2025-02-24.acacia',
+  typescript: true,
+})
+
+interface TPayload {
+  product: {
+    amount: number
+    name: string
+    quantity: number
+  }
+  customer: {
+    name: string
+    email: string
+  }
+  paymentId: string | Types.ObjectId
+}
+
+export const createCheckoutSession = async (payload: TPayload) => {
+   const { customer: customerData } = payload;
+  
+  const customer = await stripe.customers.create({
+    name: customerData.name,
+    email: customerData.email,
+  });
+
+  const paymentGatewayData = await stripe.checkout.sessions.create({
+    line_items: [
+      {
+        price_data: {
+          currency: 'usd',
+          product_data: {
+            name: payload?.product?.name,
+          },
+          unit_amount: payload.product?.amount * 100,
+        },
+        quantity: payload.product?.quantity,
+      },
+    ],
+
+    success_url: `${config.server_url}/payments/confirm-payment?sessionId={CHECKOUT_SESSION_ID}&paymentId=${payload?.paymentId}`,
+    cancel_url: config?.payment_cancel_url,
+    mode: 'payment',
+    // metadata: {
+    //   user: JSON.stringify({
+    //     paymentId: payment.id,
+    //   }),
+    // },
+    invoice_creation: {
+      enabled: true,
+    },
+    customer: customer?.id,
+    // payment_intent_data: {
+    //   metadata: {
+    //     payment: JSON.stringify({
+    //       ...payment,
+    //     }),
+    //   },
+    // },
+    payment_method_types: ['card'],
+  })
+
+  return paymentGatewayData
+}
+
+export const paymentNotifyToAdmin = async (
+  type: 'SUCCESS' | 'REFUND',
+  payment: any,
+) => {
+  const admin = await findAdmin()
+
+  // Define message and description based on type
+  const message =
+    type === 'SUCCESS'
+      ? messages.paymentManagement.paymentSuccess
+      : messages.paymentManagement.paymentRefunded
+
+  const description =
+    type === 'SUCCESS'
+      ? `A payment of $${payment.amount} has been successfully received. Transaction ID: ${payment.tranId}.`
+      : `A refund of $${payment.amount} has been successfully processed. Refund Transaction ID: ${payment.tranId}.`
+
+  // Create a notification entry
+  await NotificationService.createNotificationIntoDB({
+    receiver: admin?._id,
+    message,
+    description,
+    reference: payment.subscription,
+    model_type: modeType.Payment,
+  })
+}
+
+export const paymentNotifyToUser = async (
+  type: 'SUCCESS' | 'REFUND',
+  payment: any,
+) => {
+  // Define message and description based on type
+  const message =
+    type === 'SUCCESS'
+      ? messages.paymentManagement.paymentSuccess
+      : messages.paymentManagement.paymentRefunded
+
+  const description =
+    type === 'SUCCESS'
+      ? `Your payment of $${payment.amount} has been successfully processed. Transaction ID: ${payment.tranId}.`
+      : `A refund of $${payment.amount} has been issued to your account. Refund Transaction ID: ${payment.tranId}.`
+
+  // Create a notification entry
+  await NotificationService.createNotificationIntoDB({
+    receiver: payment?.user,
+    message,
+    description,
+    reference: payment.subscription,
+    model_type: modeType.Payment,
+  })
+}
