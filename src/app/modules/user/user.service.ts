@@ -3,7 +3,7 @@ import AppError from '../../errors/AppError'
 import { TUser } from './user.interface'
 import { User } from './user.model'
 import QueryBuilder from '../../builder/QueryBuilder'
-import { USER_ROLE } from './user.constant'
+import { USER_ROLE, USER_STATUS } from './user.constant'
 import {
   sendUserStatusNotifYToAdmin,
   sendUserStatusNotifYToUser,
@@ -69,7 +69,10 @@ const setUserPasswordFromDB = async (
   const { password, confirmPassword } = payload
 
   if (password !== confirmPassword) {
-    throw new AppError(httpStatus.BAD_REQUEST, 'Password and confirm password do not match')
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      'Password and confirm password do not match',
+    )
   }
 
   const user = await User.findById(userId)
@@ -78,7 +81,10 @@ const setUserPasswordFromDB = async (
   }
 
   if (!password || !confirmPassword) {
-    throw new AppError(httpStatus.BAD_REQUEST, 'Password and confirm password are required')
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      'Password and confirm password are required',
+    )
   }
 
   if (user.password) {
@@ -101,10 +107,16 @@ const setUserPasswordFromDB = async (
     { new: true },
   )
 
-  return 
+  return
 }
 
 const getAllUsersFromDB = async (query: Record<string, unknown>) => {
+  const activeUserCount = await User.countDocuments({
+    isDeleted: false,
+    role: { $ne: USER_ROLE.admin },
+    status: USER_STATUS.active,
+  })
+
   const usersQuery = new QueryBuilder(
     User.find({ isDeleted: false, role: { $ne: USER_ROLE.admin } }).select(
       '_id id name email photoUrl address contractNumber status createdAt',
@@ -122,7 +134,11 @@ const getAllUsersFromDB = async (query: Record<string, unknown>) => {
 
   return {
     meta,
-    result,
+    result: {
+      totalUser: meta.total,
+      activeUser: activeUserCount,
+      userList: result,
+    },
   }
 }
 
@@ -223,7 +239,12 @@ const updateUserInfoFromDB = async (
 
 const updateLocationFromDB = async (
   userId: string,
-  payload: { longitude: number; latitude: number, address?: string, timezone?: string },
+  payload: {
+    longitude: number
+    latitude: number
+    address?: string
+    timezone?: string
+  },
 ) => {
   const { longitude, latitude, address, timezone } = payload
 

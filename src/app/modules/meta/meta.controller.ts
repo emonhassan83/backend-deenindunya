@@ -3,7 +3,7 @@ import sendResponse from '../../utils/sendResponse'
 import { MetaService } from './meta.service'
 
 const userMeta = catchAsync(async (req, res) => {
-  const result = await MetaService.userMeta(req.user._id)
+  const result = await MetaService.userMeta(req.user._id, req.query)
 
   sendResponse(res, {
     success: true,
@@ -14,12 +14,12 @@ const userMeta = catchAsync(async (req, res) => {
 })
 
 const adminMeta = catchAsync(async (req, res) => {
-  const result = await MetaService.adminMeta()
+  const result = await MetaService.adminMeta(req.user._id, req.query)
 
   sendResponse(res, {
     success: true,
     statusCode: 200,
-    message: 'Categories retrieved successfully!',
+    message: 'Admin meta retrieved successfully!',
     data: result,
   })
 })
