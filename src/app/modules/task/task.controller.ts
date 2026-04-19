@@ -22,19 +22,6 @@ const getAllIntoDB = catchAsync(async (req: Request, res: Response) => {
     statusCode: 200,
     success: true,
     message: 'Tasks retrieved successfully',
-    meta: result.meta,
-    data: result.data,
-  })
-})
-
-// Get Project by ID
-const getAIntoDB = catchAsync(async (req: Request, res: Response) => {
-  const result = await TaskService.getAIntoDB(req.params.id)
-
-  sendResponse(res, {
-    statusCode: 200,
-    success: true,
-    message: 'Task retrieved successfully',
     data: result,
   })
 })
@@ -64,7 +51,6 @@ const deleteAIntoDB = catchAsync(async (req: Request, res: Response) => {
 export const TaskController = {
   insertIntoDB,
   getAllIntoDB,
-  getAIntoDB,
   changedStatus,
   deleteAIntoDB
 }

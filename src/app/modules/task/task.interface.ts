@@ -7,6 +7,8 @@ export interface TTask {
   type: TTaskType
   title: string
   logAt: string
+  expiryDate: Date
+  userTimeZone: string
   isCompleted: boolean
 }
 

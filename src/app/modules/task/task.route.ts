@@ -26,12 +26,6 @@ router.get(
   TaskController.getAllIntoDB,
 )
 
-router.get(
-  '/:id',
-  auth(USER_ROLE.user),
-  TaskController.getAIntoDB,
-)
-
 router.delete(
   '/:id',
   auth(USER_ROLE.user),
