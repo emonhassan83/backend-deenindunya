@@ -83,10 +83,28 @@ const updateLocationValidationSchema = z.object({
   }),
 })
 
+const updateNotifyValidationSchema = z.object({
+  body: z.object({
+    pushNotification: z.boolean({
+      required_error: 'pushNotification is required!',
+    }),
+    soundEffect: z.boolean({
+      required_error: 'soundEffect is required!',
+    }),
+    automaticallyBrightness: z.boolean({
+      required_error: 'automaticallyBrightness is required!',
+    }),
+    vibration: z.boolean({
+      required_error: 'vibration is required!',
+    }),
+  }),
+})
+
 export const UserValidation = {
   createValidationSchema,
   setPasswordValidationSchema,
   updateValidationSchema,
   changeStatusValidationSchema,
   updateLocationValidationSchema,
+  updateNotifyValidationSchema
 }

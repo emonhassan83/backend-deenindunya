@@ -144,7 +144,7 @@ const getAllUsersFromDB = async (query: Record<string, unknown>) => {
 
 const geUserByIdFromDB = async (id: string) => {
   const user = await User.findById(id).select(
-    '_id id name email photoUrl country address contractNumber location locationUrl timezone status createdAt',
+    '_id id name email photoUrl country address contractNumber location locationUrl timezone notificationPreference status createdAt',
   )
   if (!user || user?.isDeleted) {
     throw new AppError(httpStatus.NOT_FOUND, 'User not found!')
@@ -192,7 +192,7 @@ const changeUserNotifyFromDB = async (payload: any, userId: string) => {
     user._id,
     { payload },
     { new: true },
-  ).select('_id id name email photoUrl contactNumber status')
+  ).select('_id id name email photoUrl contactNumber status notificationPreference')
   if (!result) {
     throw new AppError(httpStatus.NOT_FOUND, 'User notify update failed!')
   }

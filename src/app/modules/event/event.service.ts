@@ -4,8 +4,10 @@ import { User } from '../user/user.model'
 import QueryBuilder from '../../builder/QueryBuilder'
 import { Event } from './event.models'
 import { TEvent } from './event.interface'
+import { EVENT_TYPE } from './event.constants'
+import { getMonthName, groupEventsByMonth } from './event.utils'
 
-// Create a new Project
+// Create a new Events
 const insertIntoDB = async (payload: TEvent) => {
   const exist = await Event.findOne({
     title: payload.title,
@@ -21,7 +23,7 @@ const insertIntoDB = async (payload: TEvent) => {
   return result
 }
 
-// Get all assign project data
+// Get all events Events data
 const getAllIntoDB = async (query: Record<string, any>) => {
   const qb = new QueryBuilder(Event.find({ isDeleted: false }), query)
     .search(['title'])
@@ -36,6 +38,214 @@ const getAllIntoDB = async (query: Record<string, any>) => {
   return { data, meta }
 }
 
+// Get all events (Islamic + User) for a specific user
+const getAllEventsForUser = async (
+  userId: string,
+  query: Record<string, any>,
+) => {
+  const { startDate, endDate, month, year } = query
+
+  let dateFilter: any = {}
+
+  // Date range filter
+  if (startDate && endDate) {
+    dateFilter.date = { $gte: startDate, $lte: endDate }
+  }
+
+  // Month filter
+  if (month && year) {
+    const paddedMonth = String(month).padStart(2, '0')
+    dateFilter.date = { $regex: `^${year}-${paddedMonth}` }
+  }
+
+  // Get Islamic events (global)
+  const islamicEvents = await Event.find({
+    type: EVENT_TYPE.islamic,
+    ...dateFilter,
+  }).sort({ date: 1 })
+
+  // Get user's personal events
+  const userEvents = await Event.find({
+    type: EVENT_TYPE.user,
+    user: userId,
+    ...dateFilter,
+  }).sort({ date: 1 })
+
+  // Combine and sort by date
+  const allEvents = [...islamicEvents, ...userEvents].sort((a, b) => {
+    return new Date(a.date).getTime() - new Date(b.date).getTime()
+  })
+
+  // Group by month for better UI
+  const eventsByMonth = groupEventsByMonth(allEvents)
+
+  return {
+    total: allEvents.length,
+    islamicCount: islamicEvents.length,
+    userCount: userEvents.length,
+    events: allEvents,
+    eventsByMonth,
+  }
+}
+
+// Get events for a specific date
+const getEventsByDate = async (userId: string, query: Record<string, any>) => {
+  const { date } = query
+
+  const events = await Event.find({
+    $or: [
+      { type: EVENT_TYPE.islamic, date },
+      { type: EVENT_TYPE.user, user: userId, date },
+    ],
+  }).sort({ type: 1 })
+
+  return events
+}
+
+// Get all events (Islamic + User) for a specific month with date-wise hasEvent flag
+const getAllEventsByMonth = async (
+  userId: string,
+  query: Record<string, any>,
+) => {
+  const { yearMonth } = query
+
+  // Validate format YYYY-MM
+  if (!yearMonth || !/^\d{4}-\d{2}$/.test(yearMonth)) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      'Invalid format. Please use YYYY-MM format (e.g., 2026-04)',
+    )
+  }
+
+  // Parse year and month from "2026-04" format
+  const [year, month] = yearMonth.split('-')
+  const paddedMonth = month.padStart(2, '0')
+
+  // Get total days in that month
+  const daysInMonth = new Date(parseInt(year), parseInt(month), 0).getDate()
+
+  // Create array of all dates in the month
+  const allDates = []
+  for (let day = 1; day <= daysInMonth; day++) {
+    const dateStr = `${year}-${paddedMonth}-${String(day).padStart(2, '0')}`
+    allDates.push(dateStr)
+  }
+
+  // Fetch Islamic events for this month (global)
+  const islamicEvents = await Event.find({
+    type: EVENT_TYPE.islamic,
+    date: {
+      $regex: `^${year}-${paddedMonth}`,
+    },
+    isDeleted: false,
+  }).lean()
+
+  // Fetch User events for this month (user specific)
+  const userEvents = await Event.find({
+    type: EVENT_TYPE.user,
+    user: userId,
+    date: {
+      $regex: `^${year}-${paddedMonth}`,
+    },
+    isDeleted: false,
+  }).lean()
+
+  // Combine all events
+  const allEvents = [...islamicEvents, ...userEvents]
+
+  // Create a Set of dates that have ANY event (Islamic or User)
+  const eventDatesSet = new Set(allEvents.map((event) => event.date))
+
+  // Build response array with hasEvent flag (simplified)
+  const result = allDates.map((date) => ({
+    date: date,
+    hasEvent: eventDatesSet.has(date),
+  }))
+
+  // Calculate summary statistics
+  const totalEvents = allEvents.length
+  const datesWithEvents = eventDatesSet.size
+  const datesWithoutEvents = daysInMonth - datesWithEvents
+
+  return {
+    year: parseInt(year),
+    month: parseInt(month),
+    totalDays: daysInMonth,
+    totalEvents,
+    datesWithEvents,
+    datesWithoutEvents,
+    calendar: result,
+  }
+}
+
+// Get current year all Islamic events (month-wise)
+const getCurrentYearIslamicEvents = async (query: Record<string, any>) => {
+  const { year } = query
+
+  const startDate = `${year}-01-01`
+  const endDate = `${year}-12-31`
+
+  const events = await Event.find({
+    type: EVENT_TYPE.islamic,
+    date: {
+      $gte: startDate,
+      $lte: endDate,
+    },
+    isDeleted: false,
+  })
+    .sort({ date: 1 })
+    .lean()
+
+  // Group by month
+  const eventsByMonth: Record<string, any[]> = {}
+
+  for (const event of events) {
+    const month = event.date.substring(0, 7) // YYYY-MM
+    if (!eventsByMonth[month]) {
+      eventsByMonth[month] = []
+    }
+    eventsByMonth[month].push(event)
+  }
+
+  // Create month-wise response with calendar view
+  const monthlyData = []
+
+  for (let month = 1; month <= 12; month++) {
+    const paddedMonth = String(month).padStart(2, '0')
+    const yearMonth = `${year}-${paddedMonth}`
+    const daysInMonth = new Date(year, month, 0).getDate()
+
+    const monthEvents = eventsByMonth[yearMonth] || []
+    const eventDatesSet = new Set(monthEvents.map((e) => e.date))
+
+    const calendar = []
+    for (let day = 1; day <= daysInMonth; day++) {
+      const dateStr = `${year}-${paddedMonth}-${String(day).padStart(2, '0')}`
+      calendar.push({
+        date: dateStr,
+        hasEvent: eventDatesSet.has(dateStr),
+        events: monthEvents.filter((e) => e.date === dateStr),
+      })
+    }
+
+    monthlyData.push({
+      month: month,
+      year: year,
+      monthName: getMonthName(month),
+      totalDays: daysInMonth,
+      totalEvents: monthEvents.length,
+      datesWithEvents: eventDatesSet.size,
+      calendar,
+    })
+  }
+
+  return {
+    year,
+    totalEvents: events.length,
+    months: monthlyData,
+  }
+}
+
 const updateIntoDB = async (id: string, payload: Partial<TEvent>) => {
   const exist = await Event.findById(id)
   if (!exist) {
@@ -47,7 +257,6 @@ const updateIntoDB = async (id: string, payload: Partial<TEvent>) => {
   return result
 }
 
-// Delete Task
 const deleteAIntoDB = async (id: string) => {
   const exist = await Event.findById(id)
   if (!exist) {
@@ -62,6 +271,10 @@ const deleteAIntoDB = async (id: string) => {
 export const EventService = {
   insertIntoDB,
   getAllIntoDB,
+  getAllEventsForUser,
+  getEventsByDate,
+  getAllEventsByMonth,
+  getCurrentYearIslamicEvents,
   updateIntoDB,
   deleteAIntoDB,
 }

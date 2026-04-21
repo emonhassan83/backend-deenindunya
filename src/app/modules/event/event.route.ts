@@ -21,9 +21,23 @@ router.put(
   EventController.updateIntoDB,
 )
 
-router.get('/my-event', auth(USER_ROLE.user), EventController.getMyEvent)
+router.get(
+  '/has-events',
+  auth(USER_ROLE.user),
+  EventController.getAllEventsByMonth,
+)
 
-router.get('/', auth(USER_ROLE.admin), EventController.getAllIntoDB)
+router.get(
+  '/islamic-event',
+  auth(USER_ROLE.admin),
+  EventController.getIslamicEvents,
+)
+
+router.get(
+  '/events-by-date',
+  auth(USER_ROLE.user),
+  EventController.getEventsByDate,
+)
 
 router.delete(
   '/:id',

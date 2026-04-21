@@ -20,6 +20,7 @@ router.post(
 router.patch(
   '/change-notify',
   auth(USER_ROLE.admin, USER_ROLE.user),
+  zodValidationRequest(UserValidation.updateNotifyValidationSchema),
   UserControllers.changeUserNotify,
 )
 

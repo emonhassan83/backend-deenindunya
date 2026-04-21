@@ -2,7 +2,6 @@ import { Request, Response } from 'express'
 import catchAsync from '../../utils/catchAsync'
 import { EventService } from './event.service'
 import sendResponse from '../../utils/sendResponse'
-import { EVENT_TYPE } from './event.constants'
 
 const insertIntoDB = catchAsync(async (req: Request, res: Response) => {
   const result = await EventService.insertIntoDB(req.body)
@@ -15,30 +14,52 @@ const insertIntoDB = catchAsync(async (req: Request, res: Response) => {
   })
 })
 
-const getAllIntoDB = catchAsync(async (req: Request, res: Response) => {
-  req.query['type'] = EVENT_TYPE.islamic
-  const result = await EventService.getAllIntoDB(req.query)
+const getIslamicEvents = catchAsync(async (req: Request, res: Response) => {
+  const result = await EventService.getCurrentYearIslamicEvents(req.query)
 
   sendResponse(res, {
     statusCode: 200,
     success: true,
     message: 'Events retrieved successfully',
-    meta: result.meta,
-    data: result.data,
+    data: result,
   })
 })
 
-const getMyEvent = catchAsync(async (req: Request, res: Response) => {
-  req.query['type'] = EVENT_TYPE.user
-  req.query['user'] = req.user._id
-  const result = await EventService.getAllIntoDB(req.query)
+const getAllEventsForUser = catchAsync(async (req: Request, res: Response) => {
+  const result = await EventService.getAllEventsForUser(req.user._id, req.query)
 
   sendResponse(res, {
     statusCode: 200,
     success: true,
-    message: 'My event toggled successfully',
-    meta: result.meta,
-    data: result.data,
+    message: 'Events retrieved successfully',
+    data: result,
+  })
+})
+
+// Get events by specific date
+const getEventsByDate = catchAsync(async (req: Request, res: Response) => {
+  const result = await EventService.getEventsByDate(
+    req.user._id,
+    req.query,
+  )
+
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: `Events for ${req.query.date} retrieved successfully`,
+    data: result,
+  })
+})
+
+// Get all events (Islamic + User) by month - Simplified (only hasEvent)
+const getAllEventsByMonth = catchAsync(async (req: Request, res: Response) => {
+  const result = await EventService.getAllEventsByMonth(req.user._id, req.query)
+
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: `Events retrieved successfully`,
+    data: result,
   })
 })
 
@@ -66,8 +87,10 @@ const deleteAIntoDB = catchAsync(async (req: Request, res: Response) => {
 
 export const EventController = {
   insertIntoDB,
-  getAllIntoDB,
+  getIslamicEvents,
+  getAllEventsForUser,
+  getEventsByDate,
+  getAllEventsByMonth,
   updateIntoDB,
   deleteAIntoDB,
-  getMyEvent,
 }
