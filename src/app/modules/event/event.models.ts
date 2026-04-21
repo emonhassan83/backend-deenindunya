@@ -8,7 +8,7 @@ const eventSchema = new Schema<TEvent>(
       type: Schema.Types.ObjectId,
       ref: 'User',
       required: false,
-      default: null
+      default: null,
     },
     type: {
       type: String,
@@ -30,5 +30,8 @@ const eventSchema = new Schema<TEvent>(
   },
   { timestamps: true },
 )
+
+// ✅ এই index থাকলে same title + date + type কখনো duplicate হবে না
+eventSchema.index({ type: 1, title: 1, date: 1 }, { unique: true })
 
 export const Event = model<TEvent, TEventModel>('Event', eventSchema)
