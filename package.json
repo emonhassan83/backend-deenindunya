@@ -13,7 +13,20 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "seed:quran": "ts-node src/app/seeder/surah.seed.ts",
     "seed:quran:prod": "node dist/seeder/surah.seed.js",
-    "seed:quran:clean": "ts-node src/app/seeder/surah.seed.ts --clean"
+    "seed:quran:clean": "ts-node src/app/seeder/surah.seed.ts --clean",
+    
+    "seed:events": "ts-node src/app/seeder/events.seed.ts --current",
+    "seed:events:prod": "node dist/app/seeder/events.seed.js --current",
+    "seed:events:current": "ts-node src/app/seeder/events.seed.ts --current",
+    "seed:events:year": "ts-node src/app/seeder/events.seed.ts --year",
+    "seed:events:range": "ts-node src/app/seeder/events.seed.ts --range",
+    "seed:events:fix": "ts-node src/app/seeder/events.seed.ts --fix",
+    "seed:events:stats": "ts-node src/app/seeder/events.seed.ts --stats",
+    "seed:events:delete": "ts-node src/app/seeder/events.seed.ts --delete 2024",
+    "seed:events:delete-all": "ts-node src/app/seeder/events.seed.ts --delete --all",
+    "seed:events:regenerate": "ts-node src/app/seeder/events.seed.ts --regenerate 1446",
+    "seed:events:missing": "ts-node src/app/seeder/events.seed.ts --missing 1446",
+    "seed:events:help": "ts-node src/app/seeder/events.seed.ts --help"
   },
   "keywords": [],
   "author": "",

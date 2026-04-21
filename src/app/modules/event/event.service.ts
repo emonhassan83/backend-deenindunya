@@ -7,18 +7,51 @@ import { TEvent } from './event.interface'
 import { EVENT_TYPE } from './event.constants'
 import { getMonthName, groupEventsByMonth } from './event.utils'
 
-// Create a new Events
-const insertIntoDB = async (payload: TEvent) => {
-  const exist = await Event.findOne({
-    title: payload.title,
-  })
-  if (exist) {
-    throw new AppError(httpStatus.BAD_REQUEST, 'Event already exists')
+// event.service.ts
+const insertIntoDB = async (payload: TEvent, userId: string) => {
+  const { type, title, date } = payload
+
+  // 1. Validate user exists
+  const user = await User.findById(userId)
+  if (!user || user?.isDeleted) {
+    throw new AppError(httpStatus.NOT_FOUND, 'User not found!')
   }
 
-  const result = await Event.create(payload)
-  if (!result)
+  // 2. Check for duplicate event (same title + date for same type)
+  const exist = await Event.findOne({
+    type: type,
+    title: title,
+    date: date,
+  })
+  
+  if (exist) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST, 
+      `Event "${title}" on ${date} already exists`
+    )
+  }
+
+  // 3. Prepare payload based on event type
+  let finalPayload: any = {
+    type: type,
+    title: title,
+    description: payload.description || '',
+    date: date,
+  }
+
+  // ✅ If type is 'user', save the user ID
+  // ✅ If type is 'islamic', user remains null (default)
+  if (type === EVENT_TYPE.user) {
+    finalPayload.user = userId
+  } else {
+    finalPayload.user = null
+  }
+
+  // 4. Create event
+  const result = await Event.create(finalPayload)
+  if (!result) {
     throw new AppError(httpStatus.BAD_REQUEST, 'Event creation failed')
+  }
 
   return result
 }
@@ -102,7 +135,7 @@ const getEventsByDate = async (userId: string, query: Record<string, any>) => {
   return events
 }
 
-// Get all events (Islamic + User) for a specific month with date-wise hasEvent flag
+// Get all events (Islamic + User) for a specific month with calendar view
 const getAllEventsByMonth = async (
   userId: string,
   query: Record<string, any>,
@@ -137,8 +170,9 @@ const getAllEventsByMonth = async (
     date: {
       $regex: `^${year}-${paddedMonth}`,
     },
-    isDeleted: false,
-  }).lean()
+  })
+    .sort({ date: 1 })
+    .lean()
 
   // Fetch User events for this month (user specific)
   const userEvents = await Event.find({
@@ -147,102 +181,61 @@ const getAllEventsByMonth = async (
     date: {
       $regex: `^${year}-${paddedMonth}`,
     },
-    isDeleted: false,
-  }).lean()
+  })
+    .sort({ date: 1 })
+    .lean()
 
   // Combine all events
   const allEvents = [...islamicEvents, ...userEvents]
 
-  // Create a Set of dates that have ANY event (Islamic or User)
-  const eventDatesSet = new Set(allEvents.map((event) => event.date))
+  // Create a Map of dates with events (for faster lookup)
+  const eventsByDate = new Map()
+  for (const event of allEvents) {
+    if (!eventsByDate.has(event.date)) {
+      eventsByDate.set(event.date, [])
+    }
+    eventsByDate.get(event.date).push(event)
+  }
 
-  // Build response array with hasEvent flag (simplified)
-  const result = allDates.map((date) => ({
+  // Build calendar array with hasEvent flag
+  const calendar = allDates.map((date) => ({
     date: date,
-    hasEvent: eventDatesSet.has(date),
+    hasEvent: eventsByDate.has(date),
   }))
-
-  // Calculate summary statistics
-  const totalEvents = allEvents.length
-  const datesWithEvents = eventDatesSet.size
-  const datesWithoutEvents = daysInMonth - datesWithEvents
 
   return {
     year: parseInt(year),
     month: parseInt(month),
-    totalDays: daysInMonth,
-    totalEvents,
-    datesWithEvents,
-    datesWithoutEvents,
-    calendar: result,
+    calendar,
   }
 }
 
-// Get current year all Islamic events (month-wise)
+// Get current year all Islamic events (Direct data, no grouping)
 const getCurrentYearIslamicEvents = async (query: Record<string, any>) => {
   const { year } = query
+
+  if (!year) {
+    throw new Error('Year is required')
+  }
 
   const startDate = `${year}-01-01`
   const endDate = `${year}-12-31`
 
+  // Direct find - no grouping
   const events = await Event.find({
     type: EVENT_TYPE.islamic,
     date: {
       $gte: startDate,
       $lte: endDate,
     },
-    isDeleted: false,
   })
     .sort({ date: 1 })
     .lean()
 
-  // Group by month
-  const eventsByMonth: Record<string, any[]> = {}
-
-  for (const event of events) {
-    const month = event.date.substring(0, 7) // YYYY-MM
-    if (!eventsByMonth[month]) {
-      eventsByMonth[month] = []
-    }
-    eventsByMonth[month].push(event)
-  }
-
-  // Create month-wise response with calendar view
-  const monthlyData = []
-
-  for (let month = 1; month <= 12; month++) {
-    const paddedMonth = String(month).padStart(2, '0')
-    const yearMonth = `${year}-${paddedMonth}`
-    const daysInMonth = new Date(year, month, 0).getDate()
-
-    const monthEvents = eventsByMonth[yearMonth] || []
-    const eventDatesSet = new Set(monthEvents.map((e) => e.date))
-
-    const calendar = []
-    for (let day = 1; day <= daysInMonth; day++) {
-      const dateStr = `${year}-${paddedMonth}-${String(day).padStart(2, '0')}`
-      calendar.push({
-        date: dateStr,
-        hasEvent: eventDatesSet.has(dateStr),
-        events: monthEvents.filter((e) => e.date === dateStr),
-      })
-    }
-
-    monthlyData.push({
-      month: month,
-      year: year,
-      monthName: getMonthName(month),
-      totalDays: daysInMonth,
-      totalEvents: monthEvents.length,
-      datesWithEvents: eventDatesSet.size,
-      calendar,
-    })
-  }
-
   return {
-    year,
+    year: parseInt(year),
     totalEvents: events.length,
-    months: monthlyData,
+    events: events,
   }
 }
 

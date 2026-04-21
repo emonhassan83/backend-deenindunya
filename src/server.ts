@@ -6,7 +6,6 @@ import { errorlogger, logger } from './app/utils/logger'
 import initializeSocketIO from './socket'
 import { seeder } from './app/seeder/seed'
 import colors from 'colors';
-import { IslamicEventSeeder } from './app/seeder/islamicEvents.seeder'
 
 let server: Server
 export const io = initializeSocketIO(createServer(app))
@@ -20,10 +19,6 @@ async function main() {
     // default task added
     seeder.seedAdmin()
     seeder.seedContents()
-
-   // Step 1: Fix existing wrong dates
-    console.log('Step 1: Fixing existing wrong dates...')
-    await IslamicEventSeeder.generateCurrentAndFutureEvents()
 
     server = app.listen(Number(config.port), config.ip as string, () => {
       console.log(

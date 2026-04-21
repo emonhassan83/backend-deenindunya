@@ -4,7 +4,7 @@ import { EventService } from './event.service'
 import sendResponse from '../../utils/sendResponse'
 
 const insertIntoDB = catchAsync(async (req: Request, res: Response) => {
-  const result = await EventService.insertIntoDB(req.body)
+  const result = await EventService.insertIntoDB(req.body, req.user._id)
 
   sendResponse(res, {
     statusCode: 200,
