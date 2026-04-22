@@ -6,6 +6,7 @@ export interface TReminder {
   title: string
   logAt: string
   isCompleted: boolean
+  deleteAt: Date
 }
 
 export type TReminderModel = Model<TReminder, Record<string, unknown>>

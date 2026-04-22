@@ -1,14 +1,12 @@
 import { Schema, model } from 'mongoose'
-import moment from 'moment-timezone'
-import { TTask, TTaskModel } from './task.interface';
-import { TASK_TYPE } from './task.constants';
-
+import { TTask, TTaskModel } from './task.interface'
+import { TASK_TYPE } from './task.constants'
 
 const taskSchema = new Schema<TTask>(
   {
     user: {
       type: Schema.Types.ObjectId,
-      ref: "User",
+      ref: 'User',
       required: true,
     },
     type: {
@@ -24,53 +22,41 @@ const taskSchema = new Schema<TTask>(
       type: String,
       required: true, // Format: "2024-12-15" (user's local date)
     },
-    expiryDate: {
-      type: Date, // UTC timestamp for easy cron job deletion
-      required: true,
-    },
     isCompleted: {
       type: Boolean,
       default: false,
     },
-    userTimeZone: {
-      type: String,
+    // ✅ Auto delete after 30 days
+    deleteAt: {
+      type: Date,
       required: true,
-      default: 'Asia/Dhaka', // User's timezone
+      default: () => {
+        const date = new Date()
+        date.setDate(date.getDate() + 30) // 30 days from creation
+        return date
+      },
     },
   },
-  { timestamps: true }
-);
+  { timestamps: true },
+)
 
-// Pre-save middleware to calculate expiryDate
-taskSchema.pre('save', function(next) {
-  if (!this.logAt || !this.type || !this.userTimeZone) {
-    return next()
+// No cron job needed! MongoDB handles this in background
+taskSchema.index({ deleteAt: 1 }, { expireAfterSeconds: 0 })
+
+// Performance indexes
+taskSchema.index({ user: 1, logAt: 1 })
+taskSchema.index({ user: 1, type: 1 })
+taskSchema.index({ user: 1, isCompleted: 1 })
+taskSchema.index({ user: 1, logAt: 1, type: 1 })
+
+// Pre-save middleware to ensure deleteAt is set
+taskSchema.pre('save', function (next) {
+  if (!this.deleteAt) {
+    const date = new Date()
+    date.setDate(date.getDate() + 30)
+    this.deleteAt = date
   }
-  
-  // Parse the logAt date in user's timezone
-  const userDate = moment.tz(this.logAt, 'YYYY-MM-DD', this.userTimeZone)
-  let expiryMoment
-  
-  switch (this.type) {
-    case TASK_TYPE.daily:
-      // Next day at 12:00 AM user's timezone
-      expiryMoment = userDate.clone().add(1, 'day').startOf('day')
-      break
-    case TASK_TYPE.weekly:
-      // Next week at 12:00 AM user's timezone
-      expiryMoment = userDate.clone().add(1, 'week').startOf('day')
-      break
-    case TASK_TYPE.monthly:
-      // Next month at 12:00 AM user's timezone
-      expiryMoment = userDate.clone().add(1, 'month').startOf('day')
-      break
-    default:
-      expiryMoment = userDate.clone().add(1, 'day').startOf('day')
-  }
-  
-  // Convert to UTC for storage
-  this.expiryDate = expiryMoment.toDate()
   next()
 })
 
-export const Task = model<TTask, TTaskModel>("Task", taskSchema);
+export const Task = model<TTask, TTaskModel>('Task', taskSchema)

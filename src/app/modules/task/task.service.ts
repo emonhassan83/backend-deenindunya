@@ -3,7 +3,6 @@ import { TTask } from './task.interface'
 import AppError from '../../errors/AppError'
 import { User } from '../user/user.model'
 import { Task } from './task.models'
-import QueryBuilder from '../../builder/QueryBuilder'
 import moment from 'moment-timezone'
 import { TASK_TYPE } from './task.constants'
 
@@ -13,21 +12,20 @@ const insertIntoDB = async (userId: string, payload: TTask) => {
   if (!user || user?.isDeleted) {
     throw new AppError(httpStatus.NOT_FOUND, 'Your profile not found')
   }
-  
+
   // Validate timezone
   const validTimezones = moment.tz.names()
   if (!validTimezones.includes(user.timezone)) {
     throw new Error('Invalid timezone')
   }
-  
+
   // Validate logAt format
   if (!moment(payload.logAt, 'YYYY-MM-DD', true).isValid()) {
     throw new Error('logAt must be in YYYY-MM-DD format')
   }
-  
+
   // Assign the user and user time zone to the task
   payload.user = user._id
-  payload.userTimeZone = user.timezone
 
   const result = await Task.create(payload)
   if (!result) {
@@ -37,48 +35,41 @@ const insertIntoDB = async (userId: string, payload: TTask) => {
   return result
 }
 
-// Get all assign project data
 // task.service.ts
-const getAllIntoDB = async (query: Record<string, any>) => {
-  const { userId, userTimeZone = 'Asia/Dhaka' } = query
-  
-  if (!userId) {
-    throw new Error("User ID is required")
+const getAllIntoDB = async (query: Record<string, any>, userId: string) => {
+  const { type } = query
+
+  // Validate type is provided
+  if (!type) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      'Task type is required (daily, weekly, or monthly)',
+    )
   }
-  
-  // First, get all tasks for the user (including "expired" ones)
-  const allTasks = await Task.find({ 
+
+  // Validate type is valid
+  if (!Object.values(TASK_TYPE).includes(type)) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      `Invalid task type. Must be ${TASK_TYPE.daily}, ${TASK_TYPE.weekly}, or ${TASK_TYPE.monthly}`,
+    )
+  }
+
+  // Validate user exists
+  const user = await User.findById(userId)
+  if (!user || user?.isDeleted) {
+    throw new AppError(httpStatus.NOT_FOUND, 'User not found')
+  }
+
+  // Get all tasks of the specified type
+  const tasks = await Task.find({
     user: userId,
-    isCompleted: false  // Only incomplete tasks
-  }).sort({ createdAt: -1 })
-  
-  // Filter tasks based on type and date (in-memory filtering)
-  // This ensures users see tasks correctly even if cron fails
-  const filteredTasks = allTasks.filter(task => {
-    const taskDate = moment.tz(task.logAt, 'YYYY-MM-DD', userTimeZone)
-    const now = moment.tz(userTimeZone)
-    
-    switch (task.type) {
-      case TASK_TYPE.daily:
-        // Task is valid only on its logAt date
-        return taskDate.isSame(now, 'day')
-        
-      case TASK_TYPE.weekly:
-        // Task is valid for 7 days starting from logAt
-        const weekEnd = taskDate.clone().add(7, 'days')
-        return now.isBetween(taskDate, weekEnd, 'day', '[]')
-        
-      case TASK_TYPE.monthly:
-        // Task is valid for 30 days starting from logAt
-        const monthEnd = taskDate.clone().add(30, 'days')
-        return now.isBetween(taskDate, monthEnd, 'day', '[]')
-        
-      default:
-        return true
-    }
-  })
-  
-  return filteredTasks
+    type: type,
+  }).select('type title logAt isCompleted')
+    .sort({ logAt: -1, createdAt: -1 })
+    .lean()
+
+  return tasks
 }
 
 // Toggle task status

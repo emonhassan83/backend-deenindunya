@@ -7,9 +7,8 @@ export interface TTask {
   type: TTaskType
   title: string
   logAt: string
-  expiryDate: Date
-  userTimeZone: string
   isCompleted: boolean
+  deleteAt: Date
 }
 
 export type TTaskModel = Model<TTask, Record<string, unknown>>

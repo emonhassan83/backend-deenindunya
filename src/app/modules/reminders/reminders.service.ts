@@ -3,7 +3,6 @@ import { TReminder } from './reminders.interface'
 import AppError from '../../errors/AppError'
 import { User } from '../user/user.model'
 import { Reminder } from './reminders.models'
-import QueryBuilder from '../../builder/QueryBuilder'
 
 // Create a new Reminder
 const insertIntoDB = async (userId: string, payload: TReminder) => {
@@ -25,21 +24,19 @@ const insertIntoDB = async (userId: string, payload: TReminder) => {
 }
 
 // Get all reminder data
-const getAllIntoDB = async (query: Record<string, any>) => {
-  const reminderModel = new QueryBuilder(Reminder.find(), query)
-    .search(['title'])
-    .filter()
-    .paginate()
-    .sort()
-    .fields()
+const getAllIntoDB = async (userId: string, query: Record<string, any>) => {
+  const { date } = query
 
-  const data = await reminderModel.modelQuery
-  const meta = await reminderModel.countTotal()
+  // date format: YYYY-MM-DD
+  const data = await Reminder.find({
+    user: userId,
+    logAt: date,
+  })
+    .sort({ createdAt: -1 })
+    .select('title logAt isCompleted')
+    .lean()
 
-  return {
-    data,
-    meta,
-  }
+  return data
 }
 
 // Toggle Reminder completion status
@@ -56,7 +53,7 @@ const toggleCompleteIntoDB = async (id: string) => {
     { isCompleted: updatedStatus },
     { new: true },
   )
-  
+
   if (!result) {
     throw new AppError(
       httpStatus.INTERNAL_SERVER_ERROR,
