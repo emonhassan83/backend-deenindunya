@@ -17,7 +17,7 @@ const createBulkPrayers = catchAsync(async (req: Request, res: Response) => {
 const getPrayersByDate = catchAsync(async (req: Request, res: Response) => {
   const result = await PrayerService.getPrayersByDate(
     req.user._id,
-    req.query.date as string,
+    req.query,
   )
 
   sendResponse(res, {
@@ -42,6 +42,20 @@ const togglePrayerStatus = catchAsync(async (req: Request, res: Response) => {
   })
 })
 
+const completedPayers = catchAsync(async (req: Request, res: Response) => {
+  const result = await PrayerService.completedPayers(
+    req.user._id,
+    req.query,
+  )
+
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: 'Completed payers successfully',
+    data: result,
+  })
+})
+
 const getPrayerTimes = catchAsync(async (req: Request, res: Response) => {
   const result = await PrayerService.getPrayerTimes(req.user._id, req.query)
 
@@ -58,4 +72,5 @@ export const PrayerController = {
   getPrayersByDate,
   togglePrayerStatus,
   getPrayerTimes,
+  completedPayers
 }

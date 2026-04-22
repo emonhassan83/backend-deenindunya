@@ -2,24 +2,20 @@ import httpStatus from 'http-status'
 import AppError from '../../errors/AppError'
 import { User } from '../user/user.model'
 import { Prayer } from './prayer.models'
-import {
-  TPrayer,
-} from './prayer.interface'
+import { TPrayer } from './prayer.interface'
 import axios from 'axios'
 import { calculateCurrentStreak, calculateLongestStreak } from './prayer.utils'
 import dayjs from 'dayjs'
+import { isValidDate } from '../../utils/isValidDate'
 
 // Create 5 prayers for a specific date
-const createBulkPrayers = async (
-  userId: string,
-  payload: { date: string; prayers?: Partial<TPrayer>[] },
-) => {
+const createBulkPrayers = async (userId: string, payload: { date: string }) => {
   const user = await User.findById(userId)
   if (!user || user?.isDeleted) {
     throw new AppError(httpStatus.NOT_FOUND, 'Your profile not found')
   }
 
-  const { date, prayers } = payload
+  const { date } = payload
 
   // Default prayer names
   const prayerNames: TPrayer['name'][] = [
@@ -60,38 +56,74 @@ const createBulkPrayers = async (
   return result
 }
 
-// Get prayers by date
-const getPrayersByDate = async (userId: string, date: string) => {
+const getPrayersByDate = async (userId: string, query: Record<string, any>) => {
+  const { date } = query
+
+  // Validate date is provided
+  if (!date) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      'Date is required. Please provide date in YYYY-MM-DD format',
+    )
+  }
+
+  // Validate date format
+  if (!isValidDate(date)) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      'Invalid date format. Please use YYYY-MM-DD format (e.g., 2026-04-22)',
+    )
+  }
+
   const user = await User.findById(userId)
   if (!user || user?.isDeleted) {
     throw new AppError(httpStatus.NOT_FOUND, 'Your profile not found')
   }
-  
+
+  // Get prayer times for the date
+  const prayerTimes = await getPrayerTimes(userId, { date })
+
+  // Get prayers from database
   const prayers = await Prayer.find({
     user: userId,
     date,
   }).sort({ name: 1 })
 
+  // Create prayer list with prayer times
+  const prayerNames = ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha']
 
-  // Calculate total and completed prayers
-  const totalPrayers = prayers.length
-  const completedPrayers = prayers.filter(p => p.prayed).length
+  const prayersWithTimes = prayerNames.map((name) => {
+    const existingPrayer = prayers.find((p) => p.name === name)
+
+    return {
+      name: name,
+      date: date,
+      prayed: existingPrayer ? existingPrayer.prayed : false,
+      prayerTime: prayerTimes[name as keyof typeof prayerTimes] || 'N/A',
+      _id: existingPrayer?._id || null,
+    }
+  })
+
+  // Calculate statistics
+  const totalPrayers = prayersWithTimes.length
+  const completedPrayers = prayersWithTimes.filter((p) => p.prayed).length
   const completionRate =
     totalPrayers > 0 ? (completedPrayers / totalPrayers) * 100 : 0
 
-  // Calculate current streak
-  const currentStreak = calculateCurrentStreak(prayers)
+  // Calculate current streak (based on consecutive days of all prayers completed)
+  const currentStreak = await calculateCurrentStreak(userId)
 
   // Calculate longest streak
-  const longestStreak = calculateLongestStreak(prayers)
+  const longestStreak = await calculateLongestStreak(userId)
 
-
-   return {
+  return {
+    date,
     completedPrayers,
+    totalPrayers,
     completionRate: parseFloat(completionRate.toFixed(2)),
     currentStreak,
     longestStreak,
-    prayers,
+    prayers: prayersWithTimes,
   }
 }
 
@@ -124,35 +156,109 @@ const togglePrayerStatus = async (id: string, userId: string) => {
   return result
 }
 
-// Fetch prayer times based on location
-const getPrayerTimes = async (
-  userId: string,
-  query: Record<string, any>
-) => {
-  const user = await User.findById(userId);
-  if (!user || user?.isDeleted) {
-    throw new AppError(httpStatus.NOT_FOUND, 'Your profile not found');
+// Complete all prayers for a specific date
+const completedPayers = async (userId: string, query: Record<string, any>) => {
+  const { date } = query
+
+  // Validate date is provided
+  if (!date) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      'Date is required. Please provide date in YYYY-MM-DD format',
+    )
   }
 
-  const { latitude, longitude, timezone } = user;
-  const { date } = query;
+  // Validate date format
+  if (!isValidDate(date)) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      'Invalid date format. Please use YYYY-MM-DD format (e.g., 2026-04-22)',
+    )
+  }
+
+  // Validate user exists
+  const user = await User.findById(userId)
+  if (!user || user?.isDeleted) {
+    throw new AppError(httpStatus.NOT_FOUND, 'User not found!')
+  }
+
+  // List of all prayers
+  const prayerNames = ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha']
+
+  let updatedCount = 0
+  let createdCount = 0
+
+  // Update or create each prayer
+  for (const prayerName of prayerNames) {
+    const result = await Prayer.findOneAndUpdate(
+      {
+        user: userId,
+        name: prayerName,
+        date: date,
+      },
+      {
+        user: userId,
+        name: prayerName,
+        date: date,
+        prayed: true,
+      },
+      {
+        upsert: true, // Create if doesn't exist
+        new: true, // Return updated document
+      },
+    )
+
+    if (result) {
+      if (result.isNew) {
+        createdCount++
+      } else {
+        updatedCount++
+      }
+    }
+  }
+
+  // Get all prayers for the date to return
+  const prayers = await Prayer.find({
+    user: userId,
+    date: date,
+  }).sort({ name: 1 })
+
+  return {
+    prayers: prayers.map((p) => ({
+      _id: p._id,
+      name: p.name,
+      date: p.date,
+      prayed: p.prayed,
+    })),
+  }
+}
+
+// Fetch prayer times based on location
+const getPrayerTimes = async (userId: string, query: Record<string, any>) => {
+  const user = await User.findById(userId)
+  if (!user || user?.isDeleted) {
+    throw new AppError(httpStatus.NOT_FOUND, 'Your profile not found')
+  }
+
+  const { latitude, longitude, timezone } = user
+  const { date } = query
 
   // Validate location data
   if (!latitude || !longitude) {
     throw new AppError(
       httpStatus.BAD_REQUEST,
       'Location not set. Please update your profile with latitude and longitude.',
-    );
+    )
   }
 
   // 🔥 FIX: Convert date to DD-MM-YYYY format (Aladhan API expects this)
-  let targetDate: string;
+  let targetDate: string
   if (date) {
     // If date provided, parse and format
-    targetDate = dayjs(date).format('DD-MM-YYYY');
+    targetDate = dayjs(date).format('DD-MM-YYYY')
   } else {
     // Use current date
-    targetDate = dayjs().format('DD-MM-YYYY');
+    targetDate = dayjs().format('DD-MM-YYYY')
   }
 
   try {
@@ -167,17 +273,17 @@ const getPrayerTimes = async (
           ...(timezone && { timezonestring: timezone }),
         },
       },
-    );
+    )
 
     if (response.data.code !== 200) {
       throw new AppError(
         httpStatus.BAD_REQUEST,
         'Failed to fetch prayer times from Aladhan API',
-      );
+      )
     }
 
-    const timings = response.data.data.timings;
-    const dateInfo = response.data.data.date;
+    const timings = response.data.data.timings
+    const dateInfo = response.data.data.date
 
     const prayerTimes = {
       fajr: timings.Fajr,
@@ -196,30 +302,31 @@ const getPrayerTimes = async (
         longitude,
         timezone: timezone || 'UTC',
       },
-    };
+    }
 
-    return prayerTimes;
+    return prayerTimes
   } catch (error: any) {
     console.error('Prayer Times Error:', {
       message: error.message,
       response: error.response?.data,
       status: error.response?.status,
-    });
+    })
 
     if (error instanceof AppError) {
-      throw error;
+      throw error
     }
 
     throw new AppError(
       httpStatus.INTERNAL_SERVER_ERROR,
       error.message || 'Failed to fetch prayer times',
-    );
+    )
   }
-};
+}
 
 export const PrayerService = {
   createBulkPrayers,
   getPrayersByDate,
   togglePrayerStatus,
-  getPrayerTimes
+  getPrayerTimes,
+  completedPayers,
 }

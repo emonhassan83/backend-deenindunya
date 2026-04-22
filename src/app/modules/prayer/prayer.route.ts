@@ -29,6 +29,13 @@ router.get(
   PrayerController.getPrayersByDate,
 )
 
+// Completed payers
+router.patch(
+  '/completed',
+  auth(USER_ROLE.user),
+  PrayerController.completedPayers,
+)
+
 // Toggle prayer status
 router.patch(
   '/toggle/:id',
