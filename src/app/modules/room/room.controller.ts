@@ -26,15 +26,13 @@ const insertRoomTask = catchAsync(async (req: Request, res: Response) => {
 })
 
 const getAllIntoDB = catchAsync(async (req: Request, res: Response) => {
-  req.query['user'] = req.user._id
-  const result = await RoomService.getAllIntoDB(req.query)
+  const result = await RoomService.getAllIntoDB(req.query, req.user._id)
 
   sendResponse(res, {
     statusCode: 200,
     success: true,
     message: 'Rooms retrieved successfully',
-    meta: result.meta,
-    data: result.data,
+    data: result,
   })
 })
 

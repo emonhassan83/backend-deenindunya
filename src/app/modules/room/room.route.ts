@@ -18,11 +18,11 @@ router.post(
   '/task',
   auth(USER_ROLE.user),
   zodValidationRequest(RoomValidation.roomTaskValidationSchema),
-  RoomController.insertIntoDB,
+  RoomController.insertRoomTask,
 )
 
 router.patch(
-  '/status/:id',
+  '/toggle/:id',
   auth(USER_ROLE.user),
   RoomController.toggleTaskStatus,
 )

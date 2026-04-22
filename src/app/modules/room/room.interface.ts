@@ -5,6 +5,7 @@ export interface TRoom {
   user: Types.ObjectId
   name: string
   logAt: string
+  deleteAt: Date
 }
 
 export interface TRoomTask {
@@ -13,6 +14,7 @@ export interface TRoomTask {
   title: string
   description: string
   isCompleted: boolean
+  deleteAt: Date
 }
 
 export type TRoomModel = Model<TRoom, Record<string, unknown>>
