@@ -4,85 +4,85 @@ import { TGrocery } from './grocery.interface'
 import AppError from '../../errors/AppError'
 import { User } from '../user/user.model'
 import { Grocery } from './grocery.models'
-import QueryBuilder from '../../builder/QueryBuilder'
-import moment from 'moment'
+import { isValidDate } from '../../utils/isValidDate'
 
 // Create grocery item
-const insertIntoDB = async (payload: TGrocery, userId: string, userTimeZone: string = 'Asia/Dhaka') => {
-  const { name } = payload
+const insertIntoDB = async (payload: TGrocery, userId: string) => {
+  const { name, logAt } = payload
 
-  const user = await User.findById(userId);
+  const user = await User.findById(userId)
   if (!user || user?.isDeleted) {
     throw new AppError(httpStatus.NOT_FOUND, 'User not found!')
   }
-  if (!user.timezone) {
-    throw new AppError(httpStatus.NOT_FOUND, 'User has no timezone set yet')
-  }
-  
-  // Get current date in user's timezone
-  const nowInUserTZ = moment.tz(user.timezone)
-  const todayStr = nowInUserTZ.format('YYYY-MM-DD')
-  
+
   // Check if item already exists for today
   const exists = await Grocery.findOne({
     user: userId,
     name: name,
-    logAt: todayStr,
+    logAt: logAt,
   })
-  
+
   if (exists) {
     throw new AppError(httpStatus.BAD_REQUEST, 'Item already exists for today')
   }
-  
+
+  // save user record
+  payload.user = user._id
+
   const result = await Grocery.create({
     user: userId,
     name: name,
-    logAt: todayStr,
+    logAt: logAt,
     isCompleted: false,
-    userTimeZone: user.timezone,
   })
-  
+
   return result
 }
 
 // Get all grocery items (no pagination)
-const getAllIntoDB = async (userId: string) => {
-  const user = await User.findById(userId);
+const getAllIntoDB = async (query: Record<string, any>, userId: string) => {
+  const { date } = query
+
+  // Validate date is provided
+  if (!date) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      'Date is required. Please provide date in YYYY-MM-DD format',
+    )
+  }
+
+  // Validate date format
+  if (!isValidDate(date)) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      'Invalid date format. Please use YYYY-MM-DD format (e.g., 2026-04-22)',
+    )
+  }
+
+  const user = await User.findById(userId)
   if (!user || user?.isDeleted) {
     throw new AppError(httpStatus.NOT_FOUND, 'User not found!')
   }
-  if (!user.timezone) {
-    throw new AppError(httpStatus.NOT_FOUND, 'User has no timezone set yet')
-  }
 
-  // Get current date in user's timezone
-  const nowInUserTZ = moment.tz(user.timezone)
-  const todayStr = nowInUserTZ.format('YYYY-MM-DD')
-  
-  // Get all incomplete grocery items for today (based on user's timezone)
-  const data = await Grocery.find({
+  // Get all grocery items for the date (both completed and incomplete)
+  const items = await Grocery.find({
     user: userId,
-    logAt: todayStr,
-    isCompleted: false,
-  }).sort({ createdAt: -1 }).lean()
-  
-  // Calculate statistics
-  const completedCount = await Grocery.countDocuments({
-    user: userId,
-    logAt: todayStr,
-    isCompleted: true,
+    logAt: date,
   })
-  
-  const totalCount = data.length + completedCount
-  
+    .sort({ createdAt: -1 })
+    .select('name logAt isCompleted')
+    .lean()
+
+  // Calculate statistics
+  const total = items.length
+  const completed = items.filter((item) => item.isCompleted === true).length
+  const progress = total > 0 ? Math.round((completed / total) * 100) : 0
+
   return {
-    data,
-    meta: {
-      total: totalCount,
-      completed: completedCount,
-      incomplete: data.length,
-      date: todayStr
-    },
+    total,
+    completed,
+    progress,
+    items,
   }
 }
 

@@ -3,6 +3,7 @@ import { TReminder } from './reminders.interface'
 import AppError from '../../errors/AppError'
 import { User } from '../user/user.model'
 import { Reminder } from './reminders.models'
+import { isValidDate } from '../../utils/isValidDate'
 
 // Create a new Reminder
 const insertIntoDB = async (userId: string, payload: TReminder) => {
@@ -26,6 +27,22 @@ const insertIntoDB = async (userId: string, payload: TReminder) => {
 // Get all reminder data
 const getAllIntoDB = async (userId: string, query: Record<string, any>) => {
   const { date } = query
+
+  // Validate date is provided
+  if (!date) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST, 
+      'Date is required. Please provide date in YYYY-MM-DD format'
+    );
+  }
+
+  // Validate date format
+  if (!isValidDate(date)) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST, 
+      'Invalid date format. Please use YYYY-MM-DD format (e.g., 2026-04-22)'
+    );
+  }
 
   // date format: YYYY-MM-DD
   const data = await Reminder.find({

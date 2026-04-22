@@ -4,7 +4,7 @@ import { GroceryService } from './grocery.service'
 import sendResponse from '../../utils/sendResponse'
 
 const insertIntoDB = catchAsync(async (req: Request, res: Response) => {
-  const result = await GroceryService.insertIntoDB(req.user._id, req.body)
+  const result = await GroceryService.insertIntoDB(req.body, req.user._id)
 
   sendResponse(res, {
     statusCode: 200,
@@ -15,14 +15,13 @@ const insertIntoDB = catchAsync(async (req: Request, res: Response) => {
 })
 
 const getAllIntoDB = catchAsync(async (req: Request, res: Response) => {
-  const result = await GroceryService.getAllIntoDB(req.user._id)
+  const result = await GroceryService.getAllIntoDB(req.query, req.user._id)
 
   sendResponse(res, {
     statusCode: 200,
     success: true,
     message: 'Grocery lists retrieved successfully',
-    meta: result.meta,
-    data: result.data,
+    data: result,
   })
 })
 

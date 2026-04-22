@@ -1,13 +1,12 @@
 // grocery.model.ts
 import { Schema, model } from 'mongoose'
-import moment from 'moment-timezone'
-import { TGrocery, TGroceryModel } from './grocery.interface';
+import { TGrocery, TGroceryModel } from './grocery.interface'
 
 const listSchema = new Schema<TGrocery>(
   {
     user: {
       type: Schema.Types.ObjectId,
-      ref: "User",
+      ref: 'User',
       required: true,
     },
     name: {
@@ -23,36 +22,35 @@ const listSchema = new Schema<TGrocery>(
       required: true,
       default: false,
     },
-    userTimeZone: {
-      type: String,
-      required: true,
-      default: 'Asia/Dhaka',
-    },
-    expiryDate: {
+    // ✅ Auto delete after 7 days
+    deleteAt: {
       type: Date,
       required: true,
+      default: () => {
+        const date = new Date()
+        date.setDate(date.getDate() + 7) // 7 days from creation
+        return date
+      },
     },
   },
-  { timestamps: true }
-);
+  { timestamps: true },
+)
 
-// Pre-save middleware to calculate expiryDate
-listSchema.pre('save', function(next) {
-  if (!this.logAt || !this.userTimeZone) {
-    return next()
+// No cron job needed! MongoDB handles this in background
+listSchema.index({ deleteAt: 1 }, { expireAfterSeconds: 0 })
+
+// Index for efficient deletion
+listSchema.index({ user: 1, logAt: 1 })
+listSchema.index({ user: 1, isCompleted: 1 })
+
+// Pre-save middleware to ensure deleteAt is set
+listSchema.pre('save', function (next) {
+  if (!this.deleteAt) {
+    const date = new Date()
+    date.setDate(date.getDate() + 7)
+    this.deleteAt = date
   }
-  
-  // Parse the logAt date in user's timezone
-  const userDate = moment.tz(this.logAt, 'YYYY-MM-DD', this.userTimeZone)
-  // Expires at next day 12:00 AM user's timezone
-  const expiryMoment = userDate.clone().add(1, 'day').startOf('day')
-  this.expiryDate = expiryMoment.toDate()
-  
   next()
 })
 
-// Index for efficient deletion
-listSchema.index({ expiryDate: 1, isCompleted: 1 })
-listSchema.index({ user: 1, logAt: 1 })
-
-export const Grocery = model<TGrocery, TGroceryModel>("Grocery", listSchema);
+export const Grocery = model<TGrocery, TGroceryModel>('Grocery', listSchema)
