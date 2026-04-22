@@ -6,6 +6,8 @@ export interface TGrocery {
   name: string
   logAt: string
   isCompleted: boolean
+  userTimeZone: string
+  expiryDate: Date
 }
 
 export type TGroceryModel = Model<TGrocery, Record<string, unknown>>

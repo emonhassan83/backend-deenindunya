@@ -15,8 +15,7 @@ const insertIntoDB = catchAsync(async (req: Request, res: Response) => {
 })
 
 const getAllIntoDB = catchAsync(async (req: Request, res: Response) => {
-  req.query['user'] = req.user._id
-  const result = await GroceryService.getAllIntoDB(req.query)
+  const result = await GroceryService.getAllIntoDB(req.user._id)
 
   sendResponse(res, {
     statusCode: 200,

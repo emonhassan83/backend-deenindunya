@@ -5,39 +5,84 @@ import AppError from '../../errors/AppError'
 import { User } from '../user/user.model'
 import { Grocery } from './grocery.models'
 import QueryBuilder from '../../builder/QueryBuilder'
+import moment from 'moment'
 
-// Create a new Project
-const insertIntoDB = async (userId: string, payload: TGrocery) => {
-  const user = await User.findById(userId)
+// Create grocery item
+const insertIntoDB = async (payload: TGrocery, userId: string, userTimeZone: string = 'Asia/Dhaka') => {
+  const { name } = payload
+
+  const user = await User.findById(userId);
   if (!user || user?.isDeleted) {
-    throw new AppError(httpStatus.NOT_FOUND, 'Your profile not found')
+    throw new AppError(httpStatus.NOT_FOUND, 'User not found!')
   }
-
-  // Assign the user to the Grocery
-  payload.user = user._id
-
-  const result = await Grocery.create(payload)
-  if (!result) {
-    throw new AppError(httpStatus.BAD_REQUEST, 'Grocery creation failed')
+  if (!user.timezone) {
+    throw new AppError(httpStatus.NOT_FOUND, 'User has no timezone set yet')
   }
-
+  
+  // Get current date in user's timezone
+  const nowInUserTZ = moment.tz(user.timezone)
+  const todayStr = nowInUserTZ.format('YYYY-MM-DD')
+  
+  // Check if item already exists for today
+  const exists = await Grocery.findOne({
+    user: userId,
+    name: name,
+    logAt: todayStr,
+  })
+  
+  if (exists) {
+    throw new AppError(httpStatus.BAD_REQUEST, 'Item already exists for today')
+  }
+  
+  const result = await Grocery.create({
+    user: userId,
+    name: name,
+    logAt: todayStr,
+    isCompleted: false,
+    userTimeZone: user.timezone,
+  })
+  
   return result
 }
 
-// Get all assign project data
-const getAllIntoDB = async (query: Record<string, any>) => {
-  const groceryModel = new QueryBuilder(Grocery.find(), query)
-    .search(['name'])
-    .filter()
-    .paginate()
-    .sort()
-    .fields()
+// Get all grocery items (no pagination)
+const getAllIntoDB = async (userId: string) => {
+  const user = await User.findById(userId);
+  if (!user || user?.isDeleted) {
+    throw new AppError(httpStatus.NOT_FOUND, 'User not found!')
+  }
+  if (!user.timezone) {
+    throw new AppError(httpStatus.NOT_FOUND, 'User has no timezone set yet')
+  }
 
-  const data = await groceryModel.modelQuery
-  const meta = await groceryModel.countTotal()
+  // Get current date in user's timezone
+  const nowInUserTZ = moment.tz(user.timezone)
+  const todayStr = nowInUserTZ.format('YYYY-MM-DD')
+  
+  // Get all incomplete grocery items for today (based on user's timezone)
+  const data = await Grocery.find({
+    user: userId,
+    logAt: todayStr,
+    isCompleted: false,
+  }).sort({ createdAt: -1 }).lean()
+  
+  // Calculate statistics
+  const completedCount = await Grocery.countDocuments({
+    user: userId,
+    logAt: todayStr,
+    isCompleted: true,
+  })
+  
+  const totalCount = data.length + completedCount
+  
   return {
     data,
-    meta,
+    meta: {
+      total: totalCount,
+      completed: completedCount,
+      incomplete: data.length,
+      date: todayStr
+    },
   }
 }
 
