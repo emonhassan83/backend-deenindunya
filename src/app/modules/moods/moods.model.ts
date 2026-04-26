@@ -6,6 +6,7 @@ const moodSchema = new Schema<TMood>(
     title: {
       type: String,
       required: true,
+      unique: true,
     },
     emoji: {
       type: String,
@@ -18,7 +19,7 @@ const moodSchema = new Schema<TMood>(
   },
   {
     timestamps: true,
-  }
+  },
 )
 
 const moodLogsSchema = new Schema<TMoodLogs>(
@@ -37,14 +38,40 @@ const moodLogsSchema = new Schema<TMoodLogs>(
       type: String,
       required: [true, 'Log date is required'],
     },
+    // ✅ Auto-delete after 30 days
+    deleteAt: {
+      type: Date,
+      required: true,
+      default: () => {
+        const date = new Date()
+        date.setDate(date.getDate() + 30)
+        return date
+      },
+    },
   },
   {
     timestamps: true,
-  }
+  },
 )
+
+// TTL Index: MongoDB will automatically delete documents when deleteAt is reached
+moodLogsSchema.index({ deleteAt: 1 }, { expireAfterSeconds: 0 })
+
+// Pre-save middleware to ensure deleteAt is set (if not provided)
+moodLogsSchema.pre('save', function (next) {
+  if (!this.deleteAt) {
+    const date = new Date()
+    date.setDate(date.getDate() + 30) // 30 days auto-delete
+    this.deleteAt = date
+  }
+  next()
+})
 
 // Compound index: one mood log per user per day
 moodLogsSchema.index({ user: 1, logAt: 1 })
 
 export const Mood = model<TMoodLogs, TMoodModel>('Mood', moodSchema)
-export const MoodLog = model<TMoodLogs, TMoodLogsModel>('MoodLog', moodLogsSchema)
+export const MoodLog = model<TMoodLogs, TMoodLogsModel>(
+  'MoodLog',
+  moodLogsSchema,
+)

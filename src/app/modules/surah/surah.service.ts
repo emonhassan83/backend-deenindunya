@@ -8,41 +8,43 @@ import { User } from '../user/user.model'
  * Get list of all Surahs with search, filter, pagination, sorting & field selection
  */
 const getSurahs = async (query: Record<string, any>, userId: string) => {
-  const user = await User.findById(userId);
+  const user = await User.findById(userId)
   if (!user || user?.isDeleted) {
-    throw new AppError(httpStatus.NOT_FOUND, 'User not found');
+    throw new AppError(httpStatus.NOT_FOUND, 'User not found')
   }
 
   try {
-    const surahQuery = new QueryBuilder(Surah.find(), query)
+    const surahQuery = new QueryBuilder(
+      // @ts-ignore
+      Surah.find().select('name number totalVerses'),
+      query,
+    )
       .search(['name']) // Search by surah name
       .filter()
       .sort()
       .paginate()
-      .fields();
+      .fields()
 
     const [surahs, meta, progress] = await Promise.all([
       surahQuery.modelQuery,
       surahQuery.countTotal(),
       SurahProgress.find({ userId }).lean(),
-    ]);
+    ])
 
     // progress কে surahId অনুযায়ী map করো
-    const progressMap = new Map(
-      progress.map((p) => [p.surahId.toString(), p])
-    );
+    const progressMap = new Map(progress.map((p) => [p.surahId.toString(), p]))
 
     // surah list enrich করো
     const enrichedSurahs = surahs.map((s) => {
-      const prog = progressMap.get(s._id.toString());
+      const prog = progressMap.get(s._id.toString())
       return {
         ...s.toObject(),
         isMemorized: prog?.isMemorized || false,
         memorizedAt: prog?.memorizedAt || null,
-      };
-    });
+      }
+    })
 
-    const totalMemorized = progress.filter((p) => p.isMemorized).length;
+    const totalMemorized = progress.filter((p) => p.isMemorized).length
 
     return {
       data: {
@@ -50,14 +52,14 @@ const getSurahs = async (query: Record<string, any>, userId: string) => {
         surahLists: enrichedSurahs,
       },
       meta,
-    };
+    }
   } catch (error: any) {
     throw new AppError(
       httpStatus.INTERNAL_SERVER_ERROR,
       error.message || 'Failed to fetch Surahs',
-    );
+    )
   }
-};
+}
 
 /**
  * Get verses of a specific Surah with pagination, sorting etc.
@@ -74,13 +76,20 @@ const getSurahVerses = async (
     }
 
     const verseQuery = new QueryBuilder(
-      SurahVerse.find({ surahId: { $in: await getSurahObjectId(surahNum) } }),
+      // @ts-ignores
+      SurahVerse.find({
+        surahId: { $in: await getSurahObjectId(surahNum) },
+      }).select('verseNumber arabicText translation audioUrl'),
       query,
     )
       .filter()
       .sort()
       .paginate()
       .fields()
+
+    if (!query.sort) {
+      verseQuery.modelQuery = verseQuery.modelQuery.sort({ verseNumber: 1 })
+    }
 
     const [data, meta] = await Promise.all([
       verseQuery.modelQuery,

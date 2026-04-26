@@ -12,6 +12,7 @@ export type TMoodLogs = {
   user: Types.ObjectId
   mood: Types.ObjectId
   logAt: string
+  deleteAt: Date
 }
 
 export type TMoodModel = Model<TMood, Record<string, unknown>>

@@ -17,8 +17,11 @@ async function main() {
     logger.info('Connected to database')
 
     // default task added
-    seeder.seedAdmin()
-    seeder.seedContents()
+    await Promise.all([
+    seeder.seedAdmin(),
+    seeder.seedContents(),
+    seeder.seedMoods()
+    ])
 
     server = app.listen(Number(config.port), config.ip as string, () => {
       console.log(

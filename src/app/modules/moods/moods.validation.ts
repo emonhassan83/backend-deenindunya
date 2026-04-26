@@ -1,5 +1,10 @@
 import { z } from 'zod'
 
+const dateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, {
+  message: 'Date must be in YYYY-MM-DD format',
+})
+
+
 const createValidationSchema = z.object({
   body: z.object({
     title: z
@@ -19,9 +24,7 @@ const moodLogsValidationSchema = z.object({
     mood: z.string({
       required_error: 'Mood required',
     }),
-    logAt: z.string({
-      required_error: 'Mood logs time is required',
-    }),
+    logAt: dateSchema,
   }),
 })
 
