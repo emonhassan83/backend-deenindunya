@@ -17,7 +17,7 @@ const sunnahSchema = new Schema<TSunnah>(
       required: true,
     },
     arabicText: {
-      type: String
+      type: String,
     },
     isDeleted: {
       type: Boolean,
@@ -43,9 +43,37 @@ const sunnahLogsSchema = new Schema<TSunnahLog>(
       type: String,
       required: true,
     },
+
+    // ✅ Auto delete after 365 days
+    deleteAt: {
+      type: Date,
+      required: true,
+      default: () => {
+        const date = new Date()
+        date.setDate(date.getDate() + 365)
+        return date
+      },
+    },
   },
   { timestamps: true },
 )
+
+// expireAfterSeconds: 0 means delete exactly at the deleteAt time
+sunnahLogsSchema.index({ deleteAt: 1 }, { expireAfterSeconds: 0 })
+
+// Pre-save middleware to ensure deleteAt is set (if not provided)
+sunnahLogsSchema.pre('save', function (next) {
+  if (!this.deleteAt) {
+    const date = new Date()
+    date.setDate(date.getDate() + 365)
+    this.deleteAt = date
+  }
+  next()
+})
+
+// Optional: Index for faster queries
+sunnahLogsSchema.index({ user: 1, completedAt: -1 })
+sunnahLogsSchema.index({ sunnah: 1, user: 1 })
 
 export const Sunnah = model<TSunnah, TSunnahModel>('Sunnah', sunnahSchema)
 export const SunnahLog = model<TSunnahLog, TSunnahLogModel>(

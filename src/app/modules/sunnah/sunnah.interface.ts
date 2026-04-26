@@ -13,6 +13,7 @@ export interface TSunnahLog {
   sunnah: Types.ObjectId
   user: Types.ObjectId
   completedAt: string
+  deleteAt: Date
 }
 
 export type TSunnahModel = Model<TSunnah, Record<string, unknown>>

@@ -26,7 +26,12 @@ router.get('/', auth(USER_ROLE.admin), SunnahController.getAllIntoDB)
 router.delete('/:id', auth(USER_ROLE.admin), SunnahController.deleteAIntoDB)
 
 // User Logs
-router.post('/logs/:id', auth(USER_ROLE.user), SunnahController.toggleLogs)
+router.patch(
+  '/logs/:id',
+  auth(USER_ROLE.user),
+  zodValidationRequest(SunnahValidation.toggleSunnahLogValidationSchema),
+  SunnahController.toggleLogs,
+)
 
 router.get('/my-sunnah', auth(USER_ROLE.user), SunnahController.getUserSunnahs)
 
