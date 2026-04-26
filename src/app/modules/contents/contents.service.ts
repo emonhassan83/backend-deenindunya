@@ -7,15 +7,13 @@ import AppError from '../../errors/AppError'
 // Get all contents
 const getAllContents = async (query: Record<string, any>) => {
   const ContentModel = new QueryBuilder(
-    Contents.find({ isDeleted: false }).populate([
-      {
-        path: 'createdBy',
-        select: 'name email photoUrl contactNumber status',
-      },
-    ]),
+    // @ts-ignore
+    Contents.find({ isDeleted: false }).select(
+      'termsAndConditions  privacyPolicy waterIntake',
+    ),
     query,
   )
-    .search(['createdBy'])
+    .search([''])
     .filter()
     .paginate()
     .sort()
@@ -45,5 +43,5 @@ const updateContents = async (payload: Partial<TContents>) => {
 
 export const contentsService = {
   getAllContents,
-  updateContents
+  updateContents,
 }

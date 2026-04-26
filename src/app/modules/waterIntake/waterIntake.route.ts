@@ -15,13 +15,6 @@ router.post(
   WaterIntakeControllers.insertIntoDB
 )
 
-// Delete water intake record (Authenticated users)
-router.delete(
-  '/:id',
-  auth(USER_ROLE.user, USER_ROLE.admin),
-  WaterIntakeControllers.deleteWaterIntake
-)
-
 // Get all user water intake records (Authenticated users)
 router.get(
   '/',

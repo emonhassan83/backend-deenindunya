@@ -11,24 +11,46 @@ const waterIntakeSchema = new Schema<TWaterIntake>(
     amountMl: {
       type: Number,
       required: [true, 'Water amount is required'],
-      min: [50, 'Amount must be at least 50ml'],
+      min: [250, 'Amount must be at least 250ml'],
       max: [5000, 'Amount cannot exceed 5000ml (5L)'],
     },
-    date: {
+    logAt: {
       type: String,
-      required: [true, 'Date is required']
-    }
+      required: [true, 'Log date is required'],
+    },
+    // ✅ Auto-delete after 7 days
+    deleteAt: {
+      type: Date,
+      required: true,
+      default: () => {
+        const date = new Date()
+        date.setDate(date.getDate() + 7)
+        return date
+      },
+    },
   },
   {
     timestamps: true,
-  }
+  },
 )
 
-// Index for filtering by user and date
-waterIntakeSchema.index({ user: 1, date: -1 })
+// TTL Index: MongoDB automatically deletes the document when deleteAt is reached
+waterIntakeSchema.index({ deleteAt: 1 }, { expireAfterSeconds: 0 })
 
+// Pre-save middleware: set deleteAt to 7 days from now if not provided
+waterIntakeSchema.pre('save', function (next) {
+  if (!this.deleteAt) {
+    const date = new Date()
+    date.setDate(date.getDate() + 7)
+    this.deleteAt = date
+  }
+  next()
+})
+
+// Index for filtering by user and date
+waterIntakeSchema.index({ user: 1, logAt: -1 })
 
 export const WaterIntake = model<TWaterIntake, TWaterIntakeModel>(
   'WaterIntake',
-  waterIntakeSchema
+  waterIntakeSchema,
 )

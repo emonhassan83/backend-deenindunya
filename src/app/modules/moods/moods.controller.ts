@@ -47,7 +47,7 @@ const insertMoodLogs = catchAsync(async (req, res) => {
 })
 
 const getAllMoodLogs = catchAsync(async (req, res) => {
-  const result = await MoodLogsService.getAllMoodLogs(req.user._id, req.query)
+  const result = await MoodLogsService.getAllMoodLogs(req.user._id)
 
   sendResponse(res, {
     success: true,
