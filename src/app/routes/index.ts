@@ -23,6 +23,7 @@ import { metaRoutes } from '../modules/meta/meta.route'
 import { PackageRoutes } from '../modules/package/package.route'
 import { SubscriptionRoutes } from '../modules/subscription/subscription.route'
 import { paymentsRoutes } from '../modules/payments/payments.route'
+import { uploadRouter } from '../modules/uploads/route'
 
 const router = Router()
 
@@ -98,6 +99,10 @@ const moduleRoutes = [
   {
     path: '/ambitions',
     route: AmbitionRoutes,
+  },
+  {
+    path: '/uploads',
+    route: uploadRouter,
   },
   {
     path: '/notifications',
