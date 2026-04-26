@@ -5,7 +5,9 @@ export type TGratitudeLogs = {
   __id?: string
   user: Types.ObjectId
   type: TGratitudeType
-  content: string
+  title: string
+  logAt: string
+  deleteAt?: Date
 }
 
 export type TGratitudeLogsModel = Model<TGratitudeLogs, Record<string, unknown>>

@@ -3,8 +3,7 @@ import sendResponse from '../../utils/sendResponse'
 import { GratitudeLogsService } from './gratitudeLogs.service'
 
 const insertIntoDB = catchAsync(async (req, res) => {
-  const userId = req.user.userId // From auth middleware
-  const result = await GratitudeLogsService.insertIntoDB(req.body, userId)
+  const result = await GratitudeLogsService.insertIntoDB(req.body, req.user._id)
 
   sendResponse(res, {
     success: true,
@@ -15,8 +14,10 @@ const insertIntoDB = catchAsync(async (req, res) => {
 })
 
 const getAllGratitudeLogs = catchAsync(async (req, res) => {
-  const userId = req.user.userId
-  const result = await GratitudeLogsService.getAllFromDB(userId, req.query)
+  const result = await GratitudeLogsService.getAllFromDB(
+    req.user._id,
+    req.query,
+  )
 
   sendResponse(res, {
     success: true,
@@ -31,8 +32,8 @@ const updateGratitudeLog = catchAsync(async (req, res) => {
   const userId = req.user.userId
   const result = await GratitudeLogsService.updateIntoDB(
     req.params.id,
-    userId,
-    req.body
+    req.user._id,
+    req.body,
   )
 
   sendResponse(res, {
@@ -44,8 +45,10 @@ const updateGratitudeLog = catchAsync(async (req, res) => {
 })
 
 const deleteGratitudeLog = catchAsync(async (req, res) => {
-  const userId = req.user.userId
-  const result = await GratitudeLogsService.deleteFromDB(req.params.id, userId)
+  const result = await GratitudeLogsService.deleteFromDB(
+    req.params.id,
+    req.user._id,
+  )
 
   sendResponse(res, {
     success: true,
