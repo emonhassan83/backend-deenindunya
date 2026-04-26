@@ -1,6 +1,10 @@
 import { z } from 'zod'
 import { ExerciseCategory } from './exercises.constant'
 
+const dateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, {
+  message: 'Date must be in YYYY-MM-DD format',
+})
+
 const createValidationSchema = z.object({
   body: z.object({
     name: z
@@ -19,6 +23,7 @@ const createValidationSchema = z.object({
     category: z.enum(Object.values(ExerciseCategory) as [string, ...string[]], {
       required_error: 'Category is required',
     }),
+    logAt: dateSchema,
   }),
 })
 

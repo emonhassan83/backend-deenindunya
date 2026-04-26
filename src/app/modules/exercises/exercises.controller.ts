@@ -3,8 +3,7 @@ import sendResponse from '../../utils/sendResponse'
 import { ExerciseService } from './exercises.service'
 
 const insertIntoDB = catchAsync(async (req, res) => {
-  const userId = req.user.userId // From auth middleware
-  const result = await ExerciseService.insertIntoDB(req.body, userId)
+  const result = await ExerciseService.insertIntoDB(req.body, req.user._id)
 
   sendResponse(res, {
     success: true,
@@ -15,23 +14,20 @@ const insertIntoDB = catchAsync(async (req, res) => {
 })
 
 const getAllExercises = catchAsync(async (req, res) => {
-  const userId = req.user.userId
-  const result = await ExerciseService.getAllFromDB(userId, req.query)
+  const result = await ExerciseService.getAllFromDB(req.user._id)
 
   sendResponse(res, {
     success: true,
     statusCode: 200,
     message: 'Exercises retrieved successfully',
-    data: result.data,
-    meta: result.meta,
+    data: result,
   })
 })
 
 const updateExercise = catchAsync(async (req, res) => {
-  const userId = req.user.userId
   const result = await ExerciseService.updateIntoDB(
     req.params.id,
-    userId,
+    req.user._id,
     req.body
   )
 
@@ -44,10 +40,9 @@ const updateExercise = catchAsync(async (req, res) => {
 })
 
 const toggleComplete = catchAsync(async (req, res) => {
-  const userId = req.user.userId
   const result = await ExerciseService.toggleCompleteStatus(
     req.params.id,
-    userId
+    req.user._id
   )
 
   sendResponse(res, {
@@ -59,8 +54,7 @@ const toggleComplete = catchAsync(async (req, res) => {
 })
 
 const deleteExercise = catchAsync(async (req, res) => {
-  const userId = req.user.userId
-  const result = await ExerciseService.deleteFromDB(req.params.id, userId)
+  const result = await ExerciseService.deleteFromDB(req.params.id, req.user._id)
 
   sendResponse(res, {
     success: true,

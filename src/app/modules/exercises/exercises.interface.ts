@@ -8,6 +8,8 @@ export type TExercise = {
   reps: number
   category: TExerciseCategory
   isCompleted: boolean
+  logAt: string
+  deleteAt?: Date
 }
 
 export type TExerciseModel = Model<TExercise, Record<string, unknown>>

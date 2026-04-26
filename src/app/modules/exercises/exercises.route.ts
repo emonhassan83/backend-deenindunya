@@ -25,7 +25,7 @@ router.put(
 
 // Toggle completion status (Authenticated users)
 router.patch(
-  '/:id/toggle',
+  '/toggle/:id',
   auth(USER_ROLE.user, USER_ROLE.admin),
   ExerciseControllers.toggleComplete
 )

@@ -38,7 +38,7 @@ const moodLogsSchema = new Schema<TMoodLogs>(
       type: String,
       required: [true, 'Log date is required'],
     },
-    // ✅ Auto-delete after 30 days
+    // Auto-delete after 30 days
     deleteAt: {
       type: Date,
       required: true,

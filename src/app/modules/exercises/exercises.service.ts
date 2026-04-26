@@ -3,100 +3,77 @@ import AppError from '../../errors/AppError'
 import { TExercise } from './exercises.interface'
 import { Exercise } from './exercises.model'
 import { User } from '../user/user.model'
+import mongoose from 'mongoose'
+import moment from 'moment'
 
 const insertIntoDB = async (
   payload: TExercise,
   userId: string,
 ): Promise<TExercise> => {
   // Validate user exists
-  const userExists = await User.findById(userId)
-  if (!userExists || userExists.isDeleted) {
+  const user = await User.findById(userId)
+  if (!user || user.isDeleted) {
     throw new AppError(httpStatus.NOT_FOUND, 'User not found!')
   }
 
   // Assign user to payload
-  payload.user = userExists._id
+  payload.user = user._id
 
   // Create new exercise
   const result = await Exercise.create(payload)
   return result
 }
 
-const getAllFromDB = async (userId: string, query: Record<string, unknown>) => {
-  const { category, isCompleted, search, page = 1, limit = 10 } = query
+const getAllFromDB = async (userId: string) => {
+  // 1. Fetch user to get timezone (optional)
+  const user = await User.findById(userId).select('timezone').lean()
+  if (!user || user.isDeleted) {
+    throw new AppError(httpStatus.NOT_FOUND, 'User not found!')
+  }
+  const timezone = user?.timezone || 'Asia/Dhaka' // default
 
-  const filter: Record<string, unknown> = {
+  const today = new Date().toLocaleDateString('en-CA') // '2026-04-26'
+
+  // 3. Get all exercises for today
+  const todayExercises = await Exercise.find({
     user: userId,
-    isDeleted: false,
-  }
+    logAt: today,
+  }).select('name reps category isCompleted logAt').lean()
 
-  // Filter by category
-  if (category) {
-    filter.category = category
-  }
+  // 4. Compute stats
+  const total = todayExercises.length
+  const completed = todayExercises.filter((ex) => ex.isCompleted).length
+  const incomplete = total - completed
+  const progress = total === 0 ? 0 : Math.round((completed / total) * 100)
 
-  // Filter by completion status
-  if (isCompleted !== undefined) {
-    filter.isCompleted = isCompleted === 'true'
-  }
-
-  // Search functionality
-  if (search) {
-    filter.$text = { $search: search as string }
-  }
-
-  const skip = (Number(page) - 1) * Number(limit)
-
-  const result = await Exercise.find(filter)
-    .skip(skip)
-    .limit(Number(limit))
-    .sort({ isCompleted: 1, createdAt: -1 }) // Incomplete first
-    .lean()
-
-  const total = await Exercise.countDocuments(filter)
-
-  // Get counts
-  const completedCount = await Exercise.countDocuments({
-    user: userId,
-    isCompleted: true,
-    isDeleted: false,
-  })
-  const incompleteCount = await Exercise.countDocuments({
-    user: userId,
-    isCompleted: false,
-    isDeleted: false,
-  })
-
-  // Get total reps completed
-  const totalRepsCompleted = await Exercise.aggregate([
-    { $match: { user: userId, isCompleted: true, isDeleted: false } },
-    { $group: { _id: null, totalReps: { $sum: '$reps' } } },
+  // 5. Compute continuous streak (rawExercise)
+  // Get all distinct dates with at least one exercise log (any completion status)
+  const allLogDates = await Exercise.aggregate([
+    { $match: { user: new mongoose.Types.ObjectId(userId) } },
+    { $group: { _id: '$logAt' } },
+    { $sort: { _id: -1 } }, // descending by date
   ])
+  const dateSet = new Set(allLogDates.map((d) => d._id))
 
-  // Get category breakdown
-  const categoryStats = await Exercise.aggregate([
-    { $match: { user: userId, isDeleted: false } },
-    {
-      $group: {
-        _id: '$category',
-        count: { $sum: 1 },
-        totalReps: { $sum: '$reps' },
-      },
-    },
-  ])
+  let streak = 0
+  let currentDate = moment().tz(timezone)
+  while (true) {
+    const dateStr = currentDate.format('YYYY-MM-DD')
+    if (dateSet.has(dateStr)) {
+      streak++
+      currentDate.subtract(1, 'day')
+    } else {
+      break
+    }
+  }
 
+  // 6. Return simplified response
   return {
-    data: result,
-    meta: {
-      page: Number(page),
-      limit: Number(limit),
-      total,
-      totalPages: Math.ceil(total / Number(limit)),
-      completedCount,
-      incompleteCount,
-      totalRepsCompleted: totalRepsCompleted[0]?.totalReps || 0,
-      categoryStats,
-    },
+    completedExercise: completed,
+    incompleteExercise: incomplete,
+    progress,
+    rawExercise: streak,
+    exercise: todayExercises,
   }
 }
 
