@@ -12,6 +12,7 @@ import {
   endOfMonth,
   subDays,
 } from 'date-fns'
+import mongoose from 'mongoose'
 
 const insertIntoDB = async (
   payload: TGratitudeLogs,
@@ -31,91 +32,31 @@ const insertIntoDB = async (
   return result
 }
 
-const getAllFromDB = async (userId: string, query: Record<string, unknown>) => {
-  const { type, search, dateFilter, page = 1, limit = 10 } = query
-
-  const filter: Record<string, unknown> = {
-    user: userId,
-    isDeleted: false,
+const getAllFromDB = async (userId: string) => {
+  const user = await User.findById(userId).select('_id').lean()
+  if (!user || user.isDeleted) {
+    throw new AppError(httpStatus.NOT_FOUND, 'User not found!')
   }
 
-  // Filter by type
-  if (type) {
-    filter.type = type
-  }
+  // Calculate date 7 days ago
+  const today = new Date()
+  const sevenDaysAgo = new Date()
+  sevenDaysAgo.setDate(today.getDate() - 7)
 
-  // Date filtering
-  if (dateFilter) {
-    const now = new Date()
-    switch (dateFilter) {
-      case 'today':
-        filter.createdAt = { $gte: startOfDay(now), $lte: endOfDay(now) }
-        break
-      case 'week':
-        filter.createdAt = { $gte: startOfWeek(now), $lte: endOfWeek(now) }
-        break
-      case 'month':
-        filter.createdAt = { $gte: startOfMonth(now), $lte: endOfMonth(now) }
-        break
-      case 'last7days':
-        filter.createdAt = { $gte: subDays(now, 7), $lte: now }
-        break
-      case 'last30days':
-        filter.createdAt = { $gte: subDays(now, 30), $lte: now }
-        break
-    }
-  }
+  // Format dates as YYYY-MM-DD strings
+  const formatDate = (date: Date) => date.toISOString().slice(0, 10)
 
-  // Search functionality
-  if (search) {
-    filter.$text = { $search: search as string }
-  }
-
-  const skip = (Number(page) - 1) * Number(limit)
-
-  const result = await GratitudeLog.find(filter)
-    .select('-isDeleted')
-    .skip(skip)
-    .limit(Number(limit))
-    .sort({ createdAt: -1 })
+  const logs = await GratitudeLog.find({
+    user: new mongoose.Types.ObjectId(userId),
+    logAt: {
+      $gte: formatDate(sevenDaysAgo),
+      $lte: formatDate(today),
+    },
+  }).select('type title logAt')
+    .sort({ logAt: -1, createdAt: -1 })
     .lean()
 
-  const total = await GratitudeLog.countDocuments(filter)
-
-  // Get stats by type
-  const typeStats = await GratitudeLog.aggregate([
-    { $match: { user: userId, isDeleted: false } },
-    { $group: { _id: '$type', count: { $sum: 1 } } },
-  ])
-
-  // Get total entries
-  const totalEntries = await GratitudeLog.countDocuments({
-    user: userId,
-    isDeleted: false,
-  })
-
-  // Get entries this month
-  const thisMonthEntries = await GratitudeLog.countDocuments({
-    user: userId,
-    isDeleted: false,
-    createdAt: {
-      $gte: startOfMonth(new Date()),
-      $lte: endOfMonth(new Date()),
-    },
-  })
-
-  return {
-    data: result,
-    meta: {
-      page: Number(page),
-      limit: Number(limit),
-      total,
-      totalPages: Math.ceil(total / Number(limit)),
-      totalEntries,
-      thisMonthEntries,
-      typeStats,
-    },
-  }
+  return logs
 }
 
 const updateIntoDB = async (
@@ -128,7 +69,6 @@ const updateIntoDB = async (
     _id: id,
     user: userId,
   })
-
   if (!existing) {
     throw new AppError(httpStatus.NOT_FOUND, 'Gratitude log not found!')
   }
@@ -155,7 +95,6 @@ const deleteFromDB = async (
     _id: id,
     user: userId,
   })
-
   if (!existing) {
     throw new AppError(httpStatus.NOT_FOUND, 'Gratitude log not found!')
   }

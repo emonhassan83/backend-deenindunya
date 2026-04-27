@@ -14,17 +14,13 @@ const insertIntoDB = catchAsync(async (req, res) => {
 })
 
 const getAllGratitudeLogs = catchAsync(async (req, res) => {
-  const result = await GratitudeLogsService.getAllFromDB(
-    req.user._id,
-    req.query,
-  )
+  const result = await GratitudeLogsService.getAllFromDB(req.user._id)
 
   sendResponse(res, {
     success: true,
     statusCode: 200,
     message: 'Gratitude logs retrieved successfully',
-    data: result.data,
-    meta: result.meta,
+    data: result,
   })
 })
 
