@@ -24,6 +24,7 @@ import { PackageRoutes } from '../modules/package/package.route'
 import { SubscriptionRoutes } from '../modules/subscription/subscription.route'
 import { paymentsRoutes } from '../modules/payments/payments.route'
 import { uploadRouter } from '../modules/uploads/route'
+import { EducationHubRoutes } from '../modules/educationHub/educationHub.route'
 
 const router = Router()
 
@@ -99,6 +100,10 @@ const moduleRoutes = [
   {
     path: '/ambitions',
     route: AmbitionRoutes,
+  },
+  {
+    path: '/education-hub',
+    route: EducationHubRoutes,
   },
   {
     path: '/uploads',

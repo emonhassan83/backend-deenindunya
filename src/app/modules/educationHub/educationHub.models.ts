@@ -11,7 +11,6 @@ import {
 const moduleSchema = new Schema<TModule>(
   {
     name: { type: String, required: true },
-    coverImage: { type: String, required: true },
   },
   { timestamps: true },
 )
@@ -20,7 +19,7 @@ const lessonSchema = new Schema<TLesson>(
   {
     module: { type: Schema.Types.ObjectId, ref: 'Module', required: true },
     type: { type: String, required: true },
-    title: { type: String, required: true }
+    title: { type: String, required: true },
   },
   { timestamps: true },
 )
@@ -29,7 +28,8 @@ const lessonLogsSchema = new Schema<TLessonLogs>(
   {
     user: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     lesson: { type: Schema.Types.ObjectId, ref: 'Surah', required: true },
-    readAt: { type: String },
+    isRead: { type: Boolean, default: false },
+    readAt: { type: Date },
   },
   { timestamps: true },
 )

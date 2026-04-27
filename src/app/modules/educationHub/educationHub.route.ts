@@ -16,6 +16,12 @@ router.patch(
 router.get('/modules', auth(USER_ROLE.user), EducationHubController.getModules)
 
 router.get(
+  '/lesson/by-type',
+  auth(USER_ROLE.user),
+  EducationHubController.getLessonsByType,
+)
+
+router.get(
   '/lesson/:moduleId',
   auth(USER_ROLE.user),
   EducationHubController.getModuleLessons,

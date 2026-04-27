@@ -3,81 +3,51 @@ import AppError from '../../errors/AppError'
 import { TAmbition } from './ambitions.interface'
 import { Ambition } from './ambitions.model'
 import { User } from '../user/user.model'
+import { AmbitionsType } from './ambitions.constant'
 
 const insertIntoDB = async (
   payload: TAmbition,
   userId: string,
 ): Promise<TAmbition> => {
   // Validate user exists
-  const userExists = await User.findById(userId)
-  if (!userExists || userExists.isDeleted) {
+  const user = await User.findById(userId)
+  if (!user || user.isDeleted) {
     throw new AppError(httpStatus.NOT_FOUND, 'User not found!')
   }
 
   // Assign user to payload
-  payload.user = userExists._id
+  payload.user = user._id
 
   // Create new ambition
   const result = await Ambition.create(payload)
   return result
 }
 
-const getAllFromDB = async (userId: string, query: Record<string, unknown>) => {
-  const { type, isCompleted, search, page = 1, limit = 10 } = query
-
-  const filter: Record<string, unknown> = {
+const getAllFromDB = async (userId: string) => {
+  // Get all ambitions for the user (not deleted)
+  const allAmbitions = await Ambition.find({
     user: userId,
-    isDeleted: false,
+  }).select('title type description isCompleted createdAt').lean()
+
+  // Calculate counts
+  const totalCount = allAmbitions.length
+  const completedCount = allAmbitions.filter(
+    (a) => a.isCompleted === true,
+  ).length
+  const progress =
+    totalCount === 0 ? 0 : Math.round((completedCount / totalCount) * 100)
+
+  // Separate by type
+  const ambitions = {
+    deen: allAmbitions.filter((a) => a.type === AmbitionsType.deen), // based on type
+    dunya: allAmbitions.filter((a) => a.type === AmbitionsType.dunya), // based on type
   }
-
-  // Filter by type
-  if (type) {
-    filter.type = type
-  }
-
-  // Filter by completion status
-  if (isCompleted !== undefined) {
-    filter.isCompleted = isCompleted === 'true'
-  }
-
-  // Search functionality
-  if (search) {
-    filter.$text = { $search: search as string }
-  }
-
-  const skip = (Number(page) - 1) * Number(limit)
-
-  const result = await Ambition.find(filter)
-    .select('-isDeleted')
-    .skip(skip)
-    .limit(Number(limit))
-    .sort({ isCompleted: 1, createdAt: -1 }) // Incomplete first, then by date
-    .lean()
-
-  const total = await Ambition.countDocuments(filter)
-
-  // Get counts by completion status
-  const completedCount = await Ambition.countDocuments({
-    user: userId,
-    isCompleted: true,
-    isDeleted: false,
-  })
-  const incompleteCount = await Ambition.countDocuments({
-    user: userId,
-    isCompleted: false,
-    isDeleted: false,
-  })
 
   return {
-    data: result,
-    meta: {
-      page: Number(page),
-      limit: Number(limit),
-      total,
-      totalPages: Math.ceil(total / Number(limit)),
-      completedCount,
-      incompleteCount,
-    },
+    totalCount,
+    completedCount,
+    progress,
+    ambitions,
   }
 }
 
@@ -89,7 +59,6 @@ const toggleCompleteStatus = async (
     _id: id,
     user: userId,
   })
-
   if (!existing) {
     throw new AppError(httpStatus.NOT_FOUND, 'Ambition not found!')
   }
@@ -121,7 +90,6 @@ const deleteFromDB = async (id: string, userId: string): Promise<TAmbition> => {
     _id: id,
     user: userId,
   })
-
   if (!existing) {
     throw new AppError(httpStatus.NOT_FOUND, 'Ambition not found!')
   }

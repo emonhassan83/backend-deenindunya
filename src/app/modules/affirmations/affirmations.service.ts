@@ -35,7 +35,7 @@ const getAllFromDB = async (query: Record<string, unknown>) => {
   const skip = (Number(page) - 1) * Number(limit)
 
   const result = await Affirmation.find(filter)
-    .select('-isDeleted')
+    .select('arabic_text transliteration english_meaning reference audio_url createdAt')
     .skip(skip)
     .limit(Number(limit))
     .sort({ createdAt: -1 })
@@ -56,7 +56,7 @@ const getAllFromDB = async (query: Record<string, unknown>) => {
 
 const getSingleFromDB = async (id: string): Promise<TAffirmation> => {
   const result = await Affirmation.findById(id)
-    .select('-isDeleted')
+    .select('arabic_text transliteration english_meaning reference audio_url createdAt')
     .lean()
 
   if (!result || result.isDeleted) {

@@ -4,13 +4,12 @@ import { EducationHubService } from './educationHub.service'
 import sendResponse from '../../utils/sendResponse'
 
 const getModules = catchAsync(async (req: Request, res: Response) => {
-  const result = await EducationHubService.getModules(req.query, req.user._id)
+  const result = await EducationHubService.getModules(req.user._id)
 
   sendResponse(res, {
     statusCode: 200,
     success: true,
     message: 'Modules retrieved successfully!',
-    meta: result.meta,
     data: result.data,
   })
 })
@@ -18,6 +17,19 @@ const getModules = catchAsync(async (req: Request, res: Response) => {
 const getModuleLessons = catchAsync(async (req: Request, res: Response) => {
   const result = await EducationHubService.getModuleLessons(
     req.params.moduleId,
+    req.user._id
+  )
+
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: 'Module lesson fetched successfully',
+    data: result,
+  })
+})
+
+const getLessonsByType = catchAsync(async (req: Request, res: Response) => {
+  const result = await EducationHubService.getLessonsByType(
     req.query,
     req.user._id
   )
@@ -26,8 +38,7 @@ const getModuleLessons = catchAsync(async (req: Request, res: Response) => {
     statusCode: 200,
     success: true,
     message: 'Module lesson fetched successfully',
-    meta: result.meta,
-    data: result.data,
+    data: result,
   })
 })
 
@@ -48,5 +59,6 @@ const readLesson = catchAsync(async (req: Request, res: Response) => {
 export const EducationHubController = {
   getModules,
   getModuleLessons,
+  getLessonsByType,
   readLesson,
 }

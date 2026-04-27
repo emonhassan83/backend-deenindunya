@@ -3,7 +3,7 @@ import { Model, Types } from 'mongoose'
 export interface TModule {
   _id?: string
   name: string
-  coverImage: string
+  // coverImage: string
 }
 
 export interface TLesson {
@@ -17,7 +17,8 @@ export interface TLessonLogs {
   _id?: string
   user: Types.ObjectId
   lesson: Types.ObjectId
-  readAt?: String
+  isRead: boolean
+  readAt?: Date
 }
 
 export type TModuleModel = Model<TModule, Record<string, unknown>>

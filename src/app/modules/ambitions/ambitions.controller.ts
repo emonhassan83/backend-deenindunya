@@ -3,8 +3,7 @@ import sendResponse from '../../utils/sendResponse'
 import { AmbitionService } from './ambitions.service'
 
 const insertIntoDB = catchAsync(async (req, res) => {
-  const userId = req.user.userId // From auth middleware
-  const result = await AmbitionService.insertIntoDB(req.body, userId)
+  const result = await AmbitionService.insertIntoDB(req.body, req.user._id)
 
   sendResponse(res, {
     success: true,
@@ -15,23 +14,20 @@ const insertIntoDB = catchAsync(async (req, res) => {
 })
 
 const getAllAmbitions = catchAsync(async (req, res) => {
-  const userId = req.user.userId
-  const result = await AmbitionService.getAllFromDB(userId, req.query)
+  const result = await AmbitionService.getAllFromDB(req.user._id)
 
   sendResponse(res, {
     success: true,
     statusCode: 200,
     message: 'Ambitions retrieved successfully',
-    data: result.data,
-    meta: result.meta,
+    data: result
   })
 })
 
 const toggleComplete = catchAsync(async (req, res) => {
-  const userId = req.user.userId
   const result = await AmbitionService.toggleCompleteStatus(
     req.params.id,
-    userId
+    req.user._id
   )
 
   sendResponse(res, {
@@ -43,8 +39,7 @@ const toggleComplete = catchAsync(async (req, res) => {
 })
 
 const deleteAmbition = catchAsync(async (req, res) => {
-  const userId = req.user.userId
-  const result = await AmbitionService.deleteFromDB(req.params.id, userId)
+  const result = await AmbitionService.deleteFromDB(req.params.id, req.user._id)
 
   sendResponse(res, {
     success: true,
