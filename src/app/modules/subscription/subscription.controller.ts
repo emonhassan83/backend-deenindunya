@@ -34,9 +34,8 @@ const getMySubscription = catchAsync(async (req: Request, res: Response) => {
   sendResponse(res, {
     statusCode: 200,
     success: true,
-    message: 'All subscriptions fetched successfully !',
-    meta: result?.meta,
-    data: result?.data,
+    message: 'My subscriptions fetched successfully !',
+    data: result?.data[0],
   })
 })
 
