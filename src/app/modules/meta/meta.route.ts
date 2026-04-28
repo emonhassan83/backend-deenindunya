@@ -5,7 +5,7 @@ import { MetaControllers } from './meta.controller'
 
 const router = express.Router()
 
-router.post('/admin', auth(USER_ROLE.admin), MetaControllers.adminMeta)
+router.get('/admin', auth(USER_ROLE.admin), MetaControllers.adminMeta)
 
 router.get('/user', auth(USER_ROLE.user), MetaControllers.userMeta)
 
