@@ -101,7 +101,7 @@ const userMeta = async (userId: string, query: Record<string, any>) => {
 }
 
 const adminMeta = async (userId: string, query: Record<string, any>) => {
-  const { earning_year, user_year } = query;
+  const { earning_year, user_year, ... othersQuery } = query;
 
   const activeUserCount = await User.countDocuments({
     isDeleted: false,
@@ -134,7 +134,7 @@ const adminMeta = async (userId: string, query: Record<string, any>) => {
     User.find({ isDeleted: false, role: { $ne: USER_ROLE.admin } }).select(
       '_id id name email photoUrl address contractNumber status createdAt',
     ),
-    query,
+    othersQuery,
   )
     .search(['name'])
     .filter()
