@@ -163,6 +163,8 @@ const geUserByIdFromDB = async (id: string) => {
   // Convert user to plain object and add isActiveSubscription field
   const userObject = user.toObject();
   (userObject as any).isActiveSubscription = !!activeSubscription;
+  (userObject as any).isPasswordSet = !!(user.password && user.password.trim() !== '')
+  delete (userObject as any).password;
 
   return userObject;
 };

@@ -10,7 +10,7 @@ import {
 
 const surahSchema = new Schema<TSurah>(
   {
-    number: { type: Number, required: true, unique: true },
+    number: { type: Number, required: true },
     name: { type: String, required: true },
     totalVerses: { type: Number, required: true },
   },
