@@ -2,8 +2,8 @@ import { z } from 'zod';
 
 const createValidationSchema = z.object({
   body: z.object({
-    title: z.string({ required_error: 'Title is required' }),
-    subtitle: z.string({ required_error: 'Subtitle is required' }),
+    title: z.string({ message: 'Title is required' }),
+    subtitle: z.string({ message: 'Subtitle is required' }),
     arabicText: z.string().optional(),
   }),
 });
@@ -19,7 +19,7 @@ const updateValidationSchema = z.object({
 const toggleSunnahLogValidationSchema = z.object({
   body: z.object({
     completedAt: z.string({
-      required_error: 'completedAt is required',
+      message: 'completedAt is required',
     }).regex(/^\d{4}-\d{2}-\d{2}$/, 'completedAt must be in YYYY-MM-DD format'),
   }),
 });

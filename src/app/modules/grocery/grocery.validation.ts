@@ -3,10 +3,10 @@ import { z } from 'zod'
 const createValidationSchema = z.object({
   body: z.object({
     name: z.string({
-      required_error: 'Grocery name is required!',
+      message: 'Grocery name is required!',
     }),
     logAt: z.string({
-      required_error: 'Grocery log at time is required!',
+      message: 'Grocery log at time is required!',
     }),
   }),
 })

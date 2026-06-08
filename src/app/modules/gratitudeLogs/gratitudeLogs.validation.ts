@@ -8,11 +8,11 @@ const dateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, {
 const createValidationSchema = z.object({
   body: z.object({
     type: z.enum(Object.values(GratitudeType) as [string, ...string[]], {
-      required_error: 'Gratitude type is required',
+      message: 'Gratitude type is required',
     }),
     title: z
       .string({
-        required_error: 'Title is required',
+        message: 'Title is required',
       })
       .min(5, 'Title must be at least 5 characters')
       .max(500, 'Title cannot exceed 500 characters'),

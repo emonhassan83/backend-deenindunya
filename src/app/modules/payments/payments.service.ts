@@ -19,7 +19,7 @@ import { User } from '../user/user.model'
 import { Package } from '../package/package.model'
 
 const stripe = new Stripe(config.stripe?.stripe_api_secret as string, {
-  apiVersion: '2025-02-24.acacia',
+  apiVersion: '2026-05-27.dahlia',
   typescript: true,
 })
 
@@ -277,7 +277,7 @@ const refundPayment = async (payload: any) => {
   session.startTransaction()
 
   try {
-    const refundData: Stripe.RefundCreateParams = {
+    const refundData = {
       payment_intent: payload.intendId,
       ...(payload.amount && {
         amount: payload.amount * 100,

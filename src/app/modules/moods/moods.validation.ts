@@ -8,12 +8,12 @@ const createValidationSchema = z.object({
   body: z.object({
     title: z
       .string({
-        required_error: 'Mood title required',
+        message: 'Mood title required',
       })
       .min(1, 'Mood cannot be empty')
       .max(50, 'Mood cannot exceed 50 characters'),
     emoji: z.string({
-      required_error: 'Mood emoji is required',
+      message: 'Mood emoji is required',
     }),
   }),
 })
@@ -21,7 +21,7 @@ const createValidationSchema = z.object({
 const moodLogsValidationSchema = z.object({
   body: z.object({
     mood: z.string({
-      required_error: 'Mood required',
+      message: 'Mood required',
     }),
     logAt: dateSchema,
   }),

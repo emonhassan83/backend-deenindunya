@@ -6,8 +6,8 @@ import { NotificationService } from '../notification/notification.service'
 import { modeType } from '../notification/notification.interface'
 import { Types } from 'mongoose'
 
-const stripe: Stripe = new Stripe(config.stripe?.stripe_api_secret as string, {
-  apiVersion: '2025-02-24.acacia',
+const stripe = new Stripe(config.stripe?.stripe_api_secret as string, {
+  apiVersion: '2026-05-27.dahlia',
   typescript: true,
 })
 

@@ -4,17 +4,17 @@ import { AmbitionsType } from './ambitions.constant'
 const createValidationSchema = z.object({
   body: z.object({
     type: z.enum(Object.values(AmbitionsType) as [string, ...string[]], {
-      required_error: 'Ambition type is required',
+      message: 'Ambition type is required',
     }),
     title: z
       .string({
-        required_error: 'Title is required',
+        message: 'Title is required',
       })
       .min(1, 'Title cannot be empty')
       .max(200, 'Title cannot exceed 200 characters'),
     description: z
       .string({
-        required_error: 'Description is required',
+        message: 'Description is required',
       })
       .min(1, 'Description cannot be empty')
       .max(1000, 'Description cannot exceed 1000 characters'),

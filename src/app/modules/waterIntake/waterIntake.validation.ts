@@ -8,7 +8,7 @@ const createValidationSchema = z.object({
   body: z.object({
     amountMl: z
       .number({
-        required_error: 'Water amount is required',
+        message: 'Water amount is required',
       })
       .int('Amount must be an integer')
       .min(50, 'Amount must be at least 50ml')

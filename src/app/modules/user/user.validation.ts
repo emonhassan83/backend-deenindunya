@@ -5,16 +5,16 @@ import { USER_STATUS } from './user.constant'
 const createValidationSchema = z.object({
   body: z.object({
     name: z.string({
-      required_error: 'User name is required!',
+      message: 'User name is required!',
     }),
     email: z.string({
-      required_error: 'Email is required!',
+      message: 'Email is required!',
     }),
     contractNumber: z.string({
-      required_error: 'contractNumber is required!',
+      message: 'contractNumber is required!',
     }),
     country: z.string({
-      required_error: 'Country is required!',
+      message: 'Country is required!',
     }),
   }),
 })
@@ -23,13 +23,13 @@ const setPasswordValidationSchema = z.object({
   body: z.object({
     password: z
       .string({
-        invalid_type_error: 'Password must be a string',
+        message: 'Password must be a string',
       })
       .min(6, { message: 'Password must be at least 6 characters' })
       .max(12, { message: 'Password cannot be more than 12 characters' }),
     confirmPassword: z
       .string({
-        invalid_type_error: 'Password must be a string',
+        message: 'Password must be a string',
       })
       .min(6, { message: 'Password must be at least 6 characters' })
       .max(12, { message: 'Password cannot be more than 12 characters' }),
@@ -64,10 +64,10 @@ const updateValidationSchema = z.object({
 const changeStatusValidationSchema = z.object({
   body: z.object({
     userId: z.string({
-      required_error: 'User id is required!',
+      message: 'User id is required!',
     }),
     status: z.enum(Object.values(USER_STATUS) as [string, ...string[]], {
-      required_error: 'User status is required!',
+      message: 'User status is required!',
     }),
   }),
 })
@@ -75,10 +75,10 @@ const changeStatusValidationSchema = z.object({
 const updateLocationValidationSchema = z.object({
   body: z.object({
     longitude: z.number({
-      required_error: 'longitude is required!',
+      message: 'longitude is required!',
     }),
     latitude: z.number({
-      required_error: 'latitude is required!',
+      message: 'latitude is required!',
     }),
   }),
 })
@@ -86,16 +86,16 @@ const updateLocationValidationSchema = z.object({
 const updateNotifyValidationSchema = z.object({
   body: z.object({
     pushNotification: z.boolean({
-      required_error: 'pushNotification is required!',
+      message: 'pushNotification is required!',
     }),
     soundEffect: z.boolean({
-      required_error: 'soundEffect is required!',
+      message: 'soundEffect is required!',
     }),
     automaticallyBrightness: z.boolean({
-      required_error: 'automaticallyBrightness is required!',
+      message: 'automaticallyBrightness is required!',
     }),
     vibration: z.boolean({
-      required_error: 'vibration is required!',
+      message: 'vibration is required!',
     }),
   }),
 })
