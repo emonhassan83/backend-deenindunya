@@ -243,7 +243,7 @@ const changePassword = async (
         passwordChangedAt: new Date(),
       },
     },
-    { new: true },
+    { returnDocument: 'after' },
   )
 
   //if password is not updated throw error
@@ -403,7 +403,7 @@ const resetPassword = async (
         },
       },
     },
-    { new: true },
+    { returnDocument: 'after' },
   )
 
   //if password is not updated throw error

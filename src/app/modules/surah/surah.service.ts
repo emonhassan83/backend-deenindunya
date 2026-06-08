@@ -132,7 +132,7 @@ const memorizeSurah = async (id: string, userId: string) => {
   const result = await SurahProgress.findOneAndUpdate(
     { userId, surahId: id },
     { isMemorized: true, memorizedAt: new Date() },
-    { upsert: true, new: true },
+    { upsert: true, returnDocument: 'after' },
   )
   if (!result) {
     throw new AppError(

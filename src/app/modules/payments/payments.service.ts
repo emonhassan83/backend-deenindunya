@@ -131,7 +131,7 @@ const confirmPayment = async (query: Record<string, any>) => {
         paymentStatus: PAYMENT_STATUS.paid,
         status: 'confirmed',
       },
-      { new: true, session },
+      { returnDocument: 'after', session },
     )
 
     if (!newSubscription) {
@@ -304,7 +304,7 @@ const refundPayment = async (payload: any) => {
     const payment = await Payment.findOneAndUpdate(
       { paymentIntentId: payload.intendId },
       { status: PAYMENT_STATUS.refunded, isPaid: false },
-      { new: true, session },
+      { returnDocument: 'after', session },
     )
 
     if (!payment) {

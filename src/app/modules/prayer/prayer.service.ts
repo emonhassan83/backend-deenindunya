@@ -205,7 +205,7 @@ const completedPayers = async (userId: string, query: Record<string, any>) => {
 
       return Prayer.findOneAndUpdate(filter, update, {
         upsert: true,
-        new: true,
+        returnDocument: 'after',
       })
     }),
   )

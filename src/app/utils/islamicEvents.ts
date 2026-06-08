@@ -123,7 +123,7 @@ const generateIslamicEventsForYear = async (hijriYear: number) => {
             user: null,
           },
         },
-        { upsert: true, new: false }
+        { upsert: true, returnDocument: 'after' }
       )
 
       if (existing === null) {
@@ -210,7 +210,7 @@ const seedMissingEventsForYear = async (hijriYear: number) => {
             user: null,
           },
         },
-        { upsert: true, new: false }
+        { upsert: true, returnDocument: 'after' }
       ) as any
 
       if (existing === null) {
