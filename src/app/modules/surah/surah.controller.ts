@@ -17,7 +17,7 @@ const getSurahs = catchAsync(async (req: Request, res: Response) => {
 
 const getSurahVerses = catchAsync(async (req: Request, res: Response) => {
   const result = await SurahService.getSurahVerses(
-    req.params.surahNumber,
+    req.params.surahNumber as string,
     req.query,
   )
 
@@ -32,7 +32,7 @@ const getSurahVerses = catchAsync(async (req: Request, res: Response) => {
 
 const memorizeSurah = catchAsync(async (req: Request, res: Response) => {
   const result = await SurahService.memorizeSurah(
-    req.params.id,
+    req.params.id as string,
     req.user._id,
   )
 

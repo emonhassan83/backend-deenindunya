@@ -25,7 +25,7 @@ const getAllMoods = catchAsync(async (req, res) => {
 })
 
 const deleteAFromDB = catchAsync(async (req, res) => {
-  const result = await MoodLogsService.deleteAFromDB(req.params.id)
+  const result = await MoodLogsService.deleteAFromDB(req.params.id as string)
 
   sendResponse(res, {
     success: true,

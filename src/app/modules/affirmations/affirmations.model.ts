@@ -42,14 +42,12 @@ const affirmationSchema = new Schema<TAffirmation>(
 affirmationSchema.index({ arabic_text: 'text', transliteration: 'text', english_meaning: 'text' })
 
 // Filter out deleted affirmations by default
-affirmationSchema.pre('find', function (next) {
+affirmationSchema.pre('find', function () {
   this.find({ isDeleted: { $ne: true } })
-  next()
 })
 
-affirmationSchema.pre('findOne', function (next) {
+affirmationSchema.pre('findOne', function () {
   this.find({ isDeleted: { $ne: true } })
-  next()
 })
 
 export const Affirmation = model<TAffirmation, TAffirmationModel>(

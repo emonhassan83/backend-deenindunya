@@ -62,13 +62,12 @@ const sunnahLogsSchema = new Schema<TSunnahLog>(
 sunnahLogsSchema.index({ deleteAt: 1 }, { expireAfterSeconds: 0 })
 
 // Pre-save middleware to ensure deleteAt is set (if not provided)
-sunnahLogsSchema.pre('save', function (next) {
+sunnahLogsSchema.pre('save', function () {
   if (!this.deleteAt) {
     const date = new Date()
     date.setDate(date.getDate() + 365)
     this.deleteAt = date
   }
-  next()
 })
 
 // Optional: Index for faster queries

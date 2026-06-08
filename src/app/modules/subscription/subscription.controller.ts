@@ -40,7 +40,7 @@ const getMySubscription = catchAsync(async (req: Request, res: Response) => {
 })
 
 const getSubscriptionById = catchAsync(async (req: Request, res: Response) => {
-  const result = await subscriptionService.getSubscriptionById(req.params.id)
+  const result = await subscriptionService.getSubscriptionById(req.params.id as string)
 
   sendResponse(res, {
     statusCode: 200,
@@ -52,7 +52,7 @@ const getSubscriptionById = catchAsync(async (req: Request, res: Response) => {
 
 const updateSubscription = catchAsync(async (req: Request, res: Response) => {
   const result = await subscriptionService.updateSubscription(
-    req.params.id,
+    req.params.id as string,
     req.body,
   )
 

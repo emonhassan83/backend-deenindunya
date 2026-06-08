@@ -78,7 +78,8 @@ const getSurahVerses = async (
     const verseQuery = new QueryBuilder(
       // @ts-ignores
       SurahVerse.find({
-        surahId: { $in: await getSurahObjectId(surahNum) },
+        // match by exact ObjectId (getSurahObjectId returns an ObjectId)
+        surahId: await getSurahObjectId(surahNum),
       }).select('verseNumber arabicText translation audioUrl'),
       query,
     )

@@ -52,13 +52,12 @@ const exerciseSchema = new Schema<TExercise>(
 exerciseSchema.index({ deleteAt: 1 }, { expireAfterSeconds: 0 })
 
 // Pre-save middleware to ensure deleteAt is set (if not provided)
-exerciseSchema.pre('save', function (next) {
+exerciseSchema.pre('save', function () {
   if (!this.deleteAt) {
     const date = new Date()
     date.setDate(date.getDate() + 365) // 365 days auto-delete
     this.deleteAt = date
   }
-  next()
 })
 
 exerciseSchema.index({ user: 1, category: 1, isCompleted: 1 })

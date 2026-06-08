@@ -59,7 +59,7 @@ const insertRoomTask = async (userId: string, payload: TRoomTask) => {
   }
 
   // validate user existence
-  const room = await Room.findOne({ _id: roomId, user: userId })
+  const room = await Room.findOne({ _id: roomId.toString(), user: userId })
   if (!room) {
     throw new AppError(httpStatus.NOT_FOUND, 'Room not found')
   }

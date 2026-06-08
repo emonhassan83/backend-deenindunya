@@ -156,7 +156,7 @@ const geUserByIdFromDB = async (id: string) => {
   // Check if user has an active subscription
   const activeSubscription = await Subscription.findOne({
     user: id,
-    status: 'confirmed',
+    status: SUBSCRIPTION_STATUS.active,
     isDeleted: false,
   });
 

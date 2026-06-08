@@ -26,7 +26,7 @@ const generateIslamicEventsForYear = async (year: number) => {
         title: event.title,
         description: event.description,
         date: gregorianDate,
-        user: null
+        user: null as any
       })
       createdEvents.push(newEvent)
     }

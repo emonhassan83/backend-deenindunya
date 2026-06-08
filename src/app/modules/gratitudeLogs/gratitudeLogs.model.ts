@@ -43,13 +43,12 @@ const gratitudeLogsSchema = new Schema<TGratitudeLogs>(
 gratitudeLogsSchema.index({ deleteAt: 1 }, { expireAfterSeconds: 0 })
 
 // Pre-save middleware to set deleteAt to 30 days from now if not provided
-gratitudeLogsSchema.pre('save', function (next) {
+gratitudeLogsSchema.pre('save', function () {
   if (!this.deleteAt) {
     const date = new Date()
     date.setDate(date.getDate() + 30)
     this.deleteAt = date
   }
-  next()
 })
 
 // Index for filtering and search

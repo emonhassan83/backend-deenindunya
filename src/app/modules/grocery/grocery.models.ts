@@ -44,13 +44,12 @@ listSchema.index({ user: 1, logAt: 1 })
 listSchema.index({ user: 1, isCompleted: 1 })
 
 // Pre-save middleware to ensure deleteAt is set
-listSchema.pre('save', function (next) {
+listSchema.pre('save', function () {
   if (!this.deleteAt) {
     const date = new Date()
     date.setDate(date.getDate() + 7)
     this.deleteAt = date
   }
-  next()
 })
 
 export const Grocery = model<TGrocery, TGroceryModel>('Grocery', listSchema)

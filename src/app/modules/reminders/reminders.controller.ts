@@ -26,7 +26,7 @@ const getAllIntoDB = catchAsync(async (req: Request, res: Response) => {
 })
 
 const toggleCompleteIntoDB = catchAsync(async (req: Request, res: Response) => {
-  const result = await ReminderService.toggleCompleteIntoDB(req.params.id)
+  const result = await ReminderService.toggleCompleteIntoDB(req.params.id as string)
 
   sendResponse(res, {
     statusCode: 200,
@@ -37,7 +37,7 @@ const toggleCompleteIntoDB = catchAsync(async (req: Request, res: Response) => {
 })
 
 const deleteAIntoDB = catchAsync(async (req: Request, res: Response) => {
-  const result = await ReminderService.deleteAIntoDB(req.params.id)
+  const result = await ReminderService.deleteAIntoDB(req.params.id as string)
 
   sendResponse(res, {
     statusCode: 200,

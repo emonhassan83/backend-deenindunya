@@ -38,13 +38,12 @@ const waterIntakeSchema = new Schema<TWaterIntake>(
 waterIntakeSchema.index({ deleteAt: 1 }, { expireAfterSeconds: 0 })
 
 // Pre-save middleware: set deleteAt to 7 days from now if not provided
-waterIntakeSchema.pre('save', function (next) {
+waterIntakeSchema.pre('save', function () {
   if (!this.deleteAt) {
     const date = new Date()
     date.setDate(date.getDate() + 7)
     this.deleteAt = date
   }
-  next()
 })
 
 // Index for filtering by user and date

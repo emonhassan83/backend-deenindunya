@@ -185,43 +185,38 @@ const completedPayers = async (userId: string, query: Record<string, any>) => {
   // List of all prayers
   const prayerNames = ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha']
 
-  let updatedCount = 0
-  let createdCount = 0
-
-  // Update or create each prayer
-  for (const prayerName of prayerNames) {
-    const result = await Prayer.findOneAndUpdate(
-      {
+  // অপ্টিমাইজেশন: লুপের ভেতর বারবার ডাটাবেজ কোয়েরি না করে Promise.all ব্যবহার করা হয়েছে
+  await Promise.all(
+    prayerNames.map((prayerName) => {
+      const filter = {
         user: userId,
         name: prayerName,
         date: date,
-      },
-      {
-        user: userId,
-        name: prayerName,
-        date: date,
-        prayed: true,
-      },
-      {
-        upsert: true, // Create if doesn't exist
-        new: true, // Return updated document
-      },
-    )
+      } as any
 
-    if (result) {
-      if (result.isNew) {
-        createdCount++
-      } else {
-        updatedCount++
-      }
-    }
-  }
+      const update = {
+        $set: {
+          user: userId,
+          name: prayerName,
+          date: date,
+          prayed: true,
+        },
+      } as any
+
+      return Prayer.findOneAndUpdate(filter, update, {
+        upsert: true,
+        new: true,
+      })
+    }),
+  )
 
   // Get all prayers for the date to return
-  const prayers = await Prayer.find({
-    user: userId,
-    date: date,
-  }).sort({ name: 1 })
+  const prayers = await Prayer.find(
+    {
+      user: userId,
+      date: date,
+    } as any,
+  ).sort({ name: 1 })
 
   return {
     prayers: prayers.map((p) => ({

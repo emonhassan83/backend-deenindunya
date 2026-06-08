@@ -26,7 +26,7 @@ const getAllAmbitions = catchAsync(async (req, res) => {
 
 const toggleComplete = catchAsync(async (req, res) => {
   const result = await AmbitionService.toggleCompleteStatus(
-    req.params.id,
+    req.params.id as string,
     req.user._id
   )
 
@@ -39,7 +39,7 @@ const toggleComplete = catchAsync(async (req, res) => {
 })
 
 const deleteAmbition = catchAsync(async (req, res) => {
-  const result = await AmbitionService.deleteFromDB(req.params.id, req.user._id)
+  const result = await AmbitionService.deleteFromDB(req.params.id as string, req.user._id)
 
   sendResponse(res, {
     success: true,

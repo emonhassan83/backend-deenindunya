@@ -3,7 +3,7 @@ import { TPayment, TPaymentModel } from './payments.interface'
 import { PAYMENT_STATUS } from './payments.constants'
 
 // Define the Mongoose schema
-const PaymentSchema = new Schema<TPayment>(
+const paymentSchema = new Schema<TPayment>(
   {
     user: {
       type: Schema.Types.ObjectId,
@@ -44,23 +44,19 @@ const PaymentSchema = new Schema<TPayment>(
 )
 
 // filter out payment data
-PaymentSchema.pre('find', function (next) {
-  //@ts-ignore
+paymentSchema.pre('find', function () {
   this.find({ isDeleted: { $ne: true } })
-  next()
 })
 
-PaymentSchema.pre('findOne', function (next) {
-  //@ts-ignore
+paymentSchema.pre('findOne', function () {
   this.find({ isDeleted: { $ne: true } })
-  next()
 })
 
-PaymentSchema.pre('aggregate', function (next) {
+paymentSchema.pre('aggregate', function () {
   this.pipeline().unshift({ $match: { isDeleted: { $ne: true } } })
-  next()
 })
+
 // Create and export the model
-const Payment = model<TPayment, TPaymentModel>('Payment', PaymentSchema)
+const Payment = model<TPayment, TPaymentModel>('Payment', paymentSchema)
 
 export default Payment
