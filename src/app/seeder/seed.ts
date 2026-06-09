@@ -13,7 +13,7 @@ const adminUser = {
     otp: '0',
     status: true,
   },
-  expireAt: null,
+  expireAt: null as any,
 }
 
 // Function to seed admin

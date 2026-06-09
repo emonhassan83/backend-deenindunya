@@ -4,13 +4,13 @@ const createValidationSchema = z.object({
   body: z.object({
     title: z
       .string({
-        required_error: 'Package title is required!',
+        message: 'Package title is required!',
       })
       .min(5)
       .max(255),
     description: z.array(
       z.string({
-        required_error: 'Description point is required!',
+        message: 'Description point is required!',
       }),
     ),
     price: z
@@ -25,7 +25,7 @@ const updateValidationSchema = z.object({
     title: z.string().min(1, 'Package title is required').optional(),
     description: z
       .string({
-        required_error: 'Description point is required!',
+        message: 'Description point is required!',
       })
       .optional(),
     price: z.number().min(0, 'Price must be a positive number').optional(),

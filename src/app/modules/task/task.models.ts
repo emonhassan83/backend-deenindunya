@@ -50,13 +50,12 @@ taskSchema.index({ user: 1, isCompleted: 1 })
 taskSchema.index({ user: 1, logAt: 1, type: 1 })
 
 // Pre-save middleware to ensure deleteAt is set
-taskSchema.pre('save', function (next) {
+taskSchema.pre('save', function () {
   if (!this.deleteAt) {
     const date = new Date()
     date.setDate(date.getDate() + 30)
     this.deleteAt = date
   }
-  next()
 })
 
 export const Task = model<TTask, TTaskModel>('Task', taskSchema)

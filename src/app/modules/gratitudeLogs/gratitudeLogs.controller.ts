@@ -25,9 +25,8 @@ const getAllGratitudeLogs = catchAsync(async (req, res) => {
 })
 
 const updateGratitudeLog = catchAsync(async (req, res) => {
-  const userId = req.user.userId
   const result = await GratitudeLogsService.updateIntoDB(
-    req.params.id,
+    req.params.id as string,
     req.user._id,
     req.body,
   )
@@ -42,7 +41,7 @@ const updateGratitudeLog = catchAsync(async (req, res) => {
 
 const deleteGratitudeLog = catchAsync(async (req, res) => {
   const result = await GratitudeLogsService.deleteFromDB(
-    req.params.id,
+    req.params.id as string,
     req.user._id,
   )
 

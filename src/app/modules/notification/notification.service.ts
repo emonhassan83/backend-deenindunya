@@ -85,9 +85,9 @@ const markAsDoneFromDB = async (id: string) => {
       $set: {
         read: true,
       },
-    },
-    { new: true },
+    }
   )
+  
   return result
 }
 

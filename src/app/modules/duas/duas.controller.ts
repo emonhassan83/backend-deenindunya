@@ -26,7 +26,7 @@ const getAllDuas = catchAsync(async (req, res) => {
 })
 
 const getSingleDua = catchAsync(async (req, res) => {
-  const result = await DuasService.getSingleFromDB(req.params.id)
+  const result = await DuasService.getSingleFromDB(req.params.id as string)
 
   sendResponse(res, {
     success: true,
@@ -37,7 +37,7 @@ const getSingleDua = catchAsync(async (req, res) => {
 })
 
 const updateDua = catchAsync(async (req, res) => {
-  const result = await DuasService.updateIntoDB(req.params.id, req.body)
+  const result = await DuasService.updateIntoDB(req.params.id as string, req.body)
 
   sendResponse(res, {
     success: true,
@@ -48,7 +48,7 @@ const updateDua = catchAsync(async (req, res) => {
 })
 
 const deleteDua = catchAsync(async (req, res) => {
-  const result = await DuasService.deleteFromDB(req.params.id)
+  const result = await DuasService.deleteFromDB(req.params.id as string)
 
   sendResponse(res, {
     success: true,

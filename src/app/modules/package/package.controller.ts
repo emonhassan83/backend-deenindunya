@@ -28,7 +28,7 @@ const getAllPackages = catchAsync(async (req, res) => {
 
 const updatePackage = catchAsync(async (req, res) => {
   const result = await PackageService.updatePackageFromDB(
-    req.params.id,
+    req.params.id as string,
     req.body,
   )
 

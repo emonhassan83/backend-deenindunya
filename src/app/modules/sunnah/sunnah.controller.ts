@@ -27,7 +27,7 @@ const getAllIntoDB = catchAsync(async (req: Request, res: Response) => {
 })
 
 const updateIntoDB = catchAsync(async (req: Request, res: Response) => {
-  const result = await SunnahService.updateIntoDB(req.params.id, req.body)
+  const result = await SunnahService.updateIntoDB(req.params.id as string, req.body)
 
   sendResponse(res, {
     statusCode: 200,
@@ -38,7 +38,7 @@ const updateIntoDB = catchAsync(async (req: Request, res: Response) => {
 })
 
 const deleteAIntoDB = catchAsync(async (req: Request, res: Response) => {
-  const result = await SunnahService.deleteAIntoDB(req.params.id)
+  const result = await SunnahService.deleteAIntoDB(req.params.id as string)
 
   sendResponse(res, {
     statusCode: 200,
@@ -61,7 +61,7 @@ const getUserSunnahs = catchAsync(async (req: Request, res: Response) => {
 })
 
 const toggleLogs = catchAsync(async (req: Request, res: Response) => {
-  const result = await SunnahService.toggleSunnahLog(req.user._id, req.params.id, req.body)
+  const result = await SunnahService.toggleSunnahLog(req.user._id, req.params.id as string, req.body)
 
   sendResponse(res, {
     statusCode: 200,

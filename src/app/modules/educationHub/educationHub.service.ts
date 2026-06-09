@@ -163,7 +163,7 @@ const readLesson = async (id: string, userId: string) => {
   const result = await LessonLogs.findOneAndUpdate(
     { user: userId, lesson: id },
     { isRead: true, readAt: new Date() },
-    { upsert: true, new: true },
+    { upsert: true, returnDocument: 'after' },
   )
   if (!result) {
     throw new AppError(

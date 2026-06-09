@@ -26,7 +26,7 @@ const getAllAffirmations = catchAsync(async (req, res) => {
 })
 
 const getSingleAffirmation = catchAsync(async (req, res) => {
-  const result = await AffirmationService.getSingleFromDB(req.params.id)
+  const result = await AffirmationService.getSingleFromDB(req.params.id as string)
 
   sendResponse(res, {
     success: true,
@@ -37,7 +37,7 @@ const getSingleAffirmation = catchAsync(async (req, res) => {
 })
 
 const updateAffirmation = catchAsync(async (req, res) => {
-  const result = await AffirmationService.updateIntoDB(req.params.id, req.body)
+  const result = await AffirmationService.updateIntoDB(req.params.id as string, req.body)
 
   sendResponse(res, {
     success: true,
@@ -48,7 +48,7 @@ const updateAffirmation = catchAsync(async (req, res) => {
 })
 
 const deleteAffirmation = catchAsync(async (req, res) => {
-  const result = await AffirmationService.deleteFromDB(req.params.id)
+  const result = await AffirmationService.deleteFromDB(req.params.id as string)
 
   sendResponse(res, {
     success: true,

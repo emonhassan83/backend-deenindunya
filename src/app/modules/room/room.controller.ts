@@ -37,7 +37,7 @@ const getAllIntoDB = catchAsync(async (req: Request, res: Response) => {
 })
 
 const toggleTaskStatus = catchAsync(async (req: Request, res: Response) => {
-  const result = await RoomService.toggleTaskStatus(req.params.id, req.user._id)
+  const result = await RoomService.toggleTaskStatus(req.params.id as string, req.user._id)
 
   sendResponse(res, {
     statusCode: 200,
@@ -48,7 +48,7 @@ const toggleTaskStatus = catchAsync(async (req: Request, res: Response) => {
 })
 
 const deleteAIntoDB = catchAsync(async (req: Request, res: Response) => {
-  const result = await RoomService.deleteAIntoDB(req.params.id)
+  const result = await RoomService.deleteAIntoDB(req.params.id as string)
 
   sendResponse(res, {
     statusCode: 200,
@@ -59,7 +59,7 @@ const deleteAIntoDB = catchAsync(async (req: Request, res: Response) => {
 })
 
 const deleteARoomTask = catchAsync(async (req: Request, res: Response) => {
-  const result = await RoomService.deleteARoomTask(req.params.id)
+  const result = await RoomService.deleteARoomTask(req.params.id as string)
 
   sendResponse(res, {
     statusCode: 200,

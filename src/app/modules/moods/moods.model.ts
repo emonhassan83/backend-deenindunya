@@ -58,13 +58,12 @@ const moodLogsSchema = new Schema<TMoodLogs>(
 moodLogsSchema.index({ deleteAt: 1 }, { expireAfterSeconds: 0 })
 
 // Pre-save middleware to ensure deleteAt is set (if not provided)
-moodLogsSchema.pre('save', function (next) {
+moodLogsSchema.pre('save', function () {
   if (!this.deleteAt) {
     const date = new Date()
     date.setDate(date.getDate() + 30) // 30 days auto-delete
     this.deleteAt = date
   }
-  next()
 })
 
 // Compound index: one mood log per user per day

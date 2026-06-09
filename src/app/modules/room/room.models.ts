@@ -81,23 +81,21 @@ roomTaskSchema.index({ room: 1, isCompleted: 1 })
 roomTaskSchema.index({ room: 1, deleteAt: 1 })
 
 // Pre-save middleware for Room
-roomSchema.pre('save', function (next) {
+roomSchema.pre('save', function () {
   if (!this.deleteAt) {
     const date = new Date()
     date.setDate(date.getDate() + 7)
     this.deleteAt = date
   }
-  next()
 })
 
 // Pre-save middleware for RoomTask
-roomTaskSchema.pre('save', function (next) {
+roomTaskSchema.pre('save', function () {
   if (!this.deleteAt) {
     const date = new Date()
     date.setDate(date.getDate() + 7)
     this.deleteAt = date
   }
-  next()
 })
 
 export const Room = model<TRoom, TRoomModel>('Room', roomSchema)

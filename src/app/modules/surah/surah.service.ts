@@ -78,7 +78,8 @@ const getSurahVerses = async (
     const verseQuery = new QueryBuilder(
       // @ts-ignores
       SurahVerse.find({
-        surahId: { $in: await getSurahObjectId(surahNum) },
+        // match by exact ObjectId (getSurahObjectId returns an ObjectId)
+        surahId: await getSurahObjectId(surahNum),
       }).select('verseNumber arabicText translation audioUrl'),
       query,
     )
@@ -131,7 +132,7 @@ const memorizeSurah = async (id: string, userId: string) => {
   const result = await SurahProgress.findOneAndUpdate(
     { userId, surahId: id },
     { isMemorized: true, memorizedAt: new Date() },
-    { upsert: true, new: true },
+    { upsert: true, returnDocument: 'after' },
   )
   if (!result) {
     throw new AppError(

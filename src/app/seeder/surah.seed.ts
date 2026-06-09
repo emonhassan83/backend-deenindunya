@@ -76,7 +76,7 @@ async function seedQuranData() {
         totalVerses: surah.totalAyah || 0,
     
       },
-      { upsert: true, new: true }
+      { upsert: true, returnDocument: 'after' }
     );
 
     // Check per-surah detail cache

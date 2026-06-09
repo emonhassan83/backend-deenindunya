@@ -26,7 +26,7 @@ const getAllIntoDB = catchAsync(async (req: Request, res: Response) => {
 })
 
 const changedStatus = catchAsync(async (req: Request, res: Response) => {
-  const result = await TaskService.changedStatusIntoDB(req.params.id)
+  const result = await TaskService.changedStatusIntoDB(req.params.id as string)
 
   sendResponse(res, {
     statusCode: 200,
@@ -37,7 +37,7 @@ const changedStatus = catchAsync(async (req: Request, res: Response) => {
 })
 
 const deleteAIntoDB = catchAsync(async (req: Request, res: Response) => {
-  const result = await TaskService.deleteAIntoDB(req.params.id)
+  const result = await TaskService.deleteAIntoDB(req.params.id as string)
 
   sendResponse(res, {
     statusCode: 200,

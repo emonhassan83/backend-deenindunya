@@ -1,7 +1,7 @@
 import { z } from 'zod'
 
 const prayerNameSchema = z.enum(['fajr', 'dhuhr', 'asr', 'maghrib', 'isha'], {
-  required_error: 'Prayer name is required!',
+  message: 'Prayer name is required!',
 })
 
 const dateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, {

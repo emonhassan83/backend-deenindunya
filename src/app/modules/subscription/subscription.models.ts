@@ -19,19 +19,16 @@ const subscriptionsSchema = new Schema<TSubscriptions>(
 )
 
 // filter out subscription
-subscriptionsSchema.pre('find', function (next) {
+subscriptionsSchema.pre('find', function () {
   this.find({ isDeleted: { $ne: true } })
-  next()
 })
 
-subscriptionsSchema.pre('findOne', function (next) {
+subscriptionsSchema.pre('findOne', function () {
   this.find({ isDeleted: { $ne: true } })
-  next()
 })
 
-subscriptionsSchema.pre('aggregate', function (next) {
+subscriptionsSchema.pre('aggregate', function () {
   this.pipeline().unshift({ $match: { isDeleted: { $ne: true } } })
-  next()
 })
 
 // Create and export the model

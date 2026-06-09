@@ -26,7 +26,7 @@ const getAllIntoDB = catchAsync(async (req: Request, res: Response) => {
 })
 
 const toggleComplete = catchAsync(async (req: Request, res: Response) => {
-  const result = await GroceryService.changedStatusIntoDB(req.params.id, req.user._id)
+  const result = await GroceryService.changedStatusIntoDB(req.params.id as string, req.user._id)
 
   sendResponse(res, {
     statusCode: 200,
@@ -37,7 +37,7 @@ const toggleComplete = catchAsync(async (req: Request, res: Response) => {
 })
 
 const deleteAIntoDB = catchAsync(async (req: Request, res: Response) => {
-  const result = await GroceryService.deleteAIntoDB(req.params.id)
+  const result = await GroceryService.deleteAIntoDB(req.params.id as string)
 
   sendResponse(res, {
     statusCode: 200,

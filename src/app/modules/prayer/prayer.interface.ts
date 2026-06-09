@@ -3,7 +3,7 @@ import { TPrayerName } from './prayer.constants'
 
 export interface TPrayer {
   _id?: string
-  user: Types.ObjectId
+  user: Types.ObjectId | string
   name: TPrayerName
   date: string
   prayed: boolean

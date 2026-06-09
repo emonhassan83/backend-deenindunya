@@ -4,11 +4,11 @@ import { EVENT_TYPE } from './event.constants'
 const createValidationSchema = z.object({
   body: z.object({
     type: z.enum(Object.values(EVENT_TYPE) as [string, ...string[]], {
-      required_error: 'Event type is required!',
+      message: 'Event type is required!',
     }),
-    title: z.string({ required_error: 'Title is required' }),
+    title: z.string({ message: 'Title is required' }),
     description: z.string().optional(),
-    date: z.string({ required_error: 'Date is required' }),
+    date: z.string({ message: 'Date is required' }),
   }),
 })
 
