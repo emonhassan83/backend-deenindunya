@@ -1,3 +1,36 @@
+Date/Session: 2026-07-01 (Session 4)
+
+Completed Tasks:
+- Unified Socket.io server and Express app on the same network port (`config.port`), mirroring the single-port architecture from `gas-delivery-backend`.
+- Implemented industry-standard Redis caching across 15 core module services, ensuring all service return signatures are preserved.
+- Integrated automatic cache invalidation (deletion of keys by prefix pattern) on any creation, update, deletion, or status toggle writes.
+- Modified the cache keys to persist indefinitely (no TTL) so that user and admin data remain cached permanently until invalidated by new inserts or modifications.
+- Verified compilation, built and ran the application inside Docker containers successfully.
+
+Key Changes:
+- Modified [server.ts](file:///d:/bd-calling/task/backend-deenduniya/server/src/server.ts) to share `server = createServer(app)` with `initializeSocketIO(server)` on the same port.
+- Integrated caching and cache key invalidation on mutation in 15 service files:
+  - [reminders.service.ts](file:///d:/bd-calling/task/backend-deenduniya/server/src/app/modules/reminders/reminders.service.ts)
+  - [task.service.ts](file:///d:/bd-calling/task/backend-deenduniya/server/src/app/modules/task/task.service.ts)
+  - [event.service.ts](file:///d:/bd-calling/task/backend-deenduniya/server/src/app/modules/event/event.service.ts)
+  - [grocery.service.ts](file:///d:/bd-calling/task/backend-deenduniya/server/src/app/modules/grocery/grocery.service.ts)
+  - [room.service.ts](file:///d:/bd-calling/task/backend-deenduniya/server/src/app/modules/room/room.service.ts)
+  - [prayer.service.ts](file:///d:/bd-calling/task/backend-deenduniya/server/src/app/modules/prayer/prayer.service.ts) (including caching external Aladhan API prayer timings)
+  - [sunnah.service.ts](file:///d:/bd-calling/task/backend-deenduniya/server/src/app/modules/sunnah/sunnah.service.ts)
+  - [duas.service.ts](file:///d:/bd-calling/task/backend-deenduniya/server/src/app/modules/duas/duas.service.ts)
+  - [surah.service.ts](file:///d:/bd-calling/task/backend-deenduniya/server/src/app/modules/surah/surah.service.ts)
+  - [waterIntake.service.ts](file:///d:/bd-calling/task/backend-deenduniya/server/src/app/modules/waterIntake/waterIntake.service.ts)
+  - [exercises.service.ts](file:///d:/bd-calling/task/backend-deenduniya/server/src/app/modules/exercises/exercises.service.ts)
+  - [gratitudeLogs.service.ts](file:///d:/bd-calling/task/backend-deenduniya/server/src/app/modules/gratitudeLogs/gratitudeLogs.service.ts)
+  - [affirmations.service.ts](file:///d:/bd-calling/task/backend-deenduniya/server/src/app/modules/affirmations/affirmations.service.ts)
+  - [ambitions.service.ts](file:///d:/bd-calling/task/backend-deenduniya/server/src/app/modules/ambitions/ambitions.service.ts)
+  - [educationHub.service.ts](file:///d:/bd-calling/task/backend-deenduniya/server/src/app/modules/educationHub/educationHub.service.ts)
+
+Pending/Next Steps:
+- None.
+
+---
+
 Date/Session: 2026-07-01 (Session 3)
 
 Completed Tasks:

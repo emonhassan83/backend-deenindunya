@@ -5,6 +5,7 @@ import { Exercise } from './exercises.model'
 import { User } from '../user/user.model'
 import mongoose from 'mongoose'
 import moment from 'moment'
+import { getCache, setCache, deleteCachePattern } from '../../redis/helpers'
 
 const insertIntoDB = async (
   payload: TExercise,
@@ -21,10 +22,20 @@ const insertIntoDB = async (
 
   // Create new exercise
   const result = await Exercise.create(payload)
+
+  // Invalidate cache
+  await deleteCachePattern(`exercise:${userId}`)
+
   return result
 }
 
 const getAllFromDB = async (userId: string) => {
+  const cacheKey = `exercise:${userId}`
+  const cachedData = await getCache<any>(cacheKey)
+  if (cachedData) {
+    return cachedData
+  }
+
   // 1. Fetch user to get timezone (optional)
   const user = await User.findById(userId).select('timezone').lean()
   if (!user || user.isDeleted) {
@@ -67,14 +78,17 @@ const getAllFromDB = async (userId: string) => {
     }
   }
 
-  // 6. Return simplified response
-  return {
+  const result = {
     completedExercise: completed,
     incompleteExercise: incomplete,
     progress,
     rawExercise: streak,
     exercise: todayExercises,
   }
+
+  await setCache(cacheKey, result)
+
+  return result
 }
 
 const updateIntoDB = async (
@@ -99,6 +113,9 @@ const updateIntoDB = async (
   if (!updated) {
     throw new AppError(httpStatus.BAD_REQUEST, 'Failed to update exercise')
   }
+
+  // Invalidate cache
+  await deleteCachePattern(`exercise:${userId}`)
 
   return updated
 }
@@ -132,6 +149,9 @@ const toggleCompleteStatus = async (
     )
   }
 
+  // Invalidate cache
+  await deleteCachePattern(`exercise:${userId}`)
+
   return updated
 }
 
@@ -149,6 +169,9 @@ const deleteFromDB = async (id: string, userId: string): Promise<TExercise> => {
   if (!result) {
     throw new AppError(httpStatus.CONFLICT, 'Exercise deletion failed!')
   }
+
+  // Invalidate cache
+  await deleteCachePattern(`exercise:${userId}`)
 
   return result
 }

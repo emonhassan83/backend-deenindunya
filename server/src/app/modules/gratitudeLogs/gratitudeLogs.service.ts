@@ -3,16 +3,8 @@ import AppError from '../../errors/AppError'
 import { TGratitudeLogs } from './gratitudeLogs.interface'
 import { GratitudeLog } from './gratitudeLogs.model'
 import { User } from '../user/user.model'
-import {
-  startOfDay,
-  endOfDay,
-  startOfWeek,
-  endOfWeek,
-  startOfMonth,
-  endOfMonth,
-  subDays,
-} from 'date-fns'
 import mongoose from 'mongoose'
+import { getCache, setCache, deleteCachePattern } from '../../redis/helpers'
 
 const insertIntoDB = async (
   payload: TGratitudeLogs,
@@ -29,10 +21,20 @@ const insertIntoDB = async (
 
   // Create new gratitude log
   const result = await GratitudeLog.create(payload)
+
+  // Invalidate cache
+  await deleteCachePattern(`gratitude:${userId}`)
+
   return result
 }
 
 const getAllFromDB = async (userId: string) => {
+  const cacheKey = `gratitude:${userId}`
+  const cachedData = await getCache<any>(cacheKey)
+  if (cachedData) {
+    return cachedData
+  }
+
   const user = await User.findById(userId).select('_id').lean()
   if (!user || user.isDeleted) {
     throw new AppError(httpStatus.NOT_FOUND, 'User not found!')
@@ -55,6 +57,8 @@ const getAllFromDB = async (userId: string) => {
   }).select('type title logAt')
     .sort({ logAt: -1, createdAt: -1 })
     .lean()
+
+  await setCache(cacheKey, logs)
 
   return logs
 }
@@ -84,6 +88,9 @@ const updateIntoDB = async (
     throw new AppError(httpStatus.BAD_REQUEST, 'Failed to update gratitude log')
   }
 
+  // Invalidate cache
+  await deleteCachePattern(`gratitude:${userId}`)
+
   return updated
 }
 
@@ -103,6 +110,9 @@ const deleteFromDB = async (
   if (!result) {
     throw new AppError(httpStatus.CONFLICT, 'Gratitude log deletion failed!')
   }
+
+  // Invalidate cache
+  await deleteCachePattern(`gratitude:${userId}`)
 
   return result
 }

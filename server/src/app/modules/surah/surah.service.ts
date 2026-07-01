@@ -3,6 +3,7 @@ import AppError from '../../errors/AppError'
 import QueryBuilder from '../../builder/QueryBuilder'
 import { Surah, SurahProgress, SurahVerse } from './surah.models'
 import { User } from '../user/user.model'
+import { getCache, setCache, deleteCachePattern } from '../../redis/helpers'
 
 /**
  * Get list of all Surahs with search, filter, pagination, sorting & field selection
@@ -11,6 +12,12 @@ const getSurahs = async (query: Record<string, any>, userId: string) => {
   const user = await User.findById(userId)
   if (!user || user?.isDeleted) {
     throw new AppError(httpStatus.NOT_FOUND, 'User not found')
+  }
+
+  const cacheKey = `surah:list:${userId}:${JSON.stringify(query)}`
+  const cachedData = await getCache<any>(cacheKey)
+  if (cachedData) {
+    return cachedData
   }
 
   try {
@@ -46,13 +53,17 @@ const getSurahs = async (query: Record<string, any>, userId: string) => {
 
     const totalMemorized = progress.filter((p) => p.isMemorized).length
 
-    return {
+    const result = {
       data: {
         totalMemorized,
         surahLists: enrichedSurahs,
       },
       meta,
     }
+
+    await setCache(cacheKey, result)
+
+    return result
   } catch (error: any) {
     throw new AppError(
       httpStatus.INTERNAL_SERVER_ERROR,
@@ -68,13 +79,18 @@ const getSurahVerses = async (
   surahNumber: string | number, // Better to use surah number instead of _id
   query: Record<string, any>,
 ) => {
-  try {
-    // Validate surahNumber
-    const surahNum = Number(surahNumber)
-    if (isNaN(surahNum) || surahNum < 1 || surahNum > 114) {
-      throw new AppError(httpStatus.BAD_REQUEST, 'Invalid Surah number')
-    }
+  const surahNum = Number(surahNumber)
+  if (isNaN(surahNum) || surahNum < 1 || surahNum > 114) {
+    throw new AppError(httpStatus.BAD_REQUEST, 'Invalid Surah number')
+  }
 
+  const cacheKey = `surah:verses:${surahNum}:${JSON.stringify(query)}`
+  const cachedData = await getCache<any>(cacheKey)
+  if (cachedData) {
+    return cachedData
+  }
+
+  try {
     const verseQuery = new QueryBuilder(
       // @ts-ignores
       SurahVerse.find({
@@ -97,10 +113,14 @@ const getSurahVerses = async (
       verseQuery.countTotal(),
     ])
 
-    return {
+    const result = {
       data,
       meta,
     }
+
+    await setCache(cacheKey, result)
+
+    return result
   } catch (error: any) {
     if (error instanceof AppError) throw error
 
@@ -140,6 +160,9 @@ const memorizeSurah = async (id: string, userId: string) => {
       'Failed to update memorization status',
     )
   }
+
+  // Invalidate list cache
+  await deleteCachePattern(`surah:list:${userId}:*`)
 
   return result
 }

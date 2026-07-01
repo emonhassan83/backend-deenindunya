@@ -5,6 +5,7 @@ import { User } from '../user/user.model'
 import { Room, RoomTask } from './room.models'
 import QueryBuilder from '../../builder/QueryBuilder'
 import { isValidDate } from '../../utils/isValidDate'
+import { getCache, setCache, deleteCachePattern } from '../../redis/helpers'
 
 // Create a new Room
 const insertIntoDB = async (userId: string, payload: TRoom) => {
@@ -46,6 +47,9 @@ const insertIntoDB = async (userId: string, payload: TRoom) => {
     throw new AppError(httpStatus.BAD_REQUEST, 'Room creation failed')
   }
 
+  // Invalidate cache
+  await deleteCachePattern(`room:${userId}:*`)
+
   return result
 }
 
@@ -68,6 +72,9 @@ const insertRoomTask = async (userId: string, payload: TRoomTask) => {
   if (!result) {
     throw new AppError(httpStatus.BAD_REQUEST, 'Room task creation failed')
   }
+
+  // Invalidate cache
+  await deleteCachePattern(`room:${userId}:*`)
 
   return result
 }
@@ -92,6 +99,12 @@ const getAllIntoDB = async (query: Record<string, any>, userId: string) => {
   const user = await User.findById(userId)
   if (!user || user?.isDeleted) {
     throw new AppError(httpStatus.NOT_FOUND, 'User not found!')
+  }
+
+  const cacheKey = `room:${userId}:${date}`
+  const cachedData = await getCache<any>(cacheKey)
+  if (cachedData) {
+    return cachedData
   }
 
   // Get rooms for the date
@@ -152,12 +165,16 @@ const getAllIntoDB = async (query: Record<string, any>, userId: string) => {
   const overallProgress =
     totalTasks > 0 ? Math.round((totalCompletedTasks / totalTasks) * 100) : 0
 
-  return {
+  const result = {
     totalTask: totalTasks,           // ✅ Total tasks across all rooms
     completedTask: totalCompletedTasks,
     progress: overallProgress,
     data: roomsWithTasks,
   }
+
+  await setCache(cacheKey, result)
+
+  return result
 }
 
 // Toggle Room task status
@@ -181,6 +198,9 @@ const toggleTaskStatus = async (id: string, userId: string) => {
     )
   }
 
+  // Invalidate cache
+  await deleteCachePattern(`room:${userId}:*`)
+
   return result
 }
 
@@ -199,19 +219,29 @@ const deleteAIntoDB = async (id: string) => {
     throw new AppError(httpStatus.BAD_REQUEST, 'Room deletion failed')
   }
 
+  // Invalidate cache
+  await deleteCachePattern(`room:${room.user}:*`)
+
   return result
 }
 
-// Delete Room
+// Delete Room Task
 const deleteARoomTask = async (id: string) => {
   const task = await RoomTask.findById(id)
   if (!task) {
     throw new AppError(httpStatus.NOT_FOUND, 'Room task not found!')
   }
 
+  const room = await Room.findById(task.room)
+
   const result = await RoomTask.findByIdAndDelete(id)
   if (!result) {
     throw new AppError(httpStatus.BAD_REQUEST, 'Room task deletion failed')
+  }
+
+  if (room) {
+    // Invalidate cache
+    await deleteCachePattern(`room:${room.user}:*`)
   }
 
   return result

@@ -8,8 +8,8 @@ import colors from 'colors';
 import { connectRedis } from './app/config/redis.config'
 import { startWorkers } from './app/worker'
 
-let server: Server
-export const io = initializeSocketIO(createServer(app))
+const server: Server = createServer(app)
+export const io = initializeSocketIO(server)
 
 async function main() {
   try {
@@ -20,7 +20,7 @@ async function main() {
 
     startWorkers()
 
-    server = app.listen(Number(config.port), '0.0.0.0', () => {
+    server.listen(Number(config.port), '0.0.0.0', () => {
       console.log(
         colors.italic.green.bold(
           `💫 Simple Server Listening on  http://${config?.ip}:${config.port} `,
@@ -29,13 +29,12 @@ async function main() {
       logger.info(`app is listening on  http://${config?.ip}:${config.port}`)
     })
 
-    io.listen(Number(config.socket_port))
     console.log(
       colors.yellow.bold(
-        `⚡Socket.io running on  http://${config.ip}:${config.socket_port}`,
+        `⚡Socket.io running on  http://${config.ip}:${config.port}`,
       ),
     );
-    logger.info(`Socket is listening on http://${config.ip}:${config.socket_port}`)
+    logger.info(`Socket is listening on http://${config.ip}:${config.port}`)
 
     //@ts-ignore
     global.socketio = io

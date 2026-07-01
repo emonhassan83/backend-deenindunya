@@ -4,6 +4,7 @@ import { User } from '../user/user.model'
 import QueryBuilder from '../../builder/QueryBuilder'
 import { Sunnah, SunnahLog } from './sunnah.models'
 import { TSunnah } from './sunnah.interface'
+import { getCache, setCache, deleteCachePattern } from '../../redis/helpers'
 
 // Create a new sunnah
 const insertIntoDB = async (payload: TSunnah) => {
@@ -19,11 +20,20 @@ const insertIntoDB = async (payload: TSunnah) => {
   if (!result)
     throw new AppError(httpStatus.BAD_REQUEST, 'Sunnah creation failed')
 
+  // Invalidate cache
+  await deleteCachePattern('sunnah:*')
+
   return result
 }
 
 // Get all sunnahs with pagination, search, filter, sort and field selection
 const getAllIntoDB = async (query: Record<string, any>) => {
+  const cacheKey = `sunnah:admin:${JSON.stringify(query)}`
+  const cachedData = await getCache<any>(cacheKey)
+  if (cachedData) {
+    return cachedData
+  }
+
   const qb = new QueryBuilder(Sunnah.find({ isDeleted: false }), query)
     .search(['title'])
     .filter()
@@ -34,7 +44,10 @@ const getAllIntoDB = async (query: Record<string, any>) => {
   const data = await qb.modelQuery
   const meta = await qb.countTotal()
 
-  return { data, meta }
+  const result = { data, meta }
+  await setCache(cacheKey, result)
+
+  return result
 }
 
 const updateIntoDB = async (id: string, payload: Partial<TSunnah>) => {
@@ -45,6 +58,10 @@ const updateIntoDB = async (id: string, payload: Partial<TSunnah>) => {
 
   const result = await Sunnah.findByIdAndUpdate(id, payload, { new: true })
   if (!result) throw new AppError(httpStatus.NOT_FOUND, 'Sunnah not found')
+
+  // Invalidate cache
+  await deleteCachePattern('sunnah:*')
+
   return result
 }
 
@@ -61,6 +78,10 @@ const deleteAIntoDB = async (id: string) => {
     { new: true },
   )
   if (!result) throw new AppError(httpStatus.NOT_FOUND, 'Sunnah not found')
+
+  // Invalidate cache
+  await deleteCachePattern('sunnah:*')
+
   return result
 }
 
@@ -81,19 +102,31 @@ const toggleSunnahLog = async (
     throw new AppError(httpStatus.NOT_FOUND, 'Sunnah not found')
 
   const existing = await SunnahLog.findOne({ user: userId, sunnah: sunnahId })
+  let logResult
   if (existing) {
-    return await SunnahLog.findByIdAndDelete(existing._id)
+    logResult = await SunnahLog.findByIdAndDelete(existing._id)
   } else {
     const log = await SunnahLog.create({
       user: userId,
       sunnah: sunnahId,
       completedAt,
     })
-    return log
+    logResult = log
   }
+
+  // Invalidate cache
+  await deleteCachePattern(`sunnah:user:${userId}:*`)
+
+  return logResult
 }
 
 const getUserSunnahs = async (userId: string, query: Record<string, any>) => {
+  const cacheKey = `sunnah:user:${userId}:${JSON.stringify(query)}`
+  const cachedData = await getCache<any>(cacheKey)
+  if (cachedData) {
+    return cachedData
+  }
+
   // Build query for Sunnah documents
   const qb = new QueryBuilder(
     // @ts-ignore
@@ -152,8 +185,7 @@ const getUserSunnahs = async (userId: string, query: Record<string, any>) => {
 
   const rawMemorized = streak
 
-  // Return enriched data with extra fields
-  return {
+  const result = {
     data: {
       totalCompleted: logs.length,
       todayMemorized,
@@ -162,6 +194,10 @@ const getUserSunnahs = async (userId: string, query: Record<string, any>) => {
     },
     meta,
   }
+
+  await setCache(cacheKey, result)
+
+  return result
 }
 
 export const SunnahService = {

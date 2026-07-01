@@ -6,6 +6,7 @@ import { Event } from './event.models'
 import { TEvent } from './event.interface'
 import { EVENT_TYPE } from './event.constants'
 import { getMonthName, groupEventsByMonth } from './event.utils'
+import { getCache, setCache, deleteCachePattern } from '../../redis/helpers'
 
 // event.service.ts
 const insertIntoDB = async (payload: TEvent, userId: string) => {
@@ -23,7 +24,7 @@ const insertIntoDB = async (payload: TEvent, userId: string) => {
     title: title,
     date: date,
   })
-  
+
   if (exist) {
     throw new AppError(
       httpStatus.BAD_REQUEST, 
@@ -53,11 +54,20 @@ const insertIntoDB = async (payload: TEvent, userId: string) => {
     throw new AppError(httpStatus.BAD_REQUEST, 'Event creation failed')
   }
 
+  // Invalidate event caches
+  await deleteCachePattern('event:*')
+
   return result
 }
 
 // Get all events Events data
 const getAllIntoDB = async (query: Record<string, any>) => {
+  const cacheKey = `event:all:${JSON.stringify(query)}`
+  const cachedData = await getCache<any>(cacheKey)
+  if (cachedData) {
+    return cachedData
+  }
+
   const qb = new QueryBuilder(Event.find({ isDeleted: false }), query)
     .search(['title'])
     .filter()
@@ -68,7 +78,10 @@ const getAllIntoDB = async (query: Record<string, any>) => {
   const data = await qb.modelQuery
   const meta = await qb.countTotal()
 
-  return { data, meta }
+  const result = { data, meta }
+  await setCache(cacheKey, result)
+
+  return result
 }
 
 // Get all events (Islamic + User) for a specific user
@@ -76,6 +89,12 @@ const getAllEventsForUser = async (
   userId: string,
   query: Record<string, any>,
 ) => {
+  const cacheKey = `event:user:${userId}:all:${JSON.stringify(query)}`
+  const cachedData = await getCache<any>(cacheKey)
+  if (cachedData) {
+    return cachedData
+  }
+
   const { startDate, endDate, month, year } = query
 
   let dateFilter: any = {}
@@ -112,18 +131,28 @@ const getAllEventsForUser = async (
   // Group by month for better UI
   const eventsByMonth = groupEventsByMonth(allEvents)
 
-  return {
+  const result = {
     total: allEvents.length,
     islamicCount: islamicEvents.length,
     userCount: userEvents.length,
     events: allEvents,
     eventsByMonth,
   }
+
+  await setCache(cacheKey, result)
+
+  return result
 }
 
 // Get events for a specific date
 const getEventsByDate = async (userId: string, query: Record<string, any>) => {
   const { date } = query
+
+  const cacheKey = `event:user:${userId}:date:${date}`
+  const cachedData = await getCache<any>(cacheKey)
+  if (cachedData) {
+    return cachedData
+  }
 
   const events = await Event.find({
     $or: [
@@ -131,6 +160,8 @@ const getEventsByDate = async (userId: string, query: Record<string, any>) => {
       { type: EVENT_TYPE.user, user: userId, date },
     ],
   }).sort({ type: 1 })
+
+  await setCache(cacheKey, events)
 
   return events
 }
@@ -148,6 +179,12 @@ const getAllEventsByMonth = async (
       httpStatus.BAD_REQUEST,
       'Invalid format. Please use YYYY-MM format (e.g., 2026-04)',
     )
+  }
+
+  const cacheKey = `event:user:${userId}:month:${yearMonth}`
+  const cachedData = await getCache<any>(cacheKey)
+  if (cachedData) {
+    return cachedData
   }
 
   // Parse year and month from "2026-04" format
@@ -203,11 +240,15 @@ const getAllEventsByMonth = async (
     hasEvent: eventsByDate.has(date),
   }))
 
-  return {
+  const result = {
     year: parseInt(year),
     month: parseInt(month),
     calendar,
   }
+
+  await setCache(cacheKey, result)
+
+  return result
 }
 
 // Get current year all Islamic events (Direct data, no grouping)
@@ -216,6 +257,12 @@ const getCurrentYearIslamicEvents = async (query: Record<string, any>) => {
 
   if (!year) {
     throw new Error('Year is required')
+  }
+
+  const cacheKey = `event:islamic:year:${year}`
+  const cachedData = await getCache<any>(cacheKey)
+  if (cachedData) {
+    return cachedData
   }
 
   const startDate = `${year}-01-01`
@@ -232,11 +279,15 @@ const getCurrentYearIslamicEvents = async (query: Record<string, any>) => {
     .sort({ date: 1 })
     .lean()
 
-  return {
+  const result = {
     year: parseInt(year),
     totalEvents: events.length,
     events: events,
   }
+
+  await setCache(cacheKey, result)
+
+  return result
 }
 
 const updateIntoDB = async (id: string, payload: Partial<TEvent>) => {
@@ -247,6 +298,10 @@ const updateIntoDB = async (id: string, payload: Partial<TEvent>) => {
 
   const result = await Event.findByIdAndUpdate(id, payload, { new: true })
   if (!result) throw new AppError(httpStatus.NOT_FOUND, 'Event not found')
+
+  // Invalidate event caches
+  await deleteCachePattern('event:*')
+
   return result
 }
 
@@ -258,6 +313,10 @@ const deleteAIntoDB = async (id: string) => {
 
   const result = await Event.findByIdAndDelete(id)
   if (!result) throw new AppError(httpStatus.NOT_FOUND, 'Event not found')
+
+  // Invalidate event caches
+  await deleteCachePattern('event:*')
+
   return result
 }
 

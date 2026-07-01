@@ -4,6 +4,7 @@ import AppError from '../../errors/AppError'
 import { User } from '../user/user.model'
 import { Reminder } from './reminders.models'
 import { isValidDate } from '../../utils/isValidDate'
+import { getCache, setCache, deleteCachePattern } from '../../redis/helpers'
 
 // Create a new Reminder
 const insertIntoDB = async (userId: string, payload: TReminder) => {
@@ -20,6 +21,9 @@ const insertIntoDB = async (userId: string, payload: TReminder) => {
   if (!result) {
     throw new AppError(httpStatus.BAD_REQUEST, 'Reminder creation failed')
   }
+
+  // Invalidate cache
+  await deleteCachePattern(`reminder:${userId}:*`)
 
   return result
 }
@@ -44,6 +48,12 @@ const getAllIntoDB = async (userId: string, query: Record<string, any>) => {
     );
   }
 
+  const cacheKey = `reminder:${userId}:${date}`
+  const cachedData = await getCache<any[]>(cacheKey)
+  if (cachedData) {
+    return cachedData
+  }
+
   // date format: YYYY-MM-DD
   const data = await Reminder.find({
     user: userId,
@@ -52,6 +62,8 @@ const getAllIntoDB = async (userId: string, query: Record<string, any>) => {
     .sort({ createdAt: -1 })
     .select('title logAt isCompleted')
     .lean()
+
+  await setCache(cacheKey, data)
 
   return data
 }
@@ -78,6 +90,9 @@ const toggleCompleteIntoDB = async (id: string) => {
     )
   }
 
+  // Invalidate cache
+  await deleteCachePattern(`reminder:${reminder.user}:*`)
+
   return result
 }
 
@@ -92,6 +107,9 @@ const deleteAIntoDB = async (id: string) => {
   if (!result) {
     throw new AppError(httpStatus.BAD_REQUEST, 'Reminder deletion failed')
   }
+
+  // Invalidate cache
+  await deleteCachePattern(`reminder:${reminder.user}:*`)
 
   return result
 }

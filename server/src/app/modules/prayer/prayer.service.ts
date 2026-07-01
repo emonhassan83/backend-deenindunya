@@ -7,6 +7,7 @@ import axios from 'axios'
 import { calculateCurrentStreak, calculateLongestStreak } from './prayer.utils'
 import dayjs from 'dayjs'
 import { isValidDate } from '../../utils/isValidDate'
+import { getCache, setCache, deleteCachePattern } from '../../redis/helpers'
 
 // Create 5 prayers for a specific date
 const createBulkPrayers = async (userId: string, payload: { date: string }) => {
@@ -53,6 +54,9 @@ const createBulkPrayers = async (userId: string, payload: { date: string }) => {
     throw new AppError(httpStatus.BAD_REQUEST, 'Prayers creation failed')
   }
 
+  // Invalidate cache
+  await deleteCachePattern(`prayer:*:${userId}:*`)
+
   return result
 }
 
@@ -78,6 +82,12 @@ const getPrayersByDate = async (userId: string, query: Record<string, any>) => {
   const user = await User.findById(userId)
   if (!user || user?.isDeleted) {
     throw new AppError(httpStatus.NOT_FOUND, 'Your profile not found')
+  }
+
+  const cacheKey = `prayer:data:${userId}:${date}`
+  const cachedData = await getCache<any>(cacheKey)
+  if (cachedData) {
+    return cachedData
   }
 
   // Get prayer times for the date
@@ -116,7 +126,7 @@ const getPrayersByDate = async (userId: string, query: Record<string, any>) => {
   // Calculate longest streak
   const longestStreak = await calculateLongestStreak(userId)
 
-  return {
+  const result = {
     date,
     completedPrayers,
     totalPrayers,
@@ -125,6 +135,10 @@ const getPrayersByDate = async (userId: string, query: Record<string, any>) => {
     longestStreak,
     prayers: prayersWithTimes,
   }
+
+  await setCache(cacheKey, result)
+
+  return result
 }
 
 // Toggle prayer completion status
@@ -152,6 +166,9 @@ const togglePrayerStatus = async (id: string, userId: string) => {
       'Prayer status update failed!',
     )
   }
+
+  // Invalidate cache
+  await deleteCachePattern(`prayer:*:${userId}:*`)
 
   return result
 }
@@ -218,6 +235,9 @@ const completedPayers = async (userId: string, query: Record<string, any>) => {
     } as any,
   ).sort({ name: 1 })
 
+  // Invalidate cache
+  await deleteCachePattern(`prayer:*:${userId}:*`)
+
   return {
     prayers: prayers.map((p) => ({
       _id: p._id,
@@ -254,6 +274,12 @@ const getPrayerTimes = async (userId: string, query: Record<string, any>) => {
   } else {
     // Use current date
     targetDate = dayjs().format('DD-MM-YYYY')
+  }
+
+  const cacheKey = `prayer:times:${userId}:${targetDate}`
+  const cachedTimes = await getCache<any>(cacheKey)
+  if (cachedTimes) {
+    return cachedTimes
   }
 
   try {
@@ -298,6 +324,8 @@ const getPrayerTimes = async (userId: string, query: Record<string, any>) => {
         timezone: timezone || 'UTC',
       },
     }
+
+    await setCache(cacheKey, prayerTimes)
 
     return prayerTimes
   } catch (error: any) {

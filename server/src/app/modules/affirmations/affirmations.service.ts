@@ -2,6 +2,7 @@ import httpStatus from 'http-status'
 import AppError from '../../errors/AppError'
 import { TAffirmation } from './affirmations.interface'
 import { Affirmation } from './affirmations.model'
+import { getCache, setCache, deleteCachePattern } from '../../redis/helpers'
 
 const insertIntoDB = async (payload: TAffirmation): Promise<TAffirmation> => {
   // Check if affirmation with same arabic text already exists
@@ -19,10 +20,20 @@ const insertIntoDB = async (payload: TAffirmation): Promise<TAffirmation> => {
 
   // Create new affirmation
   const result = await Affirmation.create(payload)
+
+  // Invalidate cache
+  await deleteCachePattern('affirmation:*')
+
   return result
 }
 
 const getAllFromDB = async (query: Record<string, unknown>) => {
+  const cacheKey = `affirmation:all:${JSON.stringify(query)}`
+  const cachedData = await getCache<any>(cacheKey)
+  if (cachedData) {
+    return cachedData
+  }
+
   const { search, page = 1, limit = 10 } = query
 
   const filter: Record<string, unknown> = { isDeleted: false }
@@ -43,7 +54,7 @@ const getAllFromDB = async (query: Record<string, unknown>) => {
 
   const total = await Affirmation.countDocuments(filter)
 
-  return {
+  const finalResult = {
     data: result,
     meta: {
       page: Number(page),
@@ -52,9 +63,19 @@ const getAllFromDB = async (query: Record<string, unknown>) => {
       totalPages: Math.ceil(total / Number(limit)),
     },
   }
+
+  await setCache(cacheKey, finalResult)
+
+  return finalResult
 }
 
 const getSingleFromDB = async (id: string): Promise<TAffirmation> => {
+  const cacheKey = `affirmation:single:${id}`
+  const cachedData = await getCache<any>(cacheKey)
+  if (cachedData) {
+    return cachedData
+  }
+
   const result = await Affirmation.findById(id)
     .select('arabic_text transliteration english_meaning reference audio_url createdAt')
     .lean()
@@ -62,6 +83,8 @@ const getSingleFromDB = async (id: string): Promise<TAffirmation> => {
   if (!result || result.isDeleted) {
     throw new AppError(httpStatus.NOT_FOUND, 'Affirmation not found!')
   }
+
+  await setCache(cacheKey, result)
 
   return result
 }
@@ -101,6 +124,9 @@ const updateIntoDB = async (
     throw new AppError(httpStatus.BAD_REQUEST, 'Failed to update affirmation')
   }
 
+  // Invalidate cache
+  await deleteCachePattern('affirmation:*')
+
   return updated
 }
 
@@ -114,6 +140,9 @@ const deleteFromDB = async (id: string): Promise<TAffirmation> => {
   if (!result) {
     throw new AppError(httpStatus.CONFLICT, 'Affirmation deletion failed!')
   }
+
+  // Invalidate cache
+  await deleteCachePattern('affirmation:*')
 
   return result
 }

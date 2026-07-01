@@ -2,6 +2,7 @@ import httpStatus from 'http-status'
 import AppError from '../../errors/AppError'
 import { TDuas } from './duas.interface'
 import { Duas } from './duas.model'
+import { getCache, setCache, deleteCachePattern } from '../../redis/helpers'
 
 const insertIntoDB = async (payload: TDuas): Promise<TDuas> => {
   // Check if dua with same arabic text already exists in this category
@@ -20,10 +21,20 @@ const insertIntoDB = async (payload: TDuas): Promise<TDuas> => {
 
   // Create new dua
   const result = await Duas.create(payload)
+
+  // Invalidate cache
+  await deleteCachePattern('dua:*')
+
   return result
 }
 
 const getAllFromDB = async (query: Record<string, unknown>) => {
+  const cacheKey = `dua:all:${JSON.stringify(query)}`
+  const cachedData = await getCache<any>(cacheKey)
+  if (cachedData) {
+    return cachedData
+  }
+
   const { category, search, page = 1, limit = 10 } = query
 
   const filter: Record<string, unknown> = { isDeleted: false }
@@ -50,7 +61,7 @@ const getAllFromDB = async (query: Record<string, unknown>) => {
 
   const total = await Duas.countDocuments(filter)
 
-  return {
+  const finalResult = {
     data: result,
     meta: {
       page: Number(page),
@@ -59,9 +70,19 @@ const getAllFromDB = async (query: Record<string, unknown>) => {
       totalPages: Math.ceil(total / Number(limit)),
     },
   }
+
+  await setCache(cacheKey, finalResult)
+
+  return finalResult
 }
 
 const getSingleFromDB = async (id: string): Promise<TDuas> => {
+  const cacheKey = `dua:single:${id}`
+  const cachedData = await getCache<any>(cacheKey)
+  if (cachedData) {
+    return cachedData
+  }
+
   const result = await Duas.findById(id)
     .populate('category', 'title')
     .select('-isDeleted')
@@ -70,6 +91,8 @@ const getSingleFromDB = async (id: string): Promise<TDuas> => {
   if (!result || result.isDeleted) {
     throw new AppError(httpStatus.NOT_FOUND, 'Dua not found!')
   }
+
+  await setCache(cacheKey, result)
 
   return result
 }
@@ -112,6 +135,9 @@ const updateIntoDB = async (
     throw new AppError(httpStatus.BAD_REQUEST, 'Failed to update dua')
   }
 
+  // Invalidate cache
+  await deleteCachePattern('dua:*')
+
   return updated
 }
 
@@ -125,6 +151,9 @@ const deleteFromDB = async (id: string): Promise<TDuas> => {
   if (!result) {
     throw new AppError(httpStatus.CONFLICT, 'Dua deletion failed!')
   }
+
+  // Invalidate cache
+  await deleteCachePattern('dua:*')
 
   return result
 }

@@ -2,15 +2,22 @@ import httpStatus from 'http-status'
 import AppError from '../../errors/AppError'
 import { User } from '../user/user.model'
 import { Lesson, LessonLogs, Module } from './educationHub.models'
+import { getCache, setCache, deleteCachePattern } from '../../redis/helpers'
 
 /**
- * Get list of all Surahs with search, filter, pagination, sorting & field selection
+ * Get list of all Modules
  */
 const getModules = async (userId: string) => {
   // Validate user
   const user = await User.findById(userId)
   if (!user || user?.isDeleted) {
     throw new AppError(httpStatus.NOT_FOUND, 'User not found')
+  }
+
+  const cacheKey = `edu:modules:${userId}`
+  const cachedData = await getCache<any>(cacheKey)
+  if (cachedData) {
+    return cachedData
   }
 
   try {
@@ -61,7 +68,10 @@ const getModules = async (userId: string) => {
       }),
     )
 
-    return { data: modulesWithReadAt }
+    const result = { data: modulesWithReadAt }
+    await setCache(cacheKey, result)
+
+    return result
   } catch (error: any) {
     throw new AppError(
       httpStatus.INTERNAL_SERVER_ERROR,
@@ -71,12 +81,18 @@ const getModules = async (userId: string) => {
 }
 
 /**
- * Get verses of a specific Surah with pagination, sorting etc.
+ * Get lessons by type
  */
 const getLessonsByType = async (query: Record<string, any>, userId: string) => {
   const { type } = query
   if (!type) {
     throw new AppError(httpStatus.BAD_REQUEST, 'Lesson type is required')
+  }
+
+  const cacheKey = `edu:lessons:type:${userId}:${type}`
+  const cachedData = await getCache<any>(cacheKey)
+  if (cachedData) {
+    return cachedData
   }
 
   try {
@@ -102,6 +118,8 @@ const getLessonsByType = async (query: Record<string, any>, userId: string) => {
       readAt: logsMap.get(lesson._id.toString()) || null,
     }))
 
+    await setCache(cacheKey, lessonsWithReadAt)
+
     return lessonsWithReadAt
   } catch (error: any) {
     if (error instanceof AppError) throw error
@@ -114,6 +132,12 @@ const getLessonsByType = async (query: Record<string, any>, userId: string) => {
 }
 
 const getModuleLessons = async (moduleId: string, userId: string) => {
+  const cacheKey = `edu:lessons:module:${userId}:${moduleId}`
+  const cachedData = await getCache<any>(cacheKey)
+  if (cachedData) {
+    return cachedData
+  }
+
   try {
     // Check if module exists
     const module = await Module.findById(moduleId)
@@ -143,6 +167,8 @@ const getModuleLessons = async (moduleId: string, userId: string) => {
       readAt: logsMap.get(lesson._id.toString()) || null,
     }))
 
+    await setCache(cacheKey, lessonsWithReadAt)
+
     return lessonsWithReadAt
   } catch (error: any) {
     if (error instanceof AppError) throw error
@@ -171,6 +197,9 @@ const readLesson = async (id: string, userId: string) => {
       'Failed to update read status',
     )
   }
+
+  // Invalidate all user's education caches
+  await deleteCachePattern(`edu:*:${userId}:*`)
 
   return result
 }

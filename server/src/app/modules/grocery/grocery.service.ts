@@ -5,6 +5,7 @@ import AppError from '../../errors/AppError'
 import { User } from '../user/user.model'
 import { Grocery } from './grocery.models'
 import { isValidDate } from '../../utils/isValidDate'
+import { getCache, setCache, deleteCachePattern } from '../../redis/helpers'
 
 // Create grocery item
 const insertIntoDB = async (payload: TGrocery, userId: string) => {
@@ -36,6 +37,9 @@ const insertIntoDB = async (payload: TGrocery, userId: string) => {
     isCompleted: false,
   })
 
+  // Invalidate cache
+  await deleteCachePattern(`grocery:${userId}:*`)
+
   return result
 }
 
@@ -64,6 +68,12 @@ const getAllIntoDB = async (query: Record<string, any>, userId: string) => {
     throw new AppError(httpStatus.NOT_FOUND, 'User not found!')
   }
 
+  const cacheKey = `grocery:${userId}:${date}`
+  const cachedData = await getCache<any>(cacheKey)
+  if (cachedData) {
+    return cachedData
+  }
+
   // Get all grocery items for the date (both completed and incomplete)
   const items = await Grocery.find({
     user: userId,
@@ -78,12 +88,16 @@ const getAllIntoDB = async (query: Record<string, any>, userId: string) => {
   const completed = items.filter((item) => item.isCompleted === true).length
   const progress = total > 0 ? Math.round((completed / total) * 100) : 0
 
-  return {
+  const result = {
     total,
     completed,
     progress,
     items,
   }
+
+  await setCache(cacheKey, result)
+
+  return result
 }
 
 // Toggle Grocery status
@@ -105,6 +119,9 @@ const changedStatusIntoDB = async (id: string, userId: string) => {
       'Grocery record not updated!',
     )
   }
+
+  // Invalidate cache
+  await deleteCachePattern(`grocery:${userId}:*`)
 
   return result
 }
@@ -129,6 +146,9 @@ const deleteAIntoDB = async (id: string) => {
 
     await session.commitTransaction()
     session.endSession()
+
+    // Invalidate cache
+    await deleteCachePattern(`grocery:${grocery.user}:*`)
 
     return result
   } catch (error) {

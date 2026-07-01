@@ -4,6 +4,7 @@ import { TAmbition } from './ambitions.interface'
 import { Ambition } from './ambitions.model'
 import { User } from '../user/user.model'
 import { AmbitionsType } from './ambitions.constant'
+import { getCache, setCache, deleteCachePattern } from '../../redis/helpers'
 
 const insertIntoDB = async (
   payload: TAmbition,
@@ -20,10 +21,20 @@ const insertIntoDB = async (
 
   // Create new ambition
   const result = await Ambition.create(payload)
+
+  // Invalidate cache
+  await deleteCachePattern(`ambition:${userId}`)
+
   return result
 }
 
 const getAllFromDB = async (userId: string) => {
+  const cacheKey = `ambition:${userId}`
+  const cachedData = await getCache<any>(cacheKey)
+  if (cachedData) {
+    return cachedData
+  }
+
   // Get all ambitions for the user (not deleted)
   const allAmbitions = await Ambition.find({
     user: userId,
@@ -43,12 +54,16 @@ const getAllFromDB = async (userId: string) => {
     dunya: allAmbitions.filter((a) => a.type === AmbitionsType.dunya), // based on type
   }
 
-  return {
+  const result = {
     totalCount,
     completedCount,
     progress,
     ambitions,
   }
+
+  await setCache(cacheKey, result)
+
+  return result
 }
 
 const toggleCompleteStatus = async (
@@ -82,6 +97,9 @@ const toggleCompleteStatus = async (
     )
   }
 
+  // Invalidate cache
+  await deleteCachePattern(`ambition:${userId}`)
+
   return updated
 }
 
@@ -98,6 +116,9 @@ const deleteFromDB = async (id: string, userId: string): Promise<TAmbition> => {
   if (!result) {
     throw new AppError(httpStatus.CONFLICT, 'Ambition deletion failed!')
   }
+
+  // Invalidate cache
+  await deleteCachePattern(`ambition:${userId}`)
 
   return result
 }

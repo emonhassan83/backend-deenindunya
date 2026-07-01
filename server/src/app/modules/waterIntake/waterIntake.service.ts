@@ -4,6 +4,7 @@ import { TWaterIntake } from './waterIntake.interface'
 import { WaterIntake } from './waterIntake.model'
 import { User } from '../user/user.model'
 import mongoose from 'mongoose'
+import { getCache, setCache, deleteCachePattern } from '../../redis/helpers'
 
 const insertIntoDB = async (
   payload: TWaterIntake,
@@ -20,10 +21,20 @@ const insertIntoDB = async (
 
   // Create new water intake record
   const result = await WaterIntake.create(payload)
+
+  // Invalidate cache
+  await deleteCachePattern(`waterIntake:${userId}`)
+
   return result
 }
 
 const getAllFromDB = async (userId: string) => {
+  const cacheKey = `waterIntake:${userId}`
+  const cachedData = await getCache<any>(cacheKey)
+  if (cachedData) {
+    return cachedData
+  }
+
   const today = new Date().toLocaleDateString('en-CA') // '2026-04-26'
 
   // Convert userId to ObjectId for aggregation
@@ -55,11 +66,15 @@ const getAllFromDB = async (userId: string) => {
     .sort({ logAt: -1, createdAt: -1 })
     .lean()
 
-  return {
+  const result = {
     totalWaterToday,
     progress,
     waterLogs,
   }
+
+  await setCache(cacheKey, result)
+
+  return result
 }
 
 export const WaterIntakeService = {

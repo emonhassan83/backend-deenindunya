@@ -1,11 +1,10 @@
+
 import { initializeApp, cert } from 'firebase-admin/app';
-import { getMessaging } from 'firebase-admin/messaging';
 import AppError from '../errors/AppError';
 import httpStatus from 'http-status'
 import { TNotification } from '../modules/notification/notification.interface';
-import { Notification } from '../modules/notification/notification.model';
-import { User } from '../modules/user/user.model';
 import config from '../config';
+import { getNotificationQueue } from '../queues/queues';
 
 const firebaseConfig = {
   type: "service_account",
@@ -23,74 +22,19 @@ const firebaseConfig = {
 initializeApp({
   credential: cert(firebaseConfig as any),
 });
- 
+
 export const sendNotification = async (
   fcmToken: string[],
   payload: TNotification,
 ): Promise<any> => {
-  console.log('payload', payload);
+  // Enqueue notification job for asynchronous processing
   try {
-    if (!payload?.receiver) {
-      throw new AppError(httpStatus.BAD_REQUEST, 'Receiver ID is required')
-    }
-
-    // ✅ Step 1: Check if user allows notifications
-    const user = await User.findById(payload.receiver).select('isNotify fcmToken')
-    if (!user) {
-      console.log('⚠️ Receiver not found in User collection')
-      return null
-    }
-
-    const response = await getMessaging().sendEachForMulticast({
-      tokens: fcmToken,
-      notification: {
-        title: payload.message,
-        body: payload.description,
-      },
-      apns: {
-        headers: {
-          "apns-push-type": "alert",
-        },
-        payload: {
-          aps: {
-            badge: 1,
-            sound: "default",
-          },
-        },
-      },
-    });
- 
-    console.log(response?.responses, "from send notification");
- 
-    if (response.successCount) {
-      fcmToken?.map(async (token) => {
-        try {
-          if (token) {
- 
-            await Notification.create(payload);
- 
-          } else {
-            console.log("Token not found");
-          }
-        } catch (error) {
-          console.log(error);
-        }
-      });
-    }
- 
-    console.log("Response:", response.responses);
- 
-    return response;
-  } catch (error: any) {
-    console.error("Error sending message:", error);
-    if (error?.code === "messaging/third-party-auth-error") {
-      return null;
-    } else {
-      console.error("Error sending message:", error);
-      throw new AppError(
-        httpStatus.NOT_IMPLEMENTED,
-        error.message || "Failed to send notification",
-      );
-    }
+    const queue = getNotificationQueue();
+    await queue.add('send-notification', { fcmToken, payload });
+    // Optionally return a placeholder response
+    return { enqueued: true };
+  } catch (error) {
+    console.error('Error enqueuing notification job:', error);
+    throw new AppError(httpStatus.INTERNAL_SERVER_ERROR, 'Failed to enqueue notification');
   }
 };

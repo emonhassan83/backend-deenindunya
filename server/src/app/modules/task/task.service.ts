@@ -5,6 +5,7 @@ import { User } from '../user/user.model'
 import { Task } from './task.models'
 import moment from 'moment-timezone'
 import { TASK_TYPE } from './task.constants'
+import { getCache, setCache, deleteCachePattern } from '../../redis/helpers'
 
 // Create a new Project
 const insertIntoDB = async (userId: string, payload: TTask) => {
@@ -31,6 +32,9 @@ const insertIntoDB = async (userId: string, payload: TTask) => {
   if (!result) {
     throw new AppError(httpStatus.BAD_REQUEST, 'Task creation failed')
   }
+
+  // Invalidate cache
+  await deleteCachePattern(`task:${userId}:*`)
 
   return result
 }
@@ -61,6 +65,12 @@ const getAllIntoDB = async (query: Record<string, any>, userId: string) => {
     throw new AppError(httpStatus.NOT_FOUND, 'User not found')
   }
 
+  const cacheKey = `task:${userId}:${type}`
+  const cachedData = await getCache<any[]>(cacheKey)
+  if (cachedData) {
+    return cachedData
+  }
+
   // Get all tasks of the specified type
   const tasks = await Task.find({
     user: userId,
@@ -68,6 +78,8 @@ const getAllIntoDB = async (query: Record<string, any>, userId: string) => {
   }).select('type title logAt isCompleted')
     .sort({ logAt: -1, createdAt: -1 })
     .lean()
+
+  await setCache(cacheKey, tasks)
 
   return tasks
 }
@@ -94,6 +106,9 @@ const changedStatusIntoDB = async (id: string) => {
     )
   }
 
+  // Invalidate cache
+  await deleteCachePattern(`task:${task.user}:*`)
+
   return result
 }
 
@@ -108,6 +123,9 @@ const deleteAIntoDB = async (id: string) => {
   if (!result) {
     throw new AppError(httpStatus.BAD_REQUEST, 'Task deletion failed')
   }
+
+  // Invalidate cache
+  await deleteCachePattern(`task:${task.user}:*`)
 
   return result
 }

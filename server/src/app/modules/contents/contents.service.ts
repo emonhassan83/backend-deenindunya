@@ -2,11 +2,18 @@ import httpStatus from 'http-status'
 import AppError from '../../errors/AppError'
 import { Contents } from './contents.models'
 import { GENERAL_KEYS } from './contents.constants'
+import { getCache, setCache, deleteCachePattern } from '../../redis/helpers'
 
 // Get single content
 const getContent = async (key: string) => {
   if (!key) {
     throw new AppError(httpStatus.BAD_REQUEST, 'Key is required')
+  }
+
+  const cacheKey = `contents:${key}`
+  const cached = await getCache<any>(cacheKey)
+  if (cached) {
+    return cached
   }
 
   const content = await Contents.findOne({ key }).select('-__v').lean()
@@ -17,15 +24,23 @@ const getContent = async (key: string) => {
     )
   }
 
+  await setCache(cacheKey, content)
   return content
 }
 
 // Get general contents
 const getContentGenerals = async () => {
+  const cacheKey = `contents:generals`
+  const cached = await getCache<any[]>(cacheKey)
+  if (cached) {
+    return cached
+  }
+
   const contents = await Contents.find({ key: { $in: GENERAL_KEYS } })
     .select('-__v')
     .lean()
 
+  await setCache(cacheKey, contents)
   return contents
 }
 
@@ -43,6 +58,9 @@ const createOrUpdate = async (key: string, payload: any) => {
     { key, value: payload.value ?? payload },
     { returnDocument: 'after', upsert: true }
   ).select('-__v')
+
+  // Invalidate related cache entries
+  await deleteCachePattern('contents:*')
 
   return content
 }
@@ -68,6 +86,9 @@ const updateGenerals = async (payload: Record<string, any>) => {
       ).select('-__v')
     )
   )
+
+  // Invalidate cache for contents
+  await deleteCachePattern('contents:*')
 }
 
 export const contentsService = {
