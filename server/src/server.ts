@@ -5,15 +5,20 @@ import config from './app/config'
 import { errorlogger, logger } from './app/utils/logger'
 import initializeSocketIO from './socket'
 import colors from 'colors';
+import { connectRedis } from './app/config/redis.config'
+import { startWorkers } from './app/worker'
 
 let server: Server
 export const io = initializeSocketIO(createServer(app))
 
 async function main() {
   try {
+    await connectRedis()
     await mongoose.connect(config.database_url as string)
 
     logger.info('Connected to database')
+
+    startWorkers()
 
     server = app.listen(Number(config.port), '0.0.0.0', () => {
       console.log(

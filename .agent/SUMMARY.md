@@ -1,3 +1,29 @@
+Date/Session: 2026-07-01 (Session 3)
+
+Completed Tasks:
+- Set up a Redis caching system for OTP management and verification.
+- Integrated BullMQ background queue system (`email-queue`, `notification-queue`, and `system-queue`) with matching background consumers/workers.
+- Migrated the OTP sending flow to dispatch via the background email worker asynchronously rather than calling Nodemailer synchronously.
+- Verified that all components compile, build successfully, and boot up cleanly in Docker container environments.
+
+Key Changes:
+- Modified [package.json](file:///d:/bd-calling/task/backend-deenduniya/server/package.json) to add `bullmq` and `ioredis` to dependencies.
+- Added Redis config [config/redis.config.ts](file:///d:/bd-calling/task/backend-deenduniya/server/src/app/config/redis.config.ts) and BullMQ options [config/queue.config.ts](file:///d:/bd-calling/task/backend-deenduniya/server/src/app/config/queue.config.ts).
+- Registered global Redis prefixes in [constant/index.ts](file:///d:/bd-calling/task/backend-deenduniya/server/src/app/constant/index.ts) and key mapper in [redis/keys/index.ts](file:///d:/bd-calling/task/backend-deenduniya/server/src/app/redis/keys/index.ts).
+- Implemented helper cache APIs in [redis/helpers/index.ts](file:///d:/bd-calling/task/backend-deenduniya/server/src/app/redis/helpers/index.ts) and OTP-specific cache service in [redis/helpers/otp.ts](file:///d:/bd-calling/task/backend-deenduniya/server/src/app/redis/helpers/otp.ts).
+- Created queue constructors in [queues/queues.ts](file:///d:/bd-calling/task/backend-deenduniya/server/src/app/queues/queues.ts).
+- Created background workers in [worker/workers/](file:///d:/bd-calling/task/backend-deenduniya/server/src/app/worker/workers):
+  - [email.worker.ts](file:///d:/bd-calling/task/backend-deenduniya/server/src/app/worker/workers/email.worker.ts)
+  - [notification.worker.ts](file:///d:/bd-calling/task/backend-deenduniya/server/src/app/worker/workers/notification.worker.ts)
+  - [system.worker.ts](file:///d:/bd-calling/task/backend-deenduniya/server/src/app/worker/workers/system.worker.ts)
+- Registered background workers in the boot lifecycle under [worker/index.ts](file:///d:/bd-calling/task/backend-deenduniya/server/src/app/worker/index.ts) and bootstrapped them in [server.ts](file:///d:/bd-calling/task/backend-deenduniya/server/src/server.ts).
+- Refactored [otp.service.ts](file:///d:/bd-calling/task/backend-deenduniya/server/src/app/modules/otp/otp.service.ts) to store/read OTPs via `OtpRedisService` and delegate mail dispatch to `emailQueue`.
+
+Pending/Next Steps:
+- None.
+
+---
+
 Date/Session: 2026-07-01 (Session 2)
 
 Completed Tasks:

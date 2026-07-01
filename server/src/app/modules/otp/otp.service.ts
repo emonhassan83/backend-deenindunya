@@ -5,9 +5,10 @@ import config from '../../config'
 import AppError from '../../errors/AppError'
 import { User } from '../user/user.model'
 import { generateOtp } from '../../utils/generateOtp'
-import emailSender from '../../utils/emailSender'
 import { createToken, TExpiresIn } from '../auth/auth.utils'
 import { Types } from 'mongoose'
+import { OtpRedisService } from '../../redis/helpers/otp'
+import { getEmailQueue } from '../../queues/queues'
 
 const verifyOtp = async (token: string, otp: string | number) => {
   if (!token) {
@@ -25,23 +26,28 @@ const verifyOtp = async (token: string, otp: string | number) => {
     )
   }
 
-  // console.log(decode)
-
   const user = await User.findOne({ email: decode?.email }).select(
     'verification status ',
   )
   if (!user) {
     throw new AppError(httpStatus.BAD_REQUEST, 'User not found')
   }
-  if (new Date() > user!.verification!.expiresAt!) {
+
+  // Retrieve OTP from Redis cache
+  const cachedOtp = await OtpRedisService.getOtp(user.email)
+  if (!cachedOtp) {
     throw new AppError(
       httpStatus.FORBIDDEN,
       'OTP has expired. Please resend it',
     )
   }
-  if (Number(otp) !== Number(user?.verification?.otp)) {
+
+  if (Number(otp) !== Number(cachedOtp)) {
     throw new AppError(httpStatus.BAD_REQUEST, 'OTP did not match')
   }
+
+  // Delete OTP from Redis cache after verification succeeds
+  await OtpRedisService.deleteOtp(user.email)
 
   const updateUser = await User.findByIdAndUpdate(
     user?._id,
@@ -83,6 +89,9 @@ const resendOtp = async (email: string) => {
   const otp = generateOtp()
   const expiresAt = moment().add(5, 'minute')
 
+  // Save OTP in Redis cache with 5 minutes TTL (300 seconds)
+  await OtpRedisService.saveOtp(user.email, otp, 300)
+
   const updateOtp = await User.findByIdAndUpdate(
     user?._id,
     {
@@ -112,29 +121,17 @@ const resendOtp = async (email: string) => {
     expiresIn: '5m',
   })
 
-  await emailSender(
-    user?.email,
-    'Your One-Time OTP',
-    `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px;">
-        <div style="text-align: left; padding: 10px 20px;">
-          <h2 style="color: #333;">Your One-Time OTP</h2>
-          <p style="color: #555; margin-top: 10px;">Dear ${user?.name},</p>
-          <p style="color: #555;">Use the following One-Time Password (OTP) to proceed with your request. This OTP is valid for a limited time.</p>
-          <div style="text-align: center; margin: 20px 0;">
-            <span style="padding: 10px 20px; font-size: 18px; font-weight: bold; border-radius: 5px; display: inline-block;">
-              ${otp}
-            </span>
-          </div>
-          <p style="color: #555;">This OTP is valid until: <strong>${expiresAt.toLocaleString()}</strong></p>
-          <p style="color: #555;">If you did not request this OTP, please ignore this email.</p>
-          <p style="color: #555;">Thank you,<br/>Deenindunya App Team</p>
-        </div>
-        <div style="text-align: center; margin-top: 20px; font-size: 12px; color: #999;">
-          <p>&copy; ${new Date().getFullYear()} Deenindunya App. All rights reserved.</p>
-        </div>
-      </div>
-    `,
+  // Enqueue verification email to background worker
+  const emailQueue = getEmailQueue()
+  await emailQueue.add(
+    'send-verification-email',
+    {
+      email: user.email,
+      name: user.name,
+      otp,
+      expiresAt: expiresAt.format('LT'),
+    },
+    { priority: 1, attempts: 3, backoff: { type: 'exponential', delay: 2000 } }
   )
 
   return { token }

@@ -42,4 +42,7 @@ export default {
     region: process.env.AWS_REGION,
     bucket: process.env.AWS_BUCKET_NAME,
   },
+  redis_host: process.env.REDIS_HOST,
+  redis_port: process.env.REDIS_PORT,
+  redis_password: process.env.REDIS_PASSWORD,
 }
