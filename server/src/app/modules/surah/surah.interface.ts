@@ -4,6 +4,9 @@ export interface TSurah {
   _id?: string
   number: number // Surah number (1–114)
   name: string // Surah name (Al-Fatiha, Al-Baqarah, etc.)
+  nameArabic: string // Arabic name (الفاتحة)
+  nameTranslation: string // English meaning (The Opening)
+  revelationPlace: string // Mecca or Madina
   totalVerses: number // Verse count
 }
 
@@ -13,6 +16,7 @@ export interface TSurahVerse {
   verseNumber: number
   arabicText: string
   translation: string
+  bengaliTranslation: string
   audioUrl: string
 }
 

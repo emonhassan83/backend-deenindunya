@@ -12,6 +12,9 @@ const surahSchema = new Schema<TSurah>(
   {
     number: { type: Number, required: true },
     name: { type: String, required: true },
+    nameArabic: { type: String, default: '' },
+    nameTranslation: { type: String, default: '' },
+    revelationPlace: { type: String, default: '' },
     totalVerses: { type: Number, required: true },
   },
   { timestamps: true },
@@ -23,6 +26,7 @@ const surahVerseSchema = new Schema<TSurahVerse>(
     verseNumber: { type: Number, required: true },
     arabicText: { type: String, required: true },
     translation: { type: String, required: true },
+    bengaliTranslation: { type: String, default: '' },
     audioUrl: { type: String, required: true },
   },
   { timestamps: true },

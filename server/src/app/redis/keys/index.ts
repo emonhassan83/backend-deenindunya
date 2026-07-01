@@ -84,5 +84,10 @@ export const REDIS_KEYS = {
   EDU_MODULES: (userId: string) => createRedisKey('edu:modules', userId),
   EDU_LESSONS_TYPE: (userId: string, type: string) => createRedisKey('edu:lessons:type', userId, type),
   EDU_LESSONS_MODULE: (userId: string, moduleId: string) => createRedisKey('edu:lessons:module', userId, moduleId),
-  EDU_PATTERN: (userId: string) => createRedisKey('edu', '*', userId, '*')
+  EDU_PATTERN: (userId: string) => createRedisKey('edu', '*', userId, '*'),
+
+  // Meta keys
+  VERSE_OF_DAY: (date: string) => createRedisKey('meta:verse-of-day', date),
+  ADHKAR_MORNING: (date: string) => createRedisKey('meta:adhkar:morning', date),
+  ADHKAR_EVENING: (date: string) => createRedisKey('meta:adhkar:evening', date),
 } as const

@@ -73,6 +73,9 @@ async function seedQuranData() {
       {
         number: surahNumber,
         name: surahName,
+        nameArabic: surah.surahNameArabic || '',
+        nameTranslation: surah.surahNameTranslation || '',
+        revelationPlace: surah.revelationPlace || '',
         totalVerses: surah.totalAyah || 0,
     
       },
@@ -98,9 +101,10 @@ async function seedQuranData() {
     }
 
     // ✅ Parse verses correctly from quranapi.pages.dev structure:
-    // { arabic1: [...], arabic2: [...], english: [...], ... }
+    // { arabic1: [...], arabic2: [...], english: [...], bengali: [...], ... }
     const arabicTexts: string[] = detailRes.arabic1 || detailRes.arabic2 || [];
     const translations: string[] = detailRes.english || [];
+    const bengaliTexts: string[] = detailRes.bengali || [];
     const totalAyah: number =
       detailRes.totalAyah || arabicTexts.length || 0;
 
@@ -109,6 +113,7 @@ async function seedQuranData() {
       verseNumber: i + 1,
       arabicText: arabicTexts[i] || "",
       translation: translations[i] || "",
+      bengaliTranslation: bengaliTexts[i] || "",
       audioUrl: `https://cdn.islamic.network/quran/audio/128/ar.alafasy/${
         // Global ayah number calculation
         allSurahs

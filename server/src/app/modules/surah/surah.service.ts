@@ -24,7 +24,7 @@ const getSurahs = async (query: Record<string, any>, userId: string) => {
   try {
     const surahQuery = new QueryBuilder(
       // @ts-ignore
-      Surah.find().select('name number totalVerses'),
+      Surah.find().select('name nameArabic nameTranslation revelationPlace number totalVerses'),
       query,
     )
       .search(['name']) // Search by surah name
@@ -97,7 +97,7 @@ const getSurahVerses = async (
       SurahVerse.find({
         // match by exact ObjectId (getSurahObjectId returns an ObjectId)
         surahId: await getSurahObjectId(surahNum),
-      }).select('verseNumber arabicText translation audioUrl'),
+      }).select('verseNumber arabicText translation bengaliTranslation audioUrl'),
       query,
     )
       .filter()
