@@ -1,47 +1,78 @@
 import httpStatus from 'http-status'
-import { TContents } from './contents.interface'
-import QueryBuilder from '../../builder/QueryBuilder'
-import { Contents } from './contents.models'
 import AppError from '../../errors/AppError'
+import { Contents } from './contents.models'
+import { GENERAL_KEYS } from './contents.constants'
 
-// Get all contents
-const getAllContents = async (query: Record<string, any>) => {
-  const ContentModel = new QueryBuilder(
-    // @ts-ignore
-    Contents.find({ isDeleted: false }).select(
-      'termsAndConditions  privacyPolicy waterIntake',
-    ),
-    query,
-  )
-    .search([''])
-    .filter()
-    .paginate()
-    .sort()
-    .fields()
-
-  const data = await ContentModel.modelQuery
-  const meta = await ContentModel.countTotal()
-  return {
-    data,
-    meta,
+// Get single content
+const getContent = async (key: string) => {
+  if (!key) {
+    throw new AppError(httpStatus.BAD_REQUEST, 'Key is required')
   }
-}
 
-// Update content
-const updateContents = async (payload: Partial<TContents>) => {
-  const content = await Contents.findOne()
+  const content = await Contents.findOne({ key }).select('-__v').lean()
   if (!content) {
-    throw new AppError(httpStatus.NOT_FOUND, 'Content not found!')
+    throw new AppError(
+      httpStatus.NOT_FOUND,
+      `Content with key "${key}" not found`,
+    )
   }
-
-  // Update the content document
-  Object.assign(content, payload)
-  await content.save()
 
   return content
 }
 
+// Get general contents
+const getContentGenerals = async () => {
+  const contents = await Contents.find({ key: { $in: GENERAL_KEYS } })
+    .select('-__v')
+    .lean()
+
+  return contents
+}
+
+// Create or Update Content
+const createOrUpdate = async (key: string, payload: any) => {
+  if (!key || key === 'generals') {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      'Key is required and cannot be "generals"',
+    )
+  }
+
+  const content = await Contents.findOneAndUpdate(
+    { key },
+    { key, value: payload.value ?? payload },
+    { returnDocument: 'after', upsert: true }
+  ).select('-__v')
+
+  return content
+}
+
+// Update multiple general contents
+const updateGenerals = async (payload: Record<string, any>) => {
+  const validKeys = GENERAL_KEYS.filter((key) => payload[key] !== undefined)
+
+  if (validKeys.length === 0) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      'No valid general content keys provided',
+    )
+  }
+
+  // Update all matching keys in parallel
+  await Promise.all(
+    validKeys.map((key) =>
+      Contents.findOneAndUpdate(
+        { key },
+        { value: payload[key] },
+        { upsert: true, returnDocument: 'after' }
+      ).select('-__v')
+    )
+  )
+}
+
 export const contentsService = {
-  getAllContents,
-  updateContents,
+  getContent,
+  getContentGenerals,
+  createOrUpdate,
+  updateGenerals,
 }

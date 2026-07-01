@@ -3,31 +3,55 @@ import catchAsync from '../../utils/catchAsync'
 import { contentsService } from './contents.service'
 import sendResponse from '../../utils/sendResponse'
 
-// Get all contents
-const getContents = catchAsync(async (req: Request, res: Response) => {
-  const result = await contentsService.getAllContents(req.query)
+const getContent = catchAsync(async (req: Request, res: Response) => {
+  const key = req.query.key as string
+  const data = await contentsService.getContent(key)
 
   sendResponse(res, {
     statusCode: 200,
     success: true,
     message: 'Content retrieved successfully',
-    data: result.data[0],
+    data,
   })
 })
 
-// Update contents
-const updateContents = catchAsync(async (req: Request, res: Response) => {
-  const result = await contentsService.updateContents(req.body)
+const getContentGenerals = catchAsync(async (req: Request, res: Response) => {
+  const data = await contentsService.getContentGenerals()
+
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: 'General contents retrieved successfully',
+    data,
+  })
+})
+
+const createOrUpdate = catchAsync(async (req: Request, res: Response) => {
+  const key = req.params.key as string
+  const data = await contentsService.createOrUpdate(key, req.body)
 
   sendResponse(res, {
     statusCode: 200,
     success: true,
     message: 'Content updated successfully',
-    data: result,
+    data,
+  })
+})
+
+const updateGenerals = catchAsync(async (req: Request, res: Response) => {
+  await contentsService.updateGenerals(req.body)
+
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: 'General contents updated successfully',
+    data: null,
   })
 })
 
 export const contentsController = {
-  getContents,
-  updateContents,
+  getContent,
+  getContentGenerals,
+  createOrUpdate,
+  updateGenerals,
 }

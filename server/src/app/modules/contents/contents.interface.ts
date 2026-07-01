@@ -1,10 +1,9 @@
 import { Model, Types } from 'mongoose'
 
 export interface TContents {
-  _id?: string
-  termsAndConditions?: string
-  privacyPolicy?: string
-  waterIntake?: string[]
+  _id?: string | Types.ObjectId
+  key: string
+  value: any
 }
 
 export type TContentsModel = Model<TContents, Record<string, unknown>>

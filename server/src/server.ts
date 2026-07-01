@@ -4,7 +4,6 @@ import mongoose from 'mongoose'
 import config from './app/config'
 import { errorlogger, logger } from './app/utils/logger'
 import initializeSocketIO from './socket'
-import { seeder } from './app/seeder/seed'
 import colors from 'colors';
 
 let server: Server
@@ -15,13 +14,6 @@ async function main() {
     await mongoose.connect(config.database_url as string)
 
     logger.info('Connected to database')
-
-    // default task added
-    await Promise.all([
-    seeder.seedAdmin(),
-    seeder.seedContents(),
-    seeder.seedMoods()
-    ])
 
     server = app.listen(Number(config.port), '0.0.0.0', () => {
       console.log(

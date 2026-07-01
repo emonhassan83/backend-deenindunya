@@ -7,13 +7,21 @@ import { contentsValidation } from './contents.validation'
 
 const router = Router()
 
-router.put(
-  '/',
+router.post(
+  '/generals',
   auth(USER_ROLE.admin),
-  zodValidationRequest(contentsValidation.updateValidationSchema),
-  contentsController.updateContents,
+  zodValidationRequest(contentsValidation.updateGeneralsZodSchema),
+  contentsController.updateGenerals,
 )
 
-router.get('/', contentsController.getContents)
+router.post(
+  '/:key',
+  auth(USER_ROLE.admin),
+  zodValidationRequest(contentsValidation.createOrUpdateContentZodSchema),
+  contentsController.createOrUpdate,
+)
+
+router.get('/', contentsController.getContent)
+router.get('/generals', contentsController.getContentGenerals)
 
 export const contentsRoutes = router

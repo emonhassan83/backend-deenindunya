@@ -3,16 +3,16 @@ import { TContents, TContentsModel } from './contents.interface'
 
 const contentsSchema = new Schema<TContents>(
   {
-    termsAndConditions: {
+    key: {
       type: String,
+      required: [true, 'Key is required'],
+      unique: true,
+      trim: true,
     },
-    privacyPolicy: {
-      type: String,
+    value: {
+      type: Schema.Types.Mixed,
+      required: [true, 'Value is required'],
     },
-    waterIntake: {
-      type: [String],
-      default: [],
-    }
   },
   {
     timestamps: true,

@@ -1,28 +1,28 @@
 import { z } from 'zod'
+import { ALLOWED_KEYS } from './contents.constants'
 
-const createValidationSchema = z.object({
+export const createOrUpdateContentZodSchema = z.object({
+  params: z.object({
+    key: z.enum(ALLOWED_KEYS as unknown as [string, ...string[]], {
+      message: 'Invalid content key provided',
+    }),
+  }),
   body: z.object({
-    termsAndConditions: z
-      .string({ message: 'terms and conditions us is required' })
-      .optional(),
-    privacyPolicy: z
-      .string({ message: 'privacy policy us is required' })
-      .optional()
+    value: z.any(),
   }),
 })
 
-const updateValidationSchema = z.object({
-  body: z.object({
-    termsAndConditions: z
-      .string({ message: 'terms and conditions us is required' })
-      .optional(),
-    privacyPolicy: z
-      .string({ message: 'privacy policy us is required' })
-      .optional(),
-  }),
+export const updateGeneralsZodSchema = z.object({
+  body: z
+    .object({
+      waterIntake: z.array(z.string()).optional(),
+    })
+    .refine((data) => Object.keys(data).length > 0, {
+      message: 'At least one general content value must be provided',
+    }),
 })
 
 export const contentsValidation = {
-  createValidationSchema,
-  updateValidationSchema
+  createOrUpdateContentZodSchema,
+  updateGeneralsZodSchema,
 }
