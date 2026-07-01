@@ -1,4 +1,5 @@
-import admin from 'firebase-admin';
+import { initializeApp, cert } from 'firebase-admin/app';
+import { getMessaging } from 'firebase-admin/messaging';
 import AppError from '../errors/AppError';
 import httpStatus from 'http-status'
 import { TNotification } from '../modules/notification/notification.interface';
@@ -19,8 +20,8 @@ const firebaseConfig = {
   client_x509_cert_url: config.firebase.client_x509_cert_url,
 };
 
-admin.initializeApp({
-  credential: admin.credential.cert(firebaseConfig as admin.ServiceAccount),
+initializeApp({
+  credential: cert(firebaseConfig as any),
 });
  
 export const sendNotification = async (
@@ -40,7 +41,7 @@ export const sendNotification = async (
       return null
     }
 
-    const response = await admin.messaging().sendEachForMulticast({
+    const response = await getMessaging().sendEachForMulticast({
       tokens: fcmToken,
       notification: {
         title: payload.message,

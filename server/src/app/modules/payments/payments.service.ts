@@ -19,7 +19,7 @@ import { User } from '../user/user.model'
 import { Package } from '../package/package.model'
 
 const stripe = new Stripe(config.stripe?.stripe_api_secret as string, {
-  apiVersion: '2026-05-27.dahlia',
+  apiVersion: '2026-06-24.dahlia',
   typescript: true,
 })
 

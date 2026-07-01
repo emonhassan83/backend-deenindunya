@@ -23,7 +23,7 @@ async function main() {
     seeder.seedMoods()
     ])
 
-    server = app.listen(Number(config.port), config.ip as string, () => {
+    server = app.listen(Number(config.port), '0.0.0.0', () => {
       console.log(
         colors.italic.green.bold(
           `💫 Simple Server Listening on  http://${config?.ip}:${config.port} `,
