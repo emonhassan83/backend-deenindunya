@@ -6,6 +6,7 @@ import { User } from '../user/user.model'
 import mongoose from 'mongoose'
 import moment from 'moment'
 import { getCache, setCache, deleteCachePattern } from '../../redis/helpers'
+import { REDIS_KEYS } from '../../redis/keys'
 
 const insertIntoDB = async (
   payload: TExercise,
@@ -24,13 +25,13 @@ const insertIntoDB = async (
   const result = await Exercise.create(payload)
 
   // Invalidate cache
-  await deleteCachePattern(`exercise:${userId}`)
+  await deleteCachePattern(REDIS_KEYS.EXERCISE(userId))
 
   return result
 }
 
 const getAllFromDB = async (userId: string) => {
-  const cacheKey = `exercise:${userId}`
+  const cacheKey = REDIS_KEYS.EXERCISE(userId)
   const cachedData = await getCache<any>(cacheKey)
   if (cachedData) {
     return cachedData
@@ -115,7 +116,7 @@ const updateIntoDB = async (
   }
 
   // Invalidate cache
-  await deleteCachePattern(`exercise:${userId}`)
+  await deleteCachePattern(REDIS_KEYS.EXERCISE(userId))
 
   return updated
 }
@@ -150,7 +151,7 @@ const toggleCompleteStatus = async (
   }
 
   // Invalidate cache
-  await deleteCachePattern(`exercise:${userId}`)
+  await deleteCachePattern(REDIS_KEYS.EXERCISE(userId))
 
   return updated
 }
@@ -171,7 +172,7 @@ const deleteFromDB = async (id: string, userId: string): Promise<TExercise> => {
   }
 
   // Invalidate cache
-  await deleteCachePattern(`exercise:${userId}`)
+  await deleteCachePattern(REDIS_KEYS.EXERCISE(userId))
 
   return result
 }

@@ -3,6 +3,7 @@ import AppError from '../../errors/AppError'
 import { TAffirmation } from './affirmations.interface'
 import { Affirmation } from './affirmations.model'
 import { getCache, setCache, deleteCachePattern } from '../../redis/helpers'
+import { REDIS_KEYS } from '../../redis/keys'
 
 const insertIntoDB = async (payload: TAffirmation): Promise<TAffirmation> => {
   // Check if affirmation with same arabic text already exists
@@ -22,13 +23,13 @@ const insertIntoDB = async (payload: TAffirmation): Promise<TAffirmation> => {
   const result = await Affirmation.create(payload)
 
   // Invalidate cache
-  await deleteCachePattern('affirmation:*')
+  await deleteCachePattern(REDIS_KEYS.AFFIRMATION_PATTERN)
 
   return result
 }
 
 const getAllFromDB = async (query: Record<string, unknown>) => {
-  const cacheKey = `affirmation:all:${JSON.stringify(query)}`
+  const cacheKey = REDIS_KEYS.AFFIRMATION_ALL(JSON.stringify(query))
   const cachedData = await getCache<any>(cacheKey)
   if (cachedData) {
     return cachedData
@@ -70,7 +71,7 @@ const getAllFromDB = async (query: Record<string, unknown>) => {
 }
 
 const getSingleFromDB = async (id: string): Promise<TAffirmation> => {
-  const cacheKey = `affirmation:single:${id}`
+  const cacheKey = REDIS_KEYS.AFFIRMATION_SINGLE(id)
   const cachedData = await getCache<any>(cacheKey)
   if (cachedData) {
     return cachedData
@@ -125,7 +126,7 @@ const updateIntoDB = async (
   }
 
   // Invalidate cache
-  await deleteCachePattern('affirmation:*')
+  await deleteCachePattern(REDIS_KEYS.AFFIRMATION_PATTERN)
 
   return updated
 }
@@ -142,7 +143,7 @@ const deleteFromDB = async (id: string): Promise<TAffirmation> => {
   }
 
   // Invalidate cache
-  await deleteCachePattern('affirmation:*')
+  await deleteCachePattern(REDIS_KEYS.AFFIRMATION_PATTERN)
 
   return result
 }

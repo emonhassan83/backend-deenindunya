@@ -3,6 +3,7 @@ import AppError from '../../errors/AppError'
 import { Contents } from './contents.models'
 import { GENERAL_KEYS } from './contents.constants'
 import { getCache, setCache, deleteCachePattern } from '../../redis/helpers'
+import { REDIS_KEYS } from '../../redis/keys'
 
 // Get single content
 const getContent = async (key: string) => {
@@ -10,7 +11,7 @@ const getContent = async (key: string) => {
     throw new AppError(httpStatus.BAD_REQUEST, 'Key is required')
   }
 
-  const cacheKey = `contents:${key}`
+  const cacheKey = REDIS_KEYS.CONTENT_BY_KEY(key)
   const cached = await getCache<any>(cacheKey)
   if (cached) {
     return cached
@@ -30,7 +31,7 @@ const getContent = async (key: string) => {
 
 // Get general contents
 const getContentGenerals = async () => {
-  const cacheKey = `contents:generals`
+  const cacheKey = REDIS_KEYS.CONTENT_GENERALS
   const cached = await getCache<any[]>(cacheKey)
   if (cached) {
     return cached
@@ -60,7 +61,7 @@ const createOrUpdate = async (key: string, payload: any) => {
   ).select('-__v')
 
   // Invalidate related cache entries
-  await deleteCachePattern('contents:*')
+  await deleteCachePattern(REDIS_KEYS.CONTENT_PATTERN)
 
   return content
 }
@@ -88,7 +89,7 @@ const updateGenerals = async (payload: Record<string, any>) => {
   )
 
   // Invalidate cache for contents
-  await deleteCachePattern('contents:*')
+  await deleteCachePattern(REDIS_KEYS.CONTENT_PATTERN)
 }
 
 export const contentsService = {

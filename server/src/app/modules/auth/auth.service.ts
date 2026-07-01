@@ -29,7 +29,7 @@ const loginUser = async (payload: TLoginUser) => {
     throw new AppError(httpStatus.FORBIDDEN, 'Password do not matched')
 
   // if user is not verify yet throw error
-  if (!user?.verification?.status) {
+  if (user.expireAt && user.expireAt < new Date()) {
     throw new AppError(httpStatus.FORBIDDEN, 'User account is not verified')
   }
 
@@ -119,7 +119,7 @@ const registerWithGoogle = async (payload: TGoogleLoginPayload ) => {
     if (user.isDeleted) {
       const updatedUser = await User.findByIdAndUpdate(
         user._id,
-        { ...updateData, isDeleted: false, verification: { otp: 0, expiresAt: new Date(), status: true }, expireAt: null },
+        { ...updateData, isDeleted: false, expireAt: null },
         { new: true }
       )
 
@@ -139,7 +139,6 @@ const registerWithGoogle = async (payload: TGoogleLoginPayload ) => {
   const newUser = await User.create({
     ...updateData,
     registerWith: REGISTER_WITH.google,
-    verification: { otp: 0, expiresAt: new Date(), status: true },
     expireAt: null,
   })
 
@@ -182,7 +181,7 @@ const registerWithApple = async (payload: TAppleLoginPayload ) => {
     if (user.isDeleted) {
       const updatedUser = await User.findByIdAndUpdate(
         user._id,
-        { ...updateData, isDeleted: false, verification: { otp: 0, expiresAt: new Date(), status: true }, expireAt: null },
+        { ...updateData, isDeleted: false, expireAt: null },
         { new: true }
       )
 
@@ -200,7 +199,6 @@ const registerWithApple = async (payload: TAppleLoginPayload ) => {
   const newUser = await User.create({
     ...updateData,
     registerWith: REGISTER_WITH.apple,
-    verification: { otp: 0, expiresAt: new Date(), status: true },
     expireAt: null,
   })
 
@@ -250,22 +248,25 @@ const changePassword = async (
   if (!updateUserPassword) {
     throw new AppError(
       httpStatus.FORBIDDEN,
-      'Password was not updated. Please try again!',
+      'Password not changed. Please try again',
     )
   }
 
-  // Send a notification to the user informing them about the successful password change
-  user?.role === 'admin' && await authNotifyUser('PASSWORD_CHANGE', user)
+  // Send a notification to the admin informing them about the password change
+  user?.role === 'admin' && (await authNotifyUser('PASSWORD_CHANGE', user))
 
   return null
 }
 
 const refreshToken = async (token: string) => {
-  //* checking if the given token is valid
-  const decoded = verifyToken(token, config.jwt_refresh_secret as string)
+  let decodedData
+  try {
+    decodedData = verifyToken(token, config.jwt_refresh_secret as string)
+  } catch (err) {
+    throw new AppError(httpStatus.UNAUTHORIZED, 'Token is invalid')
+  }
 
-  //* checking if the user is exist
-  const user = await User.isUserExistsByEmail(decoded?.email)
+  const user = await User.isUserExistsByEmail(decodedData.email)
   if (!user || user?.isDeleted) {
     throw new AppError(httpStatus.NOT_FOUND, 'This user is not found !')
   }
@@ -282,19 +283,15 @@ const refreshToken = async (token: string) => {
     config.jwt_access_expires_in as TExpiresIn,
   )
 
-  return {
-    accessToken,
-  }
+  return { accessToken }
 }
 
-const forgetPassword = async (payload: { email: string }) => {
-  //* checking if the user is exist
-  const user = await User.isUserExistsByEmail(payload.email)
+const forgetPassword = async (email: string) => {
+  const user = await User.isUserExistsByEmail(email)
   if (!user || user?.isDeleted) {
     throw new AppError(httpStatus.NOT_FOUND, 'This user is not found !')
   }
 
-  //* create token and sent to the  client
   const jwtPayload = {
     _id: user._id,
     email: user.email,
@@ -307,19 +304,15 @@ const forgetPassword = async (payload: { email: string }) => {
     '5m',
   )
 
-  const currentTime = new Date()
   const otp = generateOtp()
-  const expiresAt = moment(currentTime).add(5, 'minute')
 
-  await User.findByIdAndUpdate(user?._id, {
-    verification: {
-      otp,
-      expiresAt,
-      status: true,
-    },
-  })
-
-  // const resetUILink = `${config.reset_pass_link}?id=${user._id}&token=${resetToken} `
+  // Save OTP in Redis with 5 minutes expiration (300 seconds)
+  const { OtpRedisService } = await import('../../redis/helpers/otp')
+  const { setCache } = await import('../../redis/helpers')
+  const { REDIS_KEYS } = await import('../../redis/keys')
+  await OtpRedisService.saveOtp(email, otp, 300)
+  // Store verification status in Redis with 5 minutes expiration
+  await setCache(REDIS_KEYS.RESET_OTP_VERIFIED(email), 'false', 300)
 
   await emailSender(
     user?.email,
@@ -335,7 +328,7 @@ const forgetPassword = async (payload: { email: string }) => {
               ${otp}
             </span>
           </div>
-          <p style="color: #555;">This OTP is valid until: <strong>${expiresAt.toLocaleString()}</strong></p>
+          <p style="color: #555;">This OTP is valid until: <strong>${moment().add(5, 'minute').toDate().toLocaleString()}</strong></p>
           <p style="color: #555;">If you did not request this OTP, please ignore this email.</p>
           <p style="color: #555;">Thank you,<br/>Deenindunya App Team</p>
         </div>
@@ -359,13 +352,12 @@ const resetPassword = async (
     throw new AppError(httpStatus.NOT_FOUND, 'This user is not found !')
   }
 
-  // if session is expired
-  if (new Date() > user!.verification!.expiresAt!) {
-    throw new AppError(httpStatus.FORBIDDEN, 'Session has expired')
-  }
+  // check if OTP verified state is active in Redis
+  const { getCache, deleteCache } = await import('../../redis/helpers')
+  const { REDIS_KEYS } = await import('../../redis/keys')
+  const verifiedState = await getCache<string>(REDIS_KEYS.RESET_OTP_VERIFIED(payload.email))
 
-  // if user verification status is not available
-  if (!user?.verification?.status) {
+  if (verifiedState !== 'true') {
     throw new AppError(httpStatus.FORBIDDEN, 'OTP is not verified yet')
   }
 
@@ -397,10 +389,6 @@ const resetPassword = async (
       $set: {
         password: newHashedPassword,
         passwordChangedAt: new Date(),
-        verification: {
-          otp: 0,
-          status: true,
-        },
       },
     },
     { returnDocument: 'after' },
@@ -413,6 +401,9 @@ const resetPassword = async (
       'Password was not reset. Please try again!',
     )
   }
+
+  // Delete verified status
+  await deleteCache(REDIS_KEYS.RESET_OTP_VERIFIED(payload.email))
 
   // Send a notification to the admin informing them about the password reset
   user?.role === 'admin' && (await authNotifyUser('PASSWORD_RESET', user))

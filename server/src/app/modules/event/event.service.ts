@@ -7,6 +7,7 @@ import { TEvent } from './event.interface'
 import { EVENT_TYPE } from './event.constants'
 import { getMonthName, groupEventsByMonth } from './event.utils'
 import { getCache, setCache, deleteCachePattern } from '../../redis/helpers'
+import { REDIS_KEYS } from '../../redis/keys'
 
 // event.service.ts
 const insertIntoDB = async (payload: TEvent, userId: string) => {
@@ -27,7 +28,7 @@ const insertIntoDB = async (payload: TEvent, userId: string) => {
 
   if (exist) {
     throw new AppError(
-      httpStatus.BAD_REQUEST, 
+      httpStatus.BAD_REQUEST,
       `Event "${title}" on ${date} already exists`
     )
   }
@@ -55,14 +56,14 @@ const insertIntoDB = async (payload: TEvent, userId: string) => {
   }
 
   // Invalidate event caches
-  await deleteCachePattern('event:*')
+  await deleteCachePattern(REDIS_KEYS.EVENT_PATTERN)
 
   return result
 }
 
 // Get all events Events data
 const getAllIntoDB = async (query: Record<string, any>) => {
-  const cacheKey = `event:all:${JSON.stringify(query)}`
+  const cacheKey = REDIS_KEYS.EVENT_ALL(JSON.stringify(query))
   const cachedData = await getCache<any>(cacheKey)
   if (cachedData) {
     return cachedData
@@ -89,7 +90,7 @@ const getAllEventsForUser = async (
   userId: string,
   query: Record<string, any>,
 ) => {
-  const cacheKey = `event:user:${userId}:all:${JSON.stringify(query)}`
+  const cacheKey = REDIS_KEYS.EVENT_USER_ALL(userId, JSON.stringify(query))
   const cachedData = await getCache<any>(cacheKey)
   if (cachedData) {
     return cachedData
@@ -113,42 +114,42 @@ const getAllEventsForUser = async (
   // Get Islamic events (global)
   const islamicEvents = await Event.find({
     type: EVENT_TYPE.islamic,
+    isDeleted: false,
     ...dateFilter,
-  }).sort({ date: 1 })
+  })
+    .sort({ date: 1 })
+    .lean()
 
-  // Get user's personal events
+  // Get User events
   const userEvents = await Event.find({
     type: EVENT_TYPE.user,
     user: userId,
+    isDeleted: false,
     ...dateFilter,
-  }).sort({ date: 1 })
-
-  // Combine and sort by date
-  const allEvents = [...islamicEvents, ...userEvents].sort((a, b) => {
-    return new Date(a.date).getTime() - new Date(b.date).getTime()
   })
+    .sort({ date: 1 })
+    .lean()
 
-  // Group by month for better UI
-  const eventsByMonth = groupEventsByMonth(allEvents)
+  // Combine and group by month
+  const allEvents = [...islamicEvents, ...userEvents]
 
-  const result = {
-    total: allEvents.length,
-    islamicCount: islamicEvents.length,
-    userCount: userEvents.length,
-    events: allEvents,
-    eventsByMonth,
-  }
+  // Sort combined events by date
+  allEvents.sort(
+    (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
+  )
 
-  await setCache(cacheKey, result)
+  const grouped = groupEventsByMonth(allEvents)
 
-  return result
+  await setCache(cacheKey, grouped)
+
+  return grouped
 }
 
 // Get events for a specific date
 const getEventsByDate = async (userId: string, query: Record<string, any>) => {
   const { date } = query
 
-  const cacheKey = `event:user:${userId}:date:${date}`
+  const cacheKey = REDIS_KEYS.EVENT_USER_DATE(userId, date)
   const cachedData = await getCache<any>(cacheKey)
   if (cachedData) {
     return cachedData
@@ -177,11 +178,11 @@ const getAllEventsByMonth = async (
   if (!yearMonth || !/^\d{4}-\d{2}$/.test(yearMonth)) {
     throw new AppError(
       httpStatus.BAD_REQUEST,
-      'Invalid format. Please use YYYY-MM format (e.g., 2026-04)',
+      'Invalid format. Please use YYYY-MM-DD format (e.g., 2026-04)',
     )
   }
 
-  const cacheKey = `event:user:${userId}:month:${yearMonth}`
+  const cacheKey = REDIS_KEYS.EVENT_USER_MONTH(userId, yearMonth)
   const cachedData = await getCache<any>(cacheKey)
   if (cachedData) {
     return cachedData
@@ -259,7 +260,7 @@ const getCurrentYearIslamicEvents = async (query: Record<string, any>) => {
     throw new Error('Year is required')
   }
 
-  const cacheKey = `event:islamic:year:${year}`
+  const cacheKey = REDIS_KEYS.EVENT_ISLAMIC_YEAR(year)
   const cachedData = await getCache<any>(cacheKey)
   if (cachedData) {
     return cachedData
@@ -290,32 +291,80 @@ const getCurrentYearIslamicEvents = async (query: Record<string, any>) => {
   return result
 }
 
-const updateIntoDB = async (id: string, payload: Partial<TEvent>) => {
-  const exist = await Event.findById(id)
-  if (!exist) {
-    throw new AppError(httpStatus.NOT_FOUND, 'Event not found')
+const updateIntoDB = async (
+  id: string,
+  payload: Partial<TEvent>,
+  userId: string,
+) => {
+  // Find event
+  const event = await Event.findById(id)
+  if (!event) {
+    throw new AppError(httpStatus.NOT_FOUND, 'Event not found!')
   }
 
-  const result = await Event.findByIdAndUpdate(id, payload, { new: true })
-  if (!result) throw new AppError(httpStatus.NOT_FOUND, 'Event not found')
+  // If type is user, ensure it belongs to the requesting user
+  if (event.type === EVENT_TYPE.user && String(event.user) !== userId) {
+    throw new AppError(
+      httpStatus.FORBIDDEN,
+      'You are not authorized to update this event',
+    )
+  }
+
+  // If trying to change type to user but user is not provided
+  if (payload.type === EVENT_TYPE.user && !event.user && !userId) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      'User ID is required for user type events',
+    )
+  }
+
+  const result = await Event.findByIdAndUpdate(id, payload, {
+    new: true,
+  })
+
+  if (!result) {
+    throw new AppError(
+      httpStatus.INTERNAL_SERVER_ERROR,
+      'Event update failed!',
+    )
+  }
 
   // Invalidate event caches
-  await deleteCachePattern('event:*')
+  await deleteCachePattern(REDIS_KEYS.EVENT_PATTERN)
 
   return result
 }
 
-const deleteAIntoDB = async (id: string) => {
-  const exist = await Event.findById(id)
-  if (!exist) {
-    throw new AppError(httpStatus.NOT_FOUND, 'Event not found')
+const deleteAIntoDB = async (id: string, userId: string) => {
+  // Find event
+  const event = await Event.findById(id)
+  if (!event) {
+    throw new AppError(httpStatus.NOT_FOUND, 'Event not found!')
   }
 
-  const result = await Event.findByIdAndDelete(id)
-  if (!result) throw new AppError(httpStatus.NOT_FOUND, 'Event not found')
+  // If type is user, ensure it belongs to the requesting user
+  if (event.type === EVENT_TYPE.user && String(event.user) !== userId) {
+    throw new AppError(
+      httpStatus.FORBIDDEN,
+      'You are not authorized to delete this event',
+    )
+  }
+
+  const result = await Event.findByIdAndUpdate(
+    id,
+    { isDeleted: true },
+    { new: true },
+  )
+
+  if (!result) {
+    throw new AppError(
+      httpStatus.INTERNAL_SERVER_ERROR,
+      'Event deletion failed!',
+    )
+  }
 
   // Invalidate event caches
-  await deleteCachePattern('event:*')
+  await deleteCachePattern(REDIS_KEYS.EVENT_PATTERN)
 
   return result
 }

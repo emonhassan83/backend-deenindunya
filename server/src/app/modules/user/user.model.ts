@@ -48,11 +48,7 @@ const userSchema = new Schema<TUser>(
     },
     needsPasswordChange: { type: Boolean, default: true },
     passwordChangedAt: { type: Date, default: null },
-    verification: {
-      otp: { type: Schema.Types.Mixed, default: 0 },
-      expiresAt: { type: Date, default: null },
-      status: { type: Boolean, default: false },
-    },
+    isSignUpOtpVerified: { type: Boolean, default: false },
     notificationPreference: { type: notificationPreferenceSchema, default: {} },
     status: {
       type: String,

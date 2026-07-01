@@ -3,6 +3,7 @@ import AppError from '../../errors/AppError'
 import { TDuas } from './duas.interface'
 import { Duas } from './duas.model'
 import { getCache, setCache, deleteCachePattern } from '../../redis/helpers'
+import { REDIS_KEYS } from '../../redis/keys'
 
 const insertIntoDB = async (payload: TDuas): Promise<TDuas> => {
   // Check if dua with same arabic text already exists in this category
@@ -23,13 +24,13 @@ const insertIntoDB = async (payload: TDuas): Promise<TDuas> => {
   const result = await Duas.create(payload)
 
   // Invalidate cache
-  await deleteCachePattern('dua:*')
+  await deleteCachePattern(REDIS_KEYS.DUA_PATTERN)
 
   return result
 }
 
 const getAllFromDB = async (query: Record<string, unknown>) => {
-  const cacheKey = `dua:all:${JSON.stringify(query)}`
+  const cacheKey = REDIS_KEYS.DUA_ALL(JSON.stringify(query))
   const cachedData = await getCache<any>(cacheKey)
   if (cachedData) {
     return cachedData
@@ -77,7 +78,7 @@ const getAllFromDB = async (query: Record<string, unknown>) => {
 }
 
 const getSingleFromDB = async (id: string): Promise<TDuas> => {
-  const cacheKey = `dua:single:${id}`
+  const cacheKey = REDIS_KEYS.DUA_SINGLE(id)
   const cachedData = await getCache<any>(cacheKey)
   if (cachedData) {
     return cachedData
@@ -136,7 +137,7 @@ const updateIntoDB = async (
   }
 
   // Invalidate cache
-  await deleteCachePattern('dua:*')
+  await deleteCachePattern(REDIS_KEYS.DUA_PATTERN)
 
   return updated
 }
@@ -153,7 +154,7 @@ const deleteFromDB = async (id: string): Promise<TDuas> => {
   }
 
   // Invalidate cache
-  await deleteCachePattern('dua:*')
+  await deleteCachePattern(REDIS_KEYS.DUA_PATTERN)
 
   return result
 }

@@ -9,6 +9,8 @@ import { createToken, TExpiresIn } from '../auth/auth.utils'
 import { Types } from 'mongoose'
 import { OtpRedisService } from '../../redis/helpers/otp'
 import { getEmailQueue } from '../../queues/queues'
+import { setCache } from '../../redis/helpers'
+import { REDIS_KEYS } from '../../redis/keys'
 
 const verifyOtp = async (token: string, otp: string | number) => {
   if (!token) {
@@ -27,7 +29,7 @@ const verifyOtp = async (token: string, otp: string | number) => {
   }
 
   const user = await User.findOne({ email: decode?.email }).select(
-    'verification status ',
+    'status ',
   )
   if (!user) {
     throw new AppError(httpStatus.BAD_REQUEST, 'User not found')
@@ -49,15 +51,14 @@ const verifyOtp = async (token: string, otp: string | number) => {
   // Delete OTP from Redis cache after verification succeeds
   await OtpRedisService.deleteOtp(user.email)
 
+  // Store verification status in Redis with 5 minutes expiration
+  await setCache(REDIS_KEYS.REGISTER_OTP_VERIFIED(user.email), 'true', 300)
+
   const updateUser = await User.findByIdAndUpdate(
     user?._id,
     {
       $set: {
-        verification: {
-          otp: 0,
-          expiresAt: moment().add(5, 'minute'),
-          status: true,
-        },
+        isSignUpOtpVerified: true,
         expireAt: null, // set null to prevent verify user deletion data
       },
     },
@@ -91,27 +92,6 @@ const resendOtp = async (email: string) => {
 
   // Save OTP in Redis cache with 5 minutes TTL (300 seconds)
   await OtpRedisService.saveOtp(user.email, otp, 300)
-
-  const updateOtp = await User.findByIdAndUpdate(
-    user?._id,
-    {
-      $set: {
-        verification: {
-          otp,
-          expiresAt,
-          status: true,
-        },
-      },
-    },
-    { new: true },
-  )
-
-  if (!updateOtp) {
-    throw new AppError(
-      httpStatus.BAD_REQUEST,
-      'Failed to resend OTP. Please try again later',
-    )
-  }
 
   const jwtPayload = {
     email: user?.email,

@@ -4,6 +4,7 @@ import QueryBuilder from '../../builder/QueryBuilder'
 import { Surah, SurahProgress, SurahVerse } from './surah.models'
 import { User } from '../user/user.model'
 import { getCache, setCache, deleteCachePattern } from '../../redis/helpers'
+import { REDIS_KEYS } from '../../redis/keys'
 
 /**
  * Get list of all Surahs with search, filter, pagination, sorting & field selection
@@ -14,7 +15,7 @@ const getSurahs = async (query: Record<string, any>, userId: string) => {
     throw new AppError(httpStatus.NOT_FOUND, 'User not found')
   }
 
-  const cacheKey = `surah:list:${userId}:${JSON.stringify(query)}`
+  const cacheKey = REDIS_KEYS.SURAH_LIST(userId, JSON.stringify(query))
   const cachedData = await getCache<any>(cacheKey)
   if (cachedData) {
     return cachedData
@@ -84,7 +85,7 @@ const getSurahVerses = async (
     throw new AppError(httpStatus.BAD_REQUEST, 'Invalid Surah number')
   }
 
-  const cacheKey = `surah:verses:${surahNum}:${JSON.stringify(query)}`
+  const cacheKey = REDIS_KEYS.SURAH_VERSES(String(surahNum), JSON.stringify(query))
   const cachedData = await getCache<any>(cacheKey)
   if (cachedData) {
     return cachedData
@@ -162,7 +163,7 @@ const memorizeSurah = async (id: string, userId: string) => {
   }
 
   // Invalidate list cache
-  await deleteCachePattern(`surah:list:${userId}:*`)
+  await deleteCachePattern(REDIS_KEYS.SURAH_USER_PATTERN(userId))
 
   return result
 }

@@ -5,6 +5,7 @@ import { GratitudeLog } from './gratitudeLogs.model'
 import { User } from '../user/user.model'
 import mongoose from 'mongoose'
 import { getCache, setCache, deleteCachePattern } from '../../redis/helpers'
+import { REDIS_KEYS } from '../../redis/keys'
 
 const insertIntoDB = async (
   payload: TGratitudeLogs,
@@ -23,13 +24,13 @@ const insertIntoDB = async (
   const result = await GratitudeLog.create(payload)
 
   // Invalidate cache
-  await deleteCachePattern(`gratitude:${userId}`)
+  await deleteCachePattern(REDIS_KEYS.GRATITUDE(userId))
 
   return result
 }
 
 const getAllFromDB = async (userId: string) => {
-  const cacheKey = `gratitude:${userId}`
+  const cacheKey = REDIS_KEYS.GRATITUDE(userId)
   const cachedData = await getCache<any>(cacheKey)
   if (cachedData) {
     return cachedData
@@ -89,7 +90,7 @@ const updateIntoDB = async (
   }
 
   // Invalidate cache
-  await deleteCachePattern(`gratitude:${userId}`)
+  await deleteCachePattern(REDIS_KEYS.GRATITUDE(userId))
 
   return updated
 }
@@ -97,7 +98,7 @@ const updateIntoDB = async (
 const deleteFromDB = async (
   id: string,
   userId: string,
-): Promise<TGratitudeLogs> => {
+ ): Promise<TGratitudeLogs> => {
   const existing = await GratitudeLog.findOne({
     _id: id,
     user: userId,
@@ -112,7 +113,7 @@ const deleteFromDB = async (
   }
 
   // Invalidate cache
-  await deleteCachePattern(`gratitude:${userId}`)
+  await deleteCachePattern(REDIS_KEYS.GRATITUDE(userId))
 
   return result
 }

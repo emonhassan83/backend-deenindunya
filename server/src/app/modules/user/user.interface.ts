@@ -30,12 +30,8 @@ export interface TUser {
   role: TUserRole
   registerWith: string
   needsPasswordChange: boolean
-  passwordChangedAt?: Date
-  verification: {
-    otp: string | number
-    expiresAt: Date
-    status: boolean
-  }
+  passwordChangedAt: Date
+  isSignUpOtpVerified: boolean
   notificationPreference: TNotificationPreference
   status: TUserStatus
   expireAt: Date

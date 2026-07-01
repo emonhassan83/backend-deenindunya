@@ -6,6 +6,7 @@ import { User } from '../user/user.model'
 import { Grocery } from './grocery.models'
 import { isValidDate } from '../../utils/isValidDate'
 import { getCache, setCache, deleteCachePattern } from '../../redis/helpers'
+import { REDIS_KEYS } from '../../redis/keys'
 
 // Create grocery item
 const insertIntoDB = async (payload: TGrocery, userId: string) => {
@@ -38,7 +39,7 @@ const insertIntoDB = async (payload: TGrocery, userId: string) => {
   })
 
   // Invalidate cache
-  await deleteCachePattern(`grocery:${userId}:*`)
+  await deleteCachePattern(REDIS_KEYS.GROCERY_PATTERN(userId))
 
   return result
 }
@@ -68,7 +69,7 @@ const getAllIntoDB = async (query: Record<string, any>, userId: string) => {
     throw new AppError(httpStatus.NOT_FOUND, 'User not found!')
   }
 
-  const cacheKey = `grocery:${userId}:${date}`
+  const cacheKey = REDIS_KEYS.GROCERY_KEY(userId, date)
   const cachedData = await getCache<any>(cacheKey)
   if (cachedData) {
     return cachedData
@@ -121,7 +122,7 @@ const changedStatusIntoDB = async (id: string, userId: string) => {
   }
 
   // Invalidate cache
-  await deleteCachePattern(`grocery:${userId}:*`)
+  await deleteCachePattern(REDIS_KEYS.GROCERY_PATTERN(userId))
 
   return result
 }
@@ -148,7 +149,7 @@ const deleteAIntoDB = async (id: string) => {
     session.endSession()
 
     // Invalidate cache
-    await deleteCachePattern(`grocery:${grocery.user}:*`)
+    await deleteCachePattern(REDIS_KEYS.GROCERY_PATTERN(String(grocery.user)))
 
     return result
   } catch (error) {

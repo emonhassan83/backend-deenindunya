@@ -6,6 +6,7 @@ import { Task } from './task.models'
 import moment from 'moment-timezone'
 import { TASK_TYPE } from './task.constants'
 import { getCache, setCache, deleteCachePattern } from '../../redis/helpers'
+import { REDIS_KEYS } from '../../redis/keys'
 
 // Create a new Project
 const insertIntoDB = async (userId: string, payload: TTask) => {
@@ -34,7 +35,7 @@ const insertIntoDB = async (userId: string, payload: TTask) => {
   }
 
   // Invalidate cache
-  await deleteCachePattern(`task:${userId}:*`)
+  await deleteCachePattern(REDIS_KEYS.TASK_PATTERN(userId))
 
   return result
 }
@@ -65,7 +66,7 @@ const getAllIntoDB = async (query: Record<string, any>, userId: string) => {
     throw new AppError(httpStatus.NOT_FOUND, 'User not found')
   }
 
-  const cacheKey = `task:${userId}:${type}`
+  const cacheKey = REDIS_KEYS.TASK_KEY(userId, type)
   const cachedData = await getCache<any[]>(cacheKey)
   if (cachedData) {
     return cachedData
@@ -107,7 +108,7 @@ const changedStatusIntoDB = async (id: string) => {
   }
 
   // Invalidate cache
-  await deleteCachePattern(`task:${task.user}:*`)
+  await deleteCachePattern(REDIS_KEYS.TASK_PATTERN(String(task.user)))
 
   return result
 }
@@ -125,7 +126,7 @@ const deleteAIntoDB = async (id: string) => {
   }
 
   // Invalidate cache
-  await deleteCachePattern(`task:${task.user}:*`)
+  await deleteCachePattern(REDIS_KEYS.TASK_PATTERN(String(task.user)))
 
   return result
 }

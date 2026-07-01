@@ -5,6 +5,7 @@ import { User } from '../user/user.model'
 import { Reminder } from './reminders.models'
 import { isValidDate } from '../../utils/isValidDate'
 import { getCache, setCache, deleteCachePattern } from '../../redis/helpers'
+import { REDIS_KEYS } from '../../redis/keys'
 
 // Create a new Reminder
 const insertIntoDB = async (userId: string, payload: TReminder) => {
@@ -23,7 +24,7 @@ const insertIntoDB = async (userId: string, payload: TReminder) => {
   }
 
   // Invalidate cache
-  await deleteCachePattern(`reminder:${userId}:*`)
+  await deleteCachePattern(REDIS_KEYS.REMINDER_PATTERN(userId))
 
   return result
 }
@@ -48,7 +49,7 @@ const getAllIntoDB = async (userId: string, query: Record<string, any>) => {
     );
   }
 
-  const cacheKey = `reminder:${userId}:${date}`
+  const cacheKey = REDIS_KEYS.REMINDER_KEY(userId, date)
   const cachedData = await getCache<any[]>(cacheKey)
   if (cachedData) {
     return cachedData
@@ -91,7 +92,7 @@ const toggleCompleteIntoDB = async (id: string) => {
   }
 
   // Invalidate cache
-  await deleteCachePattern(`reminder:${reminder.user}:*`)
+  await deleteCachePattern(REDIS_KEYS.REMINDER_PATTERN(String(reminder.user)))
 
   return result
 }
@@ -109,7 +110,7 @@ const deleteAIntoDB = async (id: string) => {
   }
 
   // Invalidate cache
-  await deleteCachePattern(`reminder:${reminder.user}:*`)
+  await deleteCachePattern(REDIS_KEYS.REMINDER_PATTERN(String(reminder.user)))
 
   return result
 }

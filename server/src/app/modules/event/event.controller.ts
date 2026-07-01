@@ -64,7 +64,7 @@ const getAllEventsByMonth = catchAsync(async (req: Request, res: Response) => {
 })
 
 const updateIntoDB = catchAsync(async (req: Request, res: Response) => {
-  const result = await EventService.updateIntoDB(req.params.id as string, req.body)
+  const result = await EventService.updateIntoDB(req.params.id as string, req.body, req.user._id)
 
   sendResponse(res, {
     statusCode: 200,
@@ -75,7 +75,7 @@ const updateIntoDB = catchAsync(async (req: Request, res: Response) => {
 })
 
 const deleteAIntoDB = catchAsync(async (req: Request, res: Response) => {
-  const result = await EventService.deleteAIntoDB(req.params.id as string)
+  const result = await EventService.deleteAIntoDB(req.params.id as string, req.user._id)
 
   sendResponse(res, {
     statusCode: 200,

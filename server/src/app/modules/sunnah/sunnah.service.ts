@@ -5,6 +5,7 @@ import QueryBuilder from '../../builder/QueryBuilder'
 import { Sunnah, SunnahLog } from './sunnah.models'
 import { TSunnah } from './sunnah.interface'
 import { getCache, setCache, deleteCachePattern } from '../../redis/helpers'
+import { REDIS_KEYS } from '../../redis/keys'
 
 // Create a new sunnah
 const insertIntoDB = async (payload: TSunnah) => {
@@ -21,14 +22,14 @@ const insertIntoDB = async (payload: TSunnah) => {
     throw new AppError(httpStatus.BAD_REQUEST, 'Sunnah creation failed')
 
   // Invalidate cache
-  await deleteCachePattern('sunnah:*')
+  await deleteCachePattern(REDIS_KEYS.SUNNAH_GLOBAL_PATTERN)
 
   return result
 }
 
 // Get all sunnahs with pagination, search, filter, sort and field selection
 const getAllIntoDB = async (query: Record<string, any>) => {
-  const cacheKey = `sunnah:admin:${JSON.stringify(query)}`
+  const cacheKey = REDIS_KEYS.SUNNAH_ADMIN(JSON.stringify(query))
   const cachedData = await getCache<any>(cacheKey)
   if (cachedData) {
     return cachedData
@@ -60,7 +61,7 @@ const updateIntoDB = async (id: string, payload: Partial<TSunnah>) => {
   if (!result) throw new AppError(httpStatus.NOT_FOUND, 'Sunnah not found')
 
   // Invalidate cache
-  await deleteCachePattern('sunnah:*')
+  await deleteCachePattern(REDIS_KEYS.SUNNAH_GLOBAL_PATTERN)
 
   return result
 }
@@ -80,7 +81,7 @@ const deleteAIntoDB = async (id: string) => {
   if (!result) throw new AppError(httpStatus.NOT_FOUND, 'Sunnah not found')
 
   // Invalidate cache
-  await deleteCachePattern('sunnah:*')
+  await deleteCachePattern(REDIS_KEYS.SUNNAH_GLOBAL_PATTERN)
 
   return result
 }
@@ -89,22 +90,29 @@ const deleteAIntoDB = async (id: string) => {
 const toggleSunnahLog = async (
   userId: string,
   sunnahId: string,
-  payload: { completedAt: string },
+  completedAt: string,
 ) => {
-  const { completedAt } = payload
-
   const user = await User.findById(userId)
-  if (!user || user.isDeleted)
+  if (!user || user?.isDeleted) {
     throw new AppError(httpStatus.NOT_FOUND, 'User not found')
+  }
 
   const sunnah = await Sunnah.findById(sunnahId)
-  if (!sunnah || sunnah.isDeleted)
+  if (!sunnah || sunnah.isDeleted) {
     throw new AppError(httpStatus.NOT_FOUND, 'Sunnah not found')
+  }
 
-  const existing = await SunnahLog.findOne({ user: userId, sunnah: sunnahId })
+  // Toggle log
+  const logExist = await SunnahLog.findOne({
+    user: userId,
+    sunnah: sunnahId,
+    completedAt,
+  })
+
   let logResult
-  if (existing) {
-    logResult = await SunnahLog.findByIdAndDelete(existing._id)
+  if (logExist) {
+    await SunnahLog.findByIdAndDelete(logExist._id)
+    logResult = { message: 'Logged out successfully' }
   } else {
     const log = await SunnahLog.create({
       user: userId,
@@ -115,13 +123,13 @@ const toggleSunnahLog = async (
   }
 
   // Invalidate cache
-  await deleteCachePattern(`sunnah:user:${userId}:*`)
+  await deleteCachePattern(REDIS_KEYS.SUNNAH_USER_PATTERN(userId))
 
   return logResult
 }
 
 const getUserSunnahs = async (userId: string, query: Record<string, any>) => {
-  const cacheKey = `sunnah:user:${userId}:${JSON.stringify(query)}`
+  const cacheKey = REDIS_KEYS.SUNNAH_USER(userId, JSON.stringify(query))
   const cachedData = await getCache<any>(cacheKey)
   if (cachedData) {
     return cachedData

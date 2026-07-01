@@ -5,6 +5,7 @@ import { Ambition } from './ambitions.model'
 import { User } from '../user/user.model'
 import { AmbitionsType } from './ambitions.constant'
 import { getCache, setCache, deleteCachePattern } from '../../redis/helpers'
+import { REDIS_KEYS } from '../../redis/keys'
 
 const insertIntoDB = async (
   payload: TAmbition,
@@ -23,13 +24,13 @@ const insertIntoDB = async (
   const result = await Ambition.create(payload)
 
   // Invalidate cache
-  await deleteCachePattern(`ambition:${userId}`)
+  await deleteCachePattern(REDIS_KEYS.AMBITION(userId))
 
   return result
 }
 
 const getAllFromDB = async (userId: string) => {
-  const cacheKey = `ambition:${userId}`
+  const cacheKey = REDIS_KEYS.AMBITION(userId)
   const cachedData = await getCache<any>(cacheKey)
   if (cachedData) {
     return cachedData
@@ -98,7 +99,7 @@ const toggleCompleteStatus = async (
   }
 
   // Invalidate cache
-  await deleteCachePattern(`ambition:${userId}`)
+  await deleteCachePattern(REDIS_KEYS.AMBITION(userId))
 
   return updated
 }
@@ -118,7 +119,7 @@ const deleteFromDB = async (id: string, userId: string): Promise<TAmbition> => {
   }
 
   // Invalidate cache
-  await deleteCachePattern(`ambition:${userId}`)
+  await deleteCachePattern(REDIS_KEYS.AMBITION(userId))
 
   return result
 }

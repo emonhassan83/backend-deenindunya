@@ -5,6 +5,7 @@ import { WaterIntake } from './waterIntake.model'
 import { User } from '../user/user.model'
 import mongoose from 'mongoose'
 import { getCache, setCache, deleteCachePattern } from '../../redis/helpers'
+import { REDIS_KEYS } from '../../redis/keys'
 
 const insertIntoDB = async (
   payload: TWaterIntake,
@@ -23,13 +24,13 @@ const insertIntoDB = async (
   const result = await WaterIntake.create(payload)
 
   // Invalidate cache
-  await deleteCachePattern(`waterIntake:${userId}`)
+  await deleteCachePattern(REDIS_KEYS.WATER_INTAKE(userId))
 
   return result
 }
 
 const getAllFromDB = async (userId: string) => {
-  const cacheKey = `waterIntake:${userId}`
+  const cacheKey = REDIS_KEYS.WATER_INTAKE(userId)
   const cachedData = await getCache<any>(cacheKey)
   if (cachedData) {
     return cachedData

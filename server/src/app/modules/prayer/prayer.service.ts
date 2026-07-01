@@ -8,6 +8,7 @@ import { calculateCurrentStreak, calculateLongestStreak } from './prayer.utils'
 import dayjs from 'dayjs'
 import { isValidDate } from '../../utils/isValidDate'
 import { getCache, setCache, deleteCachePattern } from '../../redis/helpers'
+import { REDIS_KEYS } from '../../redis/keys'
 
 // Create 5 prayers for a specific date
 const createBulkPrayers = async (userId: string, payload: { date: string }) => {
@@ -55,7 +56,7 @@ const createBulkPrayers = async (userId: string, payload: { date: string }) => {
   }
 
   // Invalidate cache
-  await deleteCachePattern(`prayer:*:${userId}:*`)
+  await deleteCachePattern(REDIS_KEYS.PRAYER_PATTERN(userId))
 
   return result
 }
@@ -84,7 +85,7 @@ const getPrayersByDate = async (userId: string, query: Record<string, any>) => {
     throw new AppError(httpStatus.NOT_FOUND, 'Your profile not found')
   }
 
-  const cacheKey = `prayer:data:${userId}:${date}`
+  const cacheKey = REDIS_KEYS.PRAYER_DATA(userId, date)
   const cachedData = await getCache<any>(cacheKey)
   if (cachedData) {
     return cachedData
@@ -168,7 +169,7 @@ const togglePrayerStatus = async (id: string, userId: string) => {
   }
 
   // Invalidate cache
-  await deleteCachePattern(`prayer:*:${userId}:*`)
+  await deleteCachePattern(REDIS_KEYS.PRAYER_PATTERN(userId))
 
   return result
 }
@@ -236,7 +237,7 @@ const completedPayers = async (userId: string, query: Record<string, any>) => {
   ).sort({ name: 1 })
 
   // Invalidate cache
-  await deleteCachePattern(`prayer:*:${userId}:*`)
+  await deleteCachePattern(REDIS_KEYS.PRAYER_PATTERN(userId))
 
   return {
     prayers: prayers.map((p) => ({
@@ -248,35 +249,52 @@ const completedPayers = async (userId: string, query: Record<string, any>) => {
   }
 }
 
-// Fetch prayer times based on location
+// Get prayer times based on user latitude and longitude
 const getPrayerTimes = async (userId: string, query: Record<string, any>) => {
-  const user = await User.findById(userId)
-  if (!user || user?.isDeleted) {
-    throw new AppError(httpStatus.NOT_FOUND, 'Your profile not found')
-  }
+  const { latitude, longitude, timezone, date } = query
 
-  const { latitude, longitude, timezone } = user
-  const { date } = query
+  // Use provided coordinates or get from user profile
+  let finalLat = latitude
+  let finalLng = longitude
+  let finalTimezone = timezone
 
-  // Validate location data
   if (!latitude || !longitude) {
-    throw new AppError(
-      httpStatus.BAD_REQUEST,
-      'Location not set. Please update your profile with latitude and longitude.',
-    )
+    const user = await User.findById(userId)
+    if (!user || user.isDeleted) {
+      throw new AppError(httpStatus.NOT_FOUND, 'User not found!')
+    }
+
+    // Default coordinates if not set in user profile
+    finalLat = user.latitude || 23.8103
+    finalLng = user.longitude || 90.4125
+    finalTimezone = user.timezone || 'Asia/Dhaka'
   }
 
-  // 🔥 FIX: Convert date to DD-MM-YYYY format (Aladhan API expects this)
-  let targetDate: string
+  // Validate coordinates
+  const lat = parseFloat(finalLat)
+  const lng = parseFloat(finalLng)
+
+  if (isNaN(lat) || isNaN(lng)) {
+    throw new AppError(httpStatus.BAD_REQUEST, 'Invalid coordinates')
+  }
+
+  // format date for Aladhan API (DD-MM-YYYY)
+  let targetDate
   if (date) {
-    // If date provided, parse and format
+    // Check format (YYYY-MM-DD)
+    if (!isValidDate(date)) {
+      throw new AppError(
+        httpStatus.BAD_REQUEST,
+        'Invalid date format. Use YYYY-MM-DD',
+      )
+    }
     targetDate = dayjs(date).format('DD-MM-YYYY')
   } else {
     // Use current date
     targetDate = dayjs().format('DD-MM-YYYY')
   }
 
-  const cacheKey = `prayer:times:${userId}:${targetDate}`
+  const cacheKey = REDIS_KEYS.PRAYER_TIMES(userId, targetDate)
   const cachedTimes = await getCache<any>(cacheKey)
   if (cachedTimes) {
     return cachedTimes
@@ -288,10 +306,10 @@ const getPrayerTimes = async (userId: string, query: Record<string, any>) => {
       `https://api.aladhan.com/v1/timings/${targetDate}`,
       {
         params: {
-          latitude: latitude,
-          longitude: longitude,
+          latitude: lat,
+          longitude: lng,
           method: 2, // ISNA calculation method
-          ...(timezone && { timezonestring: timezone }),
+          ...(finalTimezone && { timezonestring: finalTimezone }),
         },
       },
     )
@@ -319,9 +337,9 @@ const getPrayerTimes = async (userId: string, query: Record<string, any>) => {
         hijri: dateInfo.hijri.date, // e.g., "24-07-1446"
       },
       location: {
-        latitude,
-        longitude,
-        timezone: timezone || 'UTC',
+        latitude: lat,
+        longitude: lng,
+        timezone: finalTimezone || 'UTC',
       },
     }
 

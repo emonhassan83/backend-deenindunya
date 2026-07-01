@@ -41,7 +41,7 @@ const registerUserIntoDB = async (payload: TUser) => {
     }
 
     // 🟡 Unverified user → update & reuse
-    if (!existingUser.verification?.status) {
+    if (!existingUser.isSignUpOtpVerified) {
       existingUser.set(payload)
       return await existingUser.save()
     }
@@ -148,7 +148,7 @@ const geUserByIdFromDB = async (id: string) => {
   const user = await User.findById(id).select(
     '_id id name email photoUrl country address contractNumber location locationUrl timezone notificationPreference status createdAt',
   );
-  
+
   if (!user || user?.isDeleted) {
     throw new AppError(httpStatus.NOT_FOUND, 'User not found!');
   }

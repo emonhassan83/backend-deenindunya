@@ -3,6 +3,7 @@ import AppError from '../../errors/AppError'
 import { User } from '../user/user.model'
 import { Lesson, LessonLogs, Module } from './educationHub.models'
 import { getCache, setCache, deleteCachePattern } from '../../redis/helpers'
+import { REDIS_KEYS } from '../../redis/keys'
 
 /**
  * Get list of all Modules
@@ -14,7 +15,7 @@ const getModules = async (userId: string) => {
     throw new AppError(httpStatus.NOT_FOUND, 'User not found')
   }
 
-  const cacheKey = `edu:modules:${userId}`
+  const cacheKey = REDIS_KEYS.EDU_MODULES(userId)
   const cachedData = await getCache<any>(cacheKey)
   if (cachedData) {
     return cachedData
@@ -89,7 +90,7 @@ const getLessonsByType = async (query: Record<string, any>, userId: string) => {
     throw new AppError(httpStatus.BAD_REQUEST, 'Lesson type is required')
   }
 
-  const cacheKey = `edu:lessons:type:${userId}:${type}`
+  const cacheKey = REDIS_KEYS.EDU_LESSONS_TYPE(userId, type)
   const cachedData = await getCache<any>(cacheKey)
   if (cachedData) {
     return cachedData
@@ -132,7 +133,7 @@ const getLessonsByType = async (query: Record<string, any>, userId: string) => {
 }
 
 const getModuleLessons = async (moduleId: string, userId: string) => {
-  const cacheKey = `edu:lessons:module:${userId}:${moduleId}`
+  const cacheKey = REDIS_KEYS.EDU_LESSONS_MODULE(userId, moduleId)
   const cachedData = await getCache<any>(cacheKey)
   if (cachedData) {
     return cachedData
@@ -199,7 +200,7 @@ const readLesson = async (id: string, userId: string) => {
   }
 
   // Invalidate all user's education caches
-  await deleteCachePattern(`edu:*:${userId}:*`)
+  await deleteCachePattern(REDIS_KEYS.EDU_PATTERN(userId))
 
   return result
 }

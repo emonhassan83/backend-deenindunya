@@ -6,6 +6,7 @@ import { Room, RoomTask } from './room.models'
 import QueryBuilder from '../../builder/QueryBuilder'
 import { isValidDate } from '../../utils/isValidDate'
 import { getCache, setCache, deleteCachePattern } from '../../redis/helpers'
+import { REDIS_KEYS } from '../../redis/keys'
 
 // Create a new Room
 const insertIntoDB = async (userId: string, payload: TRoom) => {
@@ -48,7 +49,7 @@ const insertIntoDB = async (userId: string, payload: TRoom) => {
   }
 
   // Invalidate cache
-  await deleteCachePattern(`room:${userId}:*`)
+  await deleteCachePattern(REDIS_KEYS.ROOM_PATTERN(userId))
 
   return result
 }
@@ -74,7 +75,7 @@ const insertRoomTask = async (userId: string, payload: TRoomTask) => {
   }
 
   // Invalidate cache
-  await deleteCachePattern(`room:${userId}:*`)
+  await deleteCachePattern(REDIS_KEYS.ROOM_PATTERN(userId))
 
   return result
 }
@@ -101,7 +102,7 @@ const getAllIntoDB = async (query: Record<string, any>, userId: string) => {
     throw new AppError(httpStatus.NOT_FOUND, 'User not found!')
   }
 
-  const cacheKey = `room:${userId}:${date}`
+  const cacheKey = REDIS_KEYS.ROOM_KEY(userId, date)
   const cachedData = await getCache<any>(cacheKey)
   if (cachedData) {
     return cachedData
@@ -115,58 +116,49 @@ const getAllIntoDB = async (query: Record<string, any>, userId: string) => {
     .sort({ createdAt: -1 })
     .lean()
 
-  // Get rooms with their tasks
-  const roomsWithTasks = await Promise.all(
-    rooms.map(async (room) => {
-      // Get all tasks for this room
-      const roomTasks = await RoomTask.find({
-        room: room._id,
-      })
-        .sort({ createdAt: -1 })
-        .lean()
+  // Get room tasks for all fetched rooms
+  const roomIds = rooms.map((r) => r._id)
 
-      // Calculate statistics
-      const totalTasks = roomTasks.length
-      const completedTasks = roomTasks.filter(
-        (task) => task.isCompleted === true,
-      ).length
-      const progress =
-        totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0
+  const tasks = await RoomTask.find({
+    room: { $in: roomIds },
+  })
+    .sort({ createdAt: -1 })
+    .lean()
 
-      return {
-        _id: room._id,
-        name: room.name,
-        logAt: room.logAt,
-        roomTask: roomTasks.map((task) => ({
-          _id: task._id,
-          title: task.title,
-          description: task.description,
-          isCompleted: task.isCompleted,
-        })),
-        stats: {
-          totalTasks,
-          completedTasks,
-          progress,
-        },
+  // Group tasks by room ID
+  const tasksByRoom = tasks.reduce(
+    (acc, task) => {
+      const roomIdStr = task.room.toString()
+      if (!acc[roomIdStr]) {
+        acc[roomIdStr] = []
       }
-    }),
+      acc[roomIdStr].push(task)
+      return acc
+    },
+    {} as Record<string, any[]>,
   )
 
-  // Calculate overall statistics for the date
-  const allRooms = roomsWithTasks
-  const totalTasks = allRooms.reduce(
-    (sum, room) => sum + room.stats.totalTasks,
-    0,
-  )
-  const totalCompletedTasks = allRooms.reduce(
-    (sum, room) => sum + room.stats.completedTasks,
-    0,
-  )
-  const overallProgress =
-    totalTasks > 0 ? Math.round((totalCompletedTasks / totalTasks) * 100) : 0
+  // Enriched rooms with their tasks and progress
+  const roomsWithTasks = rooms.map((room) => {
+    const roomTasks = tasksByRoom[room._id.toString()] || []
+    const totalTasks = roomTasks.length
+    const completedTasks = roomTasks.filter((t) => t.isCompleted).length
+    const progress = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0
+
+    return {
+      ...room,
+      progress,
+      roomTasks,
+    }
+  })
+
+  // Calculate overall progress across all rooms
+  const totalTasksAllRooms = tasks.length
+  const totalCompletedTasks = tasks.filter((t) => t.isCompleted).length
+  const overallProgress = totalTasksAllRooms > 0 ? Math.round((totalCompletedTasks / totalTasksAllRooms) * 100) : 0
 
   const result = {
-    totalTask: totalTasks,           // ✅ Total tasks across all rooms
+    totalRoom: rooms.length,
     completedTask: totalCompletedTasks,
     progress: overallProgress,
     data: roomsWithTasks,
@@ -199,7 +191,7 @@ const toggleTaskStatus = async (id: string, userId: string) => {
   }
 
   // Invalidate cache
-  await deleteCachePattern(`room:${userId}:*`)
+  await deleteCachePattern(REDIS_KEYS.ROOM_PATTERN(userId))
 
   return result
 }
@@ -220,7 +212,7 @@ const deleteAIntoDB = async (id: string) => {
   }
 
   // Invalidate cache
-  await deleteCachePattern(`room:${room.user}:*`)
+  await deleteCachePattern(REDIS_KEYS.ROOM_PATTERN(String(room.user)))
 
   return result
 }
@@ -241,7 +233,7 @@ const deleteARoomTask = async (id: string) => {
 
   if (room) {
     // Invalidate cache
-    await deleteCachePattern(`room:${room.user}:*`)
+    await deleteCachePattern(REDIS_KEYS.ROOM_PATTERN(String(room.user)))
   }
 
   return result
