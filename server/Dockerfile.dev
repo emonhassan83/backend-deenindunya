@@ -9,6 +9,5 @@ RUN corepack enable && pnpm install
 COPY . ./
 
 EXPOSE 5024
-EXPOSE 4024
 
 CMD ["pnpm", "run", "dev"]

@@ -54,9 +54,8 @@ RUN mkdir -p logs && chown -R nodejs:nodejs logs
 # Switch to non-root user
 USER nodejs
 
-# Expose application and socket ports
+# Expose application port
 EXPOSE 5024
-EXPOSE 4024
 
 # Health check (hitting root endpoint which is implemented in app.ts)
 HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \

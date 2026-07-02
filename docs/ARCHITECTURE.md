@@ -20,7 +20,7 @@ graph TD
 ```
 
 - **API Server**: An Express server running on port `5024` that exposes versioned API endpoints (`/api/v1`).
-- **Real-time Server**: A Socket.IO listener running on port `4024` that handles persistent WebSocket connections.
+- **Real-time Server**: A Socket.IO listener running on port `5024` that handles persistent WebSocket connections.
 - **Database**: MongoDB Atlas cloud cluster connected using Mongoose.
 
 ---
