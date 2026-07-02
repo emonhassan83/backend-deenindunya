@@ -13,10 +13,7 @@ const contentsSchema = new Schema<TContents>(
       type: Schema.Types.Mixed,
       required: [true, 'Value is required'],
     },
-  },
-  {
-    timestamps: true,
-  },
+  }
 )
 
 export const Contents = model<TContents, TContentsModel>(
