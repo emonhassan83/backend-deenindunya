@@ -1,4 +1,5 @@
 import httpStatus from 'http-status'
+import { Types } from 'mongoose'
 import AppError from '../../errors/AppError'
 import { User } from '../user/user.model'
 import QueryBuilder from '../../builder/QueryBuilder'
@@ -6,6 +7,7 @@ import { Sunnah, SunnahLog } from './sunnah.models'
 import { TSunnah } from './sunnah.interface'
 import { getCache, setCache, deleteCachePattern } from '../../redis/helpers'
 import { REDIS_KEYS } from '../../redis/keys'
+import { isValidDate } from '../../utils/isValidDate'
 
 // Create a new sunnah
 const insertIntoDB = async (payload: TSunnah) => {
@@ -92,6 +94,24 @@ const toggleSunnahLog = async (
   sunnahId: string,
   completedAt: string,
 ) => {
+  if (!Types.ObjectId.isValid(sunnahId)) {
+    throw new AppError(httpStatus.BAD_REQUEST, 'Invalid sunnah ID')
+  }
+
+  if (!completedAt || typeof completedAt !== 'string') {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      'completedAt is required. Please provide date in YYYY-MM-DD format',
+    )
+  }
+
+  if (!isValidDate(completedAt)) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      'Invalid completedAt format. Please use YYYY-MM-DD format',
+    )
+  }
+
   const user = await User.findById(userId)
   if (!user || user?.isDeleted) {
     throw new AppError(httpStatus.NOT_FOUND, 'User not found')

@@ -61,7 +61,11 @@ const getUserSunnahs = catchAsync(async (req: Request, res: Response) => {
 })
 
 const toggleLogs = catchAsync(async (req: Request, res: Response) => {
-  const result = await SunnahService.toggleSunnahLog(req.user._id, req.params.id as string, req.body)
+  const result = await SunnahService.toggleSunnahLog(
+    req.user._id,
+    req.params.id as string,
+    req.body.completedAt,
+  )
 
   sendResponse(res, {
     statusCode: 200,
