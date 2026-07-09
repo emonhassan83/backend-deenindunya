@@ -38,8 +38,9 @@ router.patch(
 
 // Toggle prayer status
 router.patch(
-  '/toggle/:id',
+  '/toggle/:prayerName',
   auth(USER_ROLE.user),
+  zodValidationRequest(PrayerValidation.togglePrayerStatusValidationSchema),
   PrayerController.togglePrayerStatus,
 )
 

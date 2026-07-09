@@ -9,6 +9,9 @@ import dayjs from 'dayjs'
 import { isValidDate } from '../../utils/isValidDate'
 import { getCache, setCache, deleteCachePattern } from '../../redis/helpers'
 import { REDIS_KEYS } from '../../redis/keys'
+import { PRAYER_NAME, TPrayerName } from './prayer.constants'
+
+const PRAYER_NAMES = Object.values(PRAYER_NAME) as TPrayerName[]
 
 // Create 5 prayers for a specific date
 const createBulkPrayers = async (userId: string, payload: { date: string }) => {
@@ -20,13 +23,7 @@ const createBulkPrayers = async (userId: string, payload: { date: string }) => {
   const { date } = payload
 
   // Default prayer names
-  const prayerNames: TPrayer['name'][] = [
-    'fajr',
-    'dhuhr',
-    'asr',
-    'maghrib',
-    'isha',
-  ]
+  const prayerNames: TPrayer['name'][] = PRAYER_NAMES
 
   // Check if prayers already exist for this date
   const existingPrayers = await Prayer.find({
@@ -101,7 +98,7 @@ const getPrayersByDate = async (userId: string, query: Record<string, any>) => {
   }).sort({ name: 1 })
 
   // Create prayer list with prayer times
-  const prayerNames = ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha']
+  const prayerNames = PRAYER_NAMES
 
   const prayersWithTimes = prayerNames.map((name) => {
     const existingPrayer = prayers.find((p) => p.name === name)
@@ -142,24 +139,71 @@ const getPrayersByDate = async (userId: string, query: Record<string, any>) => {
   return result
 }
 
-// Toggle prayer completion status
-const togglePrayerStatus = async (id: string, userId: string) => {
-  const prayer = await Prayer.findOne({ _id: id, user: userId })
+// Toggle prayer completion status by prayer name for a specific date
+const togglePrayerStatus = async (
+  prayerName: string,
+  userId: string,
+  query: Record<string, any>,
+) => {
+  const { date } = query
+
+  if (!date) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      'Date is required. Please provide date in YYYY-MM-DD format',
+    )
+  }
+
+  if (!isValidDate(date)) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      'Invalid date format. Please use YYYY-MM-DD format (e.g., 2026-04-22)',
+    )
+  }
+
+  if (!PRAYER_NAMES.includes(prayerName as TPrayerName)) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      `Invalid prayer name. Allowed values are: ${PRAYER_NAMES.join(', ')}`,
+    )
+  }
+  const validPrayerName = prayerName as TPrayerName
+
+  const user = await User.findById(userId)
+  if (!user || user?.isDeleted) {
+    throw new AppError(httpStatus.NOT_FOUND, 'Your profile not found')
+  }
+
+  const prayer = await Prayer.findOne({
+    user: userId,
+    name: validPrayerName,
+    date,
+  })
+
   if (!prayer) {
-    throw new AppError(httpStatus.NOT_FOUND, 'Prayer not found!')
+    const result = await Prayer.create({
+      user: userId,
+      name: validPrayerName,
+      date,
+      prayed: true,
+      prayedAt: new Date(),
+    })
+
+    await deleteCachePattern(REDIS_KEYS.PRAYER_PATTERN(userId))
+
+    return result
   }
 
   const updatedStatus = !prayer.prayed
-  const updateData: any = { prayed: updatedStatus }
+  const updateData = updatedStatus
+    ? { $set: { prayed: true, prayedAt: new Date() } }
+    : { $set: { prayed: false }, $unset: { prayedAt: '' } }
 
-  // Set prayedAt timestamp if marking as completed
-  if (updatedStatus) {
-    updateData.prayedAt = new Date()
-  } else {
-    updateData.prayedAt = null
-  }
-
-  const result = await Prayer.findByIdAndUpdate(id, updateData, { new: true })
+  const result = await Prayer.findOneAndUpdate(
+    { user: userId, name: validPrayerName, date },
+    updateData,
+    { new: true },
+  )
 
   if (!result) {
     throw new AppError(
@@ -201,7 +245,7 @@ const completedPayers = async (userId: string, query: Record<string, any>) => {
   }
 
   // List of all prayers
-  const prayerNames = ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha']
+  const prayerNames = PRAYER_NAMES
 
   // অপ্টিমাইজেশন: লুপের ভেতর বারবার ডাটাবেজ কোয়েরি না করে Promise.all ব্যবহার করা হয়েছে
   await Promise.all(

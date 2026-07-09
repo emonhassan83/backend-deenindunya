@@ -30,8 +30,9 @@ const getPrayersByDate = catchAsync(async (req: Request, res: Response) => {
 
 const togglePrayerStatus = catchAsync(async (req: Request, res: Response) => {
   const result = await PrayerService.togglePrayerStatus(
-    req.params.id as string,
+    req.params.prayerName as string,
     req.user._id,
+    req.query,
   )
 
   sendResponse(res, {
@@ -72,5 +73,5 @@ export const PrayerController = {
   getPrayersByDate,
   togglePrayerStatus,
   getPrayerTimes,
-  completedPayers
+  completedPayers,
 }
