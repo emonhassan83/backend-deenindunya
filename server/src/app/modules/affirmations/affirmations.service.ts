@@ -90,6 +90,29 @@ const getSingleFromDB = async (id: string): Promise<TAffirmation> => {
   return result
 }
 
+const getARandomAffermation = async (): Promise<TAffirmation> => {
+  const [result] = await Affirmation.aggregate([
+    { $match: { isDeleted: false } },
+    { $sample: { size: 1 } },
+    {
+      $project: {
+        arabic_text: 1,
+        transliteration: 1,
+        english_meaning: 1,
+        reference: 1,
+        audio_url: 1,
+        createdAt: 1,
+      },
+    },
+  ])
+
+  if (!result) {
+    throw new AppError(httpStatus.NOT_FOUND, 'Affirmation not found!')
+  }
+
+  return result
+}
+
 const updateIntoDB = async (
   id: string,
   payload: Partial<TAffirmation>
@@ -152,6 +175,7 @@ export const AffirmationService = {
   insertIntoDB,
   getAllFromDB,
   getSingleFromDB,
+  getARandomAffermation,
   updateIntoDB,
   deleteFromDB,
 }

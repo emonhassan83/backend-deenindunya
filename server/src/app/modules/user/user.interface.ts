@@ -22,6 +22,7 @@ export interface TUser {
   latitude: number
   longitude: number
   locationUrl: string
+  dailyGoalMl?: number
   location: {
     type: 'Point'
     coordinates: [number, number] // [longitude, latitude]

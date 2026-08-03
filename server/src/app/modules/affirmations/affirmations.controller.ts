@@ -36,6 +36,17 @@ const getSingleAffirmation = catchAsync(async (req, res) => {
   })
 })
 
+const getARandomAffermation = catchAsync(async (req, res) => {
+  const result = await AffirmationService.getARandomAffermation()
+
+  sendResponse(res, {
+    success: true,
+    statusCode: 200,
+    message: 'Random affirmation retrieved successfully',
+    data: result,
+  })
+})
+
 const updateAffirmation = catchAsync(async (req, res) => {
   const result = await AffirmationService.updateIntoDB(req.params.id as string, req.body)
 
@@ -62,6 +73,7 @@ export const AffirmationControllers = {
   insertIntoDB,
   getAllAffirmations,
   getSingleAffirmation,
+  getARandomAffermation,
   updateAffirmation,
   deleteAffirmation,
 }

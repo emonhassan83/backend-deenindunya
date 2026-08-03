@@ -36,6 +36,7 @@ const userSchema = new Schema<TUser>(
       coordinates: { type: [Number], default: [0, 0] }, // [longitude, latitude]
     },
     timezone: { type: String, default: null },
+    dailyGoalMl: { type: Number, default: 2500 },
     role: {
       type: String,
       enum: Object.values(USER_ROLE),

@@ -37,6 +37,10 @@ const getAllFromDB = async (userId: string) => {
   }
 
   const today = new Date().toLocaleDateString('en-CA') // '2026-04-26'
+  const user = await User.findById(userId).select('dailyGoalMl isDeleted')
+  if (!user || user.isDeleted) {
+    throw new AppError(httpStatus.NOT_FOUND, 'User not found!')
+  }
 
   // Convert userId to ObjectId for aggregation
   const userObjectId = new mongoose.Types.ObjectId(userId)
@@ -57,19 +61,23 @@ const getAllFromDB = async (userId: string) => {
   ])
 
   const totalWaterToday = totalWaterTodayResult[0]?.total || 0
-  const dailyGoalMl = 2500
+  const dailyGoalMl = user.dailyGoalMl || 2500
   const progress = Math.min(
     Math.round((totalWaterToday / dailyGoalMl) * 100),
     100,
   )
+  const remainingMl = Math.max(dailyGoalMl - totalWaterToday, 0)
 
   const waterLogs = await WaterIntake.find({ user: userId, logAt: today }).select('amountMl logAt')
     .sort({ logAt: -1, createdAt: -1 })
     .lean()
 
   const result = {
+    dailyGoalMl,
     totalWaterToday,
+    remainingMl,
     progress,
+    isGoalAchieved: totalWaterToday >= dailyGoalMl,
     waterLogs,
   }
 
@@ -78,7 +86,34 @@ const getAllFromDB = async (userId: string) => {
   return result
 }
 
+const setDailyTarget = async (
+  userId: string,
+  payload: { dailyGoalMl: number },
+) => {
+  const user = await User.findById(userId)
+  if (!user || user.isDeleted) {
+    throw new AppError(httpStatus.NOT_FOUND, 'User not found!')
+  }
+
+  const result = await User.findByIdAndUpdate(
+    userId,
+    { dailyGoalMl: payload.dailyGoalMl },
+    { new: true, runValidators: true },
+  ).select('dailyGoalMl')
+
+  if (!result) {
+    throw new AppError(httpStatus.BAD_REQUEST, 'Daily water target update failed')
+  }
+
+  await deleteCachePattern(REDIS_KEYS.WATER_INTAKE(userId))
+
+  return {
+    dailyGoalMl: result.dailyGoalMl,
+  }
+}
+
 export const WaterIntakeService = {
   insertIntoDB,
   getAllFromDB,
+  setDailyTarget,
 }

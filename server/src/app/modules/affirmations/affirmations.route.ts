@@ -33,6 +33,9 @@ router.delete(
 // Get all affirmations (Public)
 router.get('/', AffirmationControllers.getAllAffirmations)
 
+// Get random affirmation (Public)
+router.get('/random', AffirmationControllers.getARandomAffermation)
+
 // Get single affirmation (Public)
 router.get('/:id', AffirmationControllers.getSingleAffirmation)
 

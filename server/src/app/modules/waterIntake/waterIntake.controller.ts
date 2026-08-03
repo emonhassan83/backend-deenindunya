@@ -24,7 +24,19 @@ const getAllWaterIntakes = catchAsync(async (req, res) => {
   })
 })
 
+const setDailyTarget = catchAsync(async (req, res) => {
+  const result = await WaterIntakeService.setDailyTarget(req.user._id, req.body)
+
+  sendResponse(res, {
+    success: true,
+    statusCode: 200,
+    message: 'Daily water target updated successfully',
+    data: result,
+  })
+})
+
 export const WaterIntakeControllers = {
   insertIntoDB,
-  getAllWaterIntakes
+  getAllWaterIntakes,
+  setDailyTarget,
 }

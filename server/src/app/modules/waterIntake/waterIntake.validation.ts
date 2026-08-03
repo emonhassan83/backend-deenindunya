@@ -17,6 +17,19 @@ const createValidationSchema = z.object({
   }),
 })
 
+const setDailyTargetValidationSchema = z.object({
+  body: z.object({
+    dailyGoalMl: z
+      .number({
+        message: 'Daily water target is required',
+      })
+      .int('Daily water target must be an integer')
+      .min(250, 'Daily water target must be at least 250ml')
+      .max(10000, 'Daily water target cannot exceed 10000ml (10L)'),
+  }),
+})
+
 export const WaterIntakeValidation = {
   createValidationSchema,
+  setDailyTargetValidationSchema,
 }

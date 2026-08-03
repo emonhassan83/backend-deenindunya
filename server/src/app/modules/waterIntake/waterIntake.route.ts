@@ -15,6 +15,14 @@ router.post(
   WaterIntakeControllers.insertIntoDB
 )
 
+// Set daily water target (Authenticated users)
+router.patch(
+  '/daily-target',
+  auth(USER_ROLE.user, USER_ROLE.admin),
+  zodValidationRequest(WaterIntakeValidation.setDailyTargetValidationSchema),
+  WaterIntakeControllers.setDailyTarget
+)
+
 // Get all user water intake records (Authenticated users)
 router.get(
   '/',
