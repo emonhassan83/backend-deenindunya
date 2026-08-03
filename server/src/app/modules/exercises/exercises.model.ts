@@ -1,6 +1,5 @@
 import { Schema, model } from 'mongoose'
 import { TExercise, TExerciseModel } from './exercises.interface'
-import { ExerciseCategory } from './exercises.constant'
 
 const exerciseSchema = new Schema<TExercise>(
   {
@@ -21,7 +20,6 @@ const exerciseSchema = new Schema<TExercise>(
     },
     category: {
       type: String,
-      enum: Object.values(ExerciseCategory),
       required: [true, 'Category is required'],
     },
     isCompleted: {

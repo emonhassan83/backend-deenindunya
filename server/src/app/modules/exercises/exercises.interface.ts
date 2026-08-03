@@ -1,12 +1,11 @@
 import { Model, Types } from 'mongoose'
-import { TExerciseCategory } from './exercises.constant'
 
 export type TExercise = {
   __id?: string
   user: Types.ObjectId
   name: string
   reps: number
-  category: TExerciseCategory
+  category: string
   isCompleted: boolean
   logAt: string
   deleteAt?: Date

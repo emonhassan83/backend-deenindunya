@@ -1,5 +1,4 @@
 import { z } from 'zod'
-import { ExerciseCategory } from './exercises.constant'
 
 const dateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, {
   message: 'Date must be in YYYY-MM-DD format',
@@ -20,9 +19,12 @@ const createValidationSchema = z.object({
       .int('Reps must be an integer')
       .min(1, 'Reps must be at least 1')
       .max(1000, 'Reps cannot exceed 1000'),
-    category: z.enum(Object.values(ExerciseCategory) as [string, ...string[]], {
-      message: 'Category is required',
-    }),
+    category: z
+      .string({
+        message: 'Category is required',
+      })
+      .min(2, 'Category must be at least 2 characters')
+      .max(100, 'Category cannot exceed 100 characters'),
     logAt: dateSchema,
   }),
 })
@@ -40,7 +42,11 @@ const updateValidationSchema = z.object({
       .min(1, 'Reps must be at least 1')
       .max(1000, 'Reps cannot exceed 1000')
       .optional(),
-    category: z.enum(Object.values(ExerciseCategory) as [string, ...string[]]).optional()
+    category: z
+      .string()
+      .min(2, 'Category must be at least 2 characters')
+      .max(100, 'Category cannot exceed 100 characters')
+      .optional()
   }),
 })
 
