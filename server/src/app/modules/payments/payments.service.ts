@@ -179,7 +179,6 @@ const confirmPayment = async (query: Record<string, any>) => {
 const getAllPaymentsFromDB = async (query: Record<string, any>) => {
   const paymentModel = new QueryBuilder(
     Payment.find({ isDeleted: false, isPaid: true }).populate([
-      { path: 'subscription' },
       { path: 'user', select: 'name email photoUrl' },
     ]),
     query,
@@ -202,7 +201,6 @@ const getAllPaymentsFromDB = async (query: Record<string, any>) => {
 const dashboardData = async (query: Record<string, any>) => {
   const paymentModel = new QueryBuilder(
     Payment.find({ isDeleted: false, isPaid: true }).populate([
-      { path: 'subscription', select: 'user status paymentStatus' },
       { path: 'user', select: 'name email photoUrl' },
     ]),
     query,
@@ -246,7 +244,6 @@ const dashboardData = async (query: Record<string, any>) => {
 
 const getAPaymentsFromDB = async (id: string) => {
   const payment = await Payment.findById(id).populate([
-    { path: 'subscription' },
     { path: 'user', select: 'name email photoUrl' },
   ])
   if (!payment) {
