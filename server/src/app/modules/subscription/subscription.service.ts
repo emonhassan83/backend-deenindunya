@@ -70,7 +70,7 @@ const getAllSubscription = async (query: Record<string, any>) => {
     }).populate([
       {
         path: 'package',
-        select: 'title',
+        select: 'title billingCycle',
       },
       {
         path: 'user',

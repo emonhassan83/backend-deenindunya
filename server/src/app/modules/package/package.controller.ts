@@ -21,8 +21,7 @@ const getAllPackages = catchAsync(async (req, res) => {
     success: true,
     statusCode: 200,
     message: 'Packages retrieved successfully!',
-    meta: result.meta,
-    data: result.result,
+    data: result,
   })
 })
 
@@ -43,5 +42,5 @@ const updatePackage = catchAsync(async (req, res) => {
 export const PackageControllers = {
   createPackage,
   getAllPackages,
-  updatePackage
+  updatePackage,
 }

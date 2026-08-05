@@ -21,16 +21,11 @@ const getAllPackagesFromDB = async (query: Record<string, unknown>) => {
     .search([''])
     .filter()
     .sort()
-    .paginate()
     .fields()
 
   const result = await packageQuery.modelQuery
-  const meta = await packageQuery.countTotal()
 
-  return {
-    meta,
-    result,
-  }
+  return result
 }
 
 const updatePackageFromDB = async (id: string, payload: any) => {
@@ -52,5 +47,5 @@ const updatePackageFromDB = async (id: string, payload: any) => {
 export const PackageService = {
   createPackageIntoDB,
   getAllPackagesFromDB,
-  updatePackageFromDB
+  updatePackageFromDB,
 }

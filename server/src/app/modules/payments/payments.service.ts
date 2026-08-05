@@ -4,7 +4,6 @@ import { TPayment } from './payments.interface'
 import httpStatus from 'http-status'
 import Payment from './payments.models'
 import mongoose, { startSession } from 'mongoose'
-import { TSubscriptions } from '../subscription/subscription.interface'
 import { Subscription } from '../subscription/subscription.models'
 import AppError from '../../errors/AppError'
 import {
@@ -204,7 +203,7 @@ const dashboardData = async (query: Record<string, any>) => {
   const paymentModel = new QueryBuilder(
     Payment.find({ isDeleted: false, isPaid: true }).populate([
       { path: 'subscription', select: 'user status paymentStatus' },
-      { path: 'user', select: 'name email photoUrl contactNumber age' },
+      { path: 'user', select: 'name email photoUrl' },
     ]),
     query,
   )
