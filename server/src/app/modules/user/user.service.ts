@@ -10,7 +10,10 @@ import {
 } from './user.utils'
 import bcrypt from 'bcrypt'
 import { Subscription } from '../subscription/subscription.models'
-import { SUBSCRIPTION_STATUS } from '../subscription/subscription.constants'
+import {
+  PAYMENT_STATUS,
+  SUBSCRIPTION_STATUS,
+} from '../subscription/subscription.constants'
 
 const generateLocationUrl = (lat: number, lng: number) => {
   return `https://www.google.com/maps?q=${lat},${lng}`
@@ -156,9 +159,9 @@ const geUserByIdFromDB = async (id: string) => {
   // Check if user has an active subscription
   const activeSubscription = await Subscription.findOne({
     user: id,
-    status: SUBSCRIPTION_STATUS.active,
-    isDeleted: false,
-  });
+    paymentStatus: PAYMENT_STATUS.paid,
+    status: { $in: [SUBSCRIPTION_STATUS.active, 'confirmed'] },
+  } as any);
 
   // Convert user to plain object and add isActiveSubscription field
   const userObject = user.toObject();

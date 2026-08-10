@@ -16,6 +16,7 @@ import { PAYMENT_STATUS } from './payments.constants'
 import QueryBuilder from '../../builder/QueryBuilder'
 import { User } from '../user/user.model'
 import { Package } from '../package/package.model'
+import { SUBSCRIPTION_STATUS } from '../subscription/subscription.constants'
 
 const stripe = new Stripe(config.stripe?.stripe_api_secret as string, {
   apiVersion: '2026-06-24.dahlia',
@@ -124,11 +125,11 @@ const confirmPayment = async (query: Record<string, any>) => {
     }
 
     const newSubscription = await Subscription.findOneAndUpdate(
-      payment.subscription,
+      { _id: payment.subscription },
       {
         transactionId: payment.tranId,
         paymentStatus: PAYMENT_STATUS.paid,
-        status: 'confirmed',
+        status: SUBSCRIPTION_STATUS.active,
       },
       { returnDocument: 'after', session },
     )
