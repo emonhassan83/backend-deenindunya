@@ -15,7 +15,6 @@ export const getEarningOverview = async (year: number) => {
       $match: {
         createdAt: { $gte: yearStart, $lte: yearEnd },
         status: 'paid',
-        isPaid: true,
       },
     },
     {

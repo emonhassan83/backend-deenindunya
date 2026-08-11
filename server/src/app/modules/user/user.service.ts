@@ -10,10 +10,7 @@ import {
 } from './user.utils'
 import bcrypt from 'bcrypt'
 import { Subscription } from '../subscription/subscription.models'
-import {
-  PAYMENT_STATUS,
-  SUBSCRIPTION_STATUS,
-} from '../subscription/subscription.constants'
+import { SUBSCRIPTION_STATUS } from '../subscription/subscription.constants'
 
 const generateLocationUrl = (lat: number, lng: number) => {
   return `https://www.google.com/maps?q=${lat},${lng}`
@@ -149,23 +146,46 @@ const getAllUsersFromDB = async (query: Record<string, unknown>) => {
 
 const geUserByIdFromDB = async (id: string) => {
   const user = await User.findById(id).select(
-    '_id id name email photoUrl country address contractNumber location locationUrl timezone notificationPreference status createdAt',
+    '_id id name email photoUrl country address contractNumber location locationUrl timezone notificationPreference status isEnabledFreeTrial freeTrialExpiry hasUsedFreeTrial createdAt',
   );
 
   if (!user || user?.isDeleted) {
     throw new AppError(httpStatus.NOT_FOUND, 'User not found!');
   }
 
-  // Check if user has an active subscription
+  const now = new Date();
+  const isActiveFreeTrial =
+    user.isEnabledFreeTrial &&
+    user.freeTrialExpiry &&
+    new Date(user.freeTrialExpiry) > now;
+
   const activeSubscription = await Subscription.findOne({
     user: id,
-    paymentStatus: PAYMENT_STATUS.paid,
-    status: { $in: [SUBSCRIPTION_STATUS.active, 'confirmed'] },
-  } as any);
+    status: {
+      $in: [
+        SUBSCRIPTION_STATUS.active,
+        SUBSCRIPTION_STATUS.cancelled,
+        SUBSCRIPTION_STATUS.grace_period,
+        SUBSCRIPTION_STATUS.billing_issue,
+      ],
+    },
+    $or: [{ expiresAt: null }, { expiresAt: { $gt: now } }],
+    isDeleted: false,
+  })
+    .populate('package', 'title billingCycle revenueCatProductId entitlementId')
+    .lean();
 
-  // Convert user to plain object and add isActiveSubscription field
   const userObject = user.toObject();
   (userObject as any).isActiveSubscription = !!activeSubscription;
+  (userObject as any).subscriptionType =
+    activeSubscription?.productId || activeSubscription?.entitlementId || null;
+  (userObject as any).billingCycle =
+    (activeSubscription?.package as any)?.billingCycle || null;
+  (userObject as any).expiresAt = activeSubscription?.expiresAt || null;
+  (userObject as any).entitlementId = activeSubscription?.entitlementId || null;
+  (userObject as any).revenueCatProductId =
+    activeSubscription?.productId || null;
+  (userObject as any).isActiveFreeTrial = !!isActiveFreeTrial;
 
   return userObject;
 };
@@ -293,6 +313,52 @@ const updateLocationFromDB = async (
   return updatedUser
 }
 
+const enabledFreeTier = async (userId: string) => {
+  const user = await User.findById(userId)
+  if (!user || user.isDeleted) {
+    throw new AppError(httpStatus.NOT_FOUND, 'User not found!')
+  }
+
+  if (user.hasUsedFreeTrial) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      'Free trial has already been used.',
+    )
+  }
+
+  if (
+    user.isEnabledFreeTrial &&
+    user.freeTrialExpiry &&
+    new Date(user.freeTrialExpiry) > new Date()
+  ) {
+    throw new AppError(httpStatus.BAD_REQUEST, 'Free trial is already active.')
+  }
+
+  const freeTrialExpiry = new Date()
+  freeTrialExpiry.setDate(freeTrialExpiry.getDate() + 7)
+
+  const updatedUser = await User.findByIdAndUpdate(
+    userId,
+    {
+      isEnabledFreeTrial: true,
+      freeTrialExpiry,
+      hasUsedFreeTrial: true,
+    },
+    { new: true },
+  ).select(
+    '_id id name email photoUrl status isEnabledFreeTrial freeTrialExpiry hasUsedFreeTrial',
+  )
+
+  if (!updatedUser) {
+    throw new AppError(
+      httpStatus.INTERNAL_SERVER_ERROR,
+      'Failed to activate free trial.',
+    )
+  }
+
+  return updatedUser
+}
+
 const deleteAUserFromDB = async (userId: string) => {
   //* Check if the user exists
   const user = await User.findById(userId).select('_id')
@@ -323,5 +389,6 @@ export const UserService = {
   changeUserNotifyFromDB,
   updateUserInfoFromDB,
   updateLocationFromDB,
+  enabledFreeTier,
   deleteAUserFromDB,
 }

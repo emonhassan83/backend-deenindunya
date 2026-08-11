@@ -144,6 +144,17 @@ const updateLocation = catchAsync(async (req, res) => {
   })
 })
 
+const enabledFreeTier = catchAsync(async (req, res) => {
+  const result = await UserService.enabledFreeTier(req.user._id)
+
+  sendResponse(res, {
+    success: true,
+    statusCode: 200,
+    message: 'Free trial enabled successfully!',
+    data: result,
+  })
+})
+
 const deleteAUser = catchAsync(async (req, res) => {
   const result = await UserService.deleteAUserFromDB(req.user._id)
 
@@ -166,5 +177,6 @@ export const UserControllers = {
   updateMyProfile,
   changeUserNotify,
   updateLocation,
+  enabledFreeTier,
   deleteAUser,
 }

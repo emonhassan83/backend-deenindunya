@@ -13,6 +13,9 @@ const createValidationSchema = z.object({
         message: 'Description point is required!',
       }),
     ),
+    billingCycle: z.enum(['monthly', 'annually']),
+    revenueCatProductId: z.string().trim().optional(),
+    entitlementId: z.string().trim().optional(),
     price: z
       .number()
       .int('Price must be an integer')
@@ -30,6 +33,9 @@ const updateValidationSchema = z.object({
         }),
       )
       .optional(),
+    billingCycle: z.enum(['monthly', 'annually']).optional(),
+    revenueCatProductId: z.string().trim().optional(),
+    entitlementId: z.string().trim().optional(),
     price: z.number().min(0, 'Price must be a positive number').optional(),
   }),
 })

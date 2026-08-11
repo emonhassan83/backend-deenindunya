@@ -4,29 +4,6 @@ import { paymentsService } from './payments.service'
 import sendResponse from '../../utils/sendResponse'
 import httpStatus from 'http-status'
 
-const checkout = catchAsync(async (req: Request, res: Response) => {
-  const result = await paymentsService.checkout(req.body)
-  sendResponse(res, {
-    success: true,
-    statusCode: httpStatus.OK,
-    data: result,
-    message: 'payment link get successful',
-  })
-})
-
-const confirmPayment = catchAsync(async (req: Request, res: Response) => {
-  const result = await paymentsService.confirmPayment(req?.query)
-  // res.redirect(
-  //   `${config.payment_success_url}?subscriptionId=${result?.subscription}`,
-  // )
-  sendResponse(res, {
-    success: true,
-    statusCode: httpStatus.OK,
-    data: result,
-    message: 'payment successful',
-  })
-})
-
 const dashboardData = catchAsync(async (req: Request, res: Response) => {
   const result = await paymentsService.dashboardData(req?.query)
   sendResponse(res, {
@@ -74,23 +51,9 @@ const getAPaymentByReferenceId = catchAsync(async (req, res) => {
   });
 });
 
-const refundPayment = catchAsync(async (req, res) => {
-  const result = await paymentsService.refundPayment(req.body)
-
-  sendResponse(res, {
-    success: true,
-    statusCode: httpStatus.OK,
-    message: 'Payment refund successfully!',
-    data: result,
-  })
-})
-
 export const paymentsController = {
-  confirmPayment,
-  checkout,
   dashboardData,
   getAllPayments,
   getAPayment,
   getAPaymentByReferenceId,
-  refundPayment
 }

@@ -8,10 +8,15 @@ import { subscriptionValidation } from './subscription.validation'
 const router = Router()
 
 router.post(
-  '/',
+  '/sync/revenuecat',
   auth(USER_ROLE.admin, USER_ROLE.user),
-  zodValidationRequest(subscriptionValidation.createValidationSchema),
-  subscriptionController.createSubscription,
+  zodValidationRequest(subscriptionValidation.syncRevenueCatValidationSchema),
+  subscriptionController.syncRevenueCatSubscription,
+)
+
+router.post(
+  '/webhook/revenuecat',
+  subscriptionController.handleRevenueCatWebhook,
 )
 
 router.patch(

@@ -3,17 +3,37 @@ import catchAsync from '../../utils/catchAsync'
 import { subscriptionService } from './subscription.service'
 import sendResponse from '../../utils/sendResponse'
 
-const createSubscription = catchAsync(async (req: Request, res: Response) => {
-  req.body.user = req?.user?._id
-  const result = await subscriptionService.createSubscription(req.body)
+const syncRevenueCatSubscription = catchAsync(
+  async (req: Request, res: Response) => {
+    const result = await subscriptionService.syncRevenueCatSubscription(
+      req.user._id,
+      req.body,
+    )
 
-  sendResponse(res, {
-    statusCode: 200,
-    success: true,
-    message: 'Subscription created successfully !',
-    data: result,
-  })
-})
+    sendResponse(res, {
+      statusCode: 200,
+      success: true,
+      message: 'RevenueCat subscription synced successfully!',
+      data: result,
+    })
+  },
+)
+
+const handleRevenueCatWebhook = catchAsync(
+  async (req: Request, res: Response) => {
+    const result = await subscriptionService.handleRevenueCatWebhook(req.body, {
+      authorization: req.headers.authorization,
+      webhookSecret: req.headers['x-revenuecat-webhook-secret'],
+    })
+
+    sendResponse(res, {
+      statusCode: 200,
+      success: true,
+      message: 'RevenueCat webhook processed successfully!',
+      data: result,
+    })
+  },
+)
 
 const getAllSubscription = catchAsync(async (req: Request, res: Response) => {
   const result = await subscriptionService.getAllSubscription(req.query)
@@ -66,7 +86,8 @@ const updateSubscription = catchAsync(async (req: Request, res: Response) => {
 
 
 export const subscriptionController = {
-  createSubscription,
+  syncRevenueCatSubscription,
+  handleRevenueCatWebhook,
   getAllSubscription,
   getSubscriptionById,
   updateSubscription,

@@ -38,6 +38,12 @@ router.patch(
   UserControllers.updateLocation,
 )
 
+router.patch(
+  '/enabled-free-tier',
+  auth(USER_ROLE.user),
+  UserControllers.enabledFreeTier,
+)
+
 router.put(
   '/set-password',
   auth(USER_ROLE.user),

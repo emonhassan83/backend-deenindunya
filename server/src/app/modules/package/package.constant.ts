@@ -1,6 +1,6 @@
 export const durationType = {
   monthly: 'monthly',
-  yearly: 'yearly',
+  annually: 'annually',
 } as const
 
 export type TDurationType = keyof typeof durationType

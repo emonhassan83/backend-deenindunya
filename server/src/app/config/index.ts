@@ -34,6 +34,11 @@ export default {
     stripe_api_key: process.env.STRIPE_API_KEY,
     stripe_api_secret: process.env.STRIPE_API_SECRET,
   },
+  revenueCat: {
+    apiKey: process.env.REVENUECAT_API_KEY,
+    webhookSecret: process.env.REVENUECAT_WEBHOOK_SECRET,
+    projectId: process.env.REVENUECAT_PROJECT_ID,
+  },
   payment_success_url: process.env.PAYMENT_SUCCESS_URL,
   payment_cancel_url: process.env.PAYMENT_CANCEL_URL,
   aws: {

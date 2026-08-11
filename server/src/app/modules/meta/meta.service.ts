@@ -234,7 +234,7 @@ const adminMeta = async (userId: string, query: Record<string, any>) => {
   }).limit(10);
 
   const totalRevenue = await Payment.aggregate([
-    { $match: { status: 'paid', isPaid: true } },
+    { $match: { status: 'paid' } },
     { $group: { _id: null, total: { $sum: '$amount' } } },
   ]);
   const revenue = totalRevenue.length > 0 ? totalRevenue[0].total : 0;

@@ -1,17 +1,11 @@
-import { Types } from 'mongoose'
 import { z } from 'zod'
 
-const createValidationSchema = z.object({
+const syncRevenueCatValidationSchema = z.object({
   body: z.object({
-    user: z.string().refine((val) => Types.ObjectId.isValid(val), {
-      message: 'Invalid user ID',
-    }),
-    package: z.string().refine((val) => Types.ObjectId.isValid(val), {
-      message: 'Invalid package ID',
-    }),
+    revenueCatAppUserId: z.string().trim().min(1).optional(),
   }),
 })
 
 export const subscriptionValidation = {
-  createValidationSchema,
+  syncRevenueCatValidationSchema,
 }

@@ -4,7 +4,9 @@ import { TDurationType } from './package.constant'
 export type TPackage = {
   _id?: string
   title: string
-  billingCycle?: TDurationType
+  billingCycle: TDurationType
+  revenueCatProductId?: string
+  entitlementId?: string
   description: string[]
   price: number
   isDeleted: boolean

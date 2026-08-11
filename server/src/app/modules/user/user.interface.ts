@@ -35,6 +35,9 @@ export interface TUser {
   isSignUpOtpVerified: boolean
   notificationPreference: TNotificationPreference
   status: TUserStatus
+  isEnabledFreeTrial: boolean
+  freeTrialExpiry?: Date | null
+  hasUsedFreeTrial: boolean
   expireAt: Date
   isDeleted: boolean
   createdAt?: Date

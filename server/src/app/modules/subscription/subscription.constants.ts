@@ -1,15 +1,21 @@
 export const SUBSCRIPTION_STATUS = {
-  pending: 'pending',
   active: 'active',
+  expired: 'expired',
   cancelled: 'cancelled',
-  suspend: 'suspend'
+  grace_period: 'grace_period',
+  billing_issue: 'billing_issue',
 } as const
 
-export const PAYMENT_STATUS = {
-  unpaid: 'unpaid',
-  paid: 'paid',
-  failed: 'failed'
+export const REVENUECAT_EVENT_TYPE = {
+  initial_purchase: 'INITIAL_PURCHASE',
+  renewal: 'RENEWAL',
+  cancellation: 'CANCELLATION',
+  expiration: 'EXPIRATION',
+  billing_issue: 'BILLING_ISSUE',
+  product_change: 'PRODUCT_CHANGE',
+  refund: 'REFUND',
+  uncancellation: 'UNCANCELLATION',
 } as const
 
 export type TSubscriptionStatus = keyof typeof SUBSCRIPTION_STATUS
-export type TPaymentStatus = keyof typeof PAYMENT_STATUS
+export type TRevenueCatEventType = keyof typeof REVENUECAT_EVENT_TYPE

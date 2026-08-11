@@ -15,32 +15,39 @@ const paymentSchema = new Schema<TPayment>(
       ref: 'Subscription',
       required: true,
     },
+    revenueCatEventId: { type: String, unique: true, sparse: true },
+    revenueCatEventType: { type: String, default: null, index: true },
+    revenueCatProductId: { type: String, default: null, index: true },
+    revenueCatTransactionId: { type: String, index: true },
+    revenueCatOriginalTransactionId: { type: String, default: null, index: true },
+    entitlementId: { type: String, default: null },
     amount: {
       type: Number,
       required: true,
       min: 0,
     },
+    currency: { type: String, default: 'USD' },
     status: {
       type: String,
       enum: Object.values(PAYMENT_STATUS),
       default: PAYMENT_STATUS.unpaid,
     },
-    isPaid: {
-      type: Boolean,
-      default: false,
-    },
+    purchasedAt: { type: Date, default: null },
+    rawEventData: { type: Schema.Types.Mixed },
     isDeleted: {
       type: Boolean,
       default: false,
-    },
-    tranId: {
-      type: String,
-      required: true,
     },
   },
   {
     timestamps: true,
   },
+)
+
+paymentSchema.index({ user: 1, purchasedAt: -1 })
+paymentSchema.index(
+  { revenueCatTransactionId: 1 },
+  { unique: true, sparse: true },
 )
 
 // filter out payment data
