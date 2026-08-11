@@ -84,20 +84,8 @@ const getAPaymentsFromDB = async (id: string) => {
   return payment
 }
 
-const getAPaymentByReferenceIdFromDB = async (referenceId: string) => {
-  const payment = await Payment.findOne({ subscription: referenceId }).populate(
-    [{ path: 'subscription' }, { path: 'user', select: 'name email photoUrl' }],
-  )
-  if (!payment) {
-    throw new AppError(httpStatus.NOT_FOUND, 'Payment not found!')
-  }
-
-  return payment
-}
-
 export const paymentsService = {
   dashboardData,
   getAllPaymentsFromDB,
   getAPaymentsFromDB,
-  getAPaymentByReferenceIdFromDB,
 }

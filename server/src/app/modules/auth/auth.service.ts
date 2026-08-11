@@ -3,7 +3,7 @@ import httpStatus, { status } from 'http-status'
 import config from '../../config'
 import AppError from '../../errors/AppError'
 import { JwtPayload } from 'jsonwebtoken'
-import emailSender from '../../utils/emailSender'
+import { getEmailQueue } from '../../queues/queues'
 import { User } from '../user/user.model'
 import {
   authNotifyUser,
@@ -314,29 +314,16 @@ const forgetPassword = async (email: string) => {
   // Store verification status in Redis with 5 minutes expiration
   await setCache(REDIS_KEYS.RESET_OTP_VERIFIED(email), 'false', 300)
 
-  await emailSender(
-    user?.email,
-    'Your One-Time OTP',
-    `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px;">
-        <div style="text-align: left; padding: 10px 20px;">
-          <h2 style="color: #333;">Your One-Time OTP</h2>
-          <p style="color: #555; margin-top: 10px;">Dear ${user?.name},</p>
-          <p style="color: #555;">Use the following One-Time Password (OTP) to proceed with your request. This OTP is valid for a limited time.</p>
-          <div style="text-align: center; margin: 20px 0;">
-            <span style="padding: 10px 20px; font-size: 18px; font-weight: bold; border-radius: 5px; display: inline-block;">
-              ${otp}
-            </span>
-          </div>
-          <p style="color: #555;">This OTP is valid until: <strong>${moment().add(5, 'minute').toDate().toLocaleString()}</strong></p>
-          <p style="color: #555;">If you did not request this OTP, please ignore this email.</p>
-          <p style="color: #555;">Thank you,<br/>Deenindunya App Team</p>
-        </div>
-        <div style="text-align: center; margin-top: 20px; font-size: 12px; color: #999;">
-          <p>&copy; ${new Date().getFullYear()} Deenindunya App. All rights reserved.</p>
-        </div>
-      </div>
-    `,
+  const emailQueue = getEmailQueue()
+  await emailQueue.add(
+    'send-verification-email',
+    {
+      email: user.email,
+      name: user.name,
+      otp,
+      expiresAt: moment().add(5, 'minute').format('LT'),
+    },
+    { priority: 1, attempts: 3, backoff: { type: 'exponential', delay: 2000 } },
   )
 
   return { verifyToken: resetToken }

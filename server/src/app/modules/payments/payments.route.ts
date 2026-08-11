@@ -11,11 +11,6 @@ router.get(
   paymentsController.dashboardData,
 )
 
-router.get(
-  '/reference/:referenceId',
-  paymentsController.getAPaymentByReferenceId,
-);
-
 router.get('/:id', auth(USER_ROLE.admin), paymentsController.getAPayment)
 
 export const paymentsRoutes = router

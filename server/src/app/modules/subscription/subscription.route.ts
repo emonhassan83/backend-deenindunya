@@ -19,12 +19,6 @@ router.post(
   subscriptionController.handleRevenueCatWebhook,
 )
 
-router.patch(
-  '/:id',
-  auth(USER_ROLE.admin, USER_ROLE.user),
-  subscriptionController.updateSubscription,
-)
-
 router.get(
   '/my-subscriptions',
   auth(USER_ROLE.admin, USER_ROLE.user),

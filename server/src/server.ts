@@ -7,6 +7,7 @@ import initializeSocketIO from './socket'
 import colors from 'colors';
 import { connectRedis } from './app/config/redis.config'
 import { startWorkers } from './app/worker'
+import { startJobScheduler } from './app/job/jobScheduler'
 
 const server: Server = createServer(app)
 export const io = initializeSocketIO(server)
@@ -19,6 +20,7 @@ async function main() {
     logger.info('Connected to database')
 
     startWorkers()
+    startJobScheduler()
 
     server.listen(Number(config.port), '0.0.0.0', () => {
       console.log(

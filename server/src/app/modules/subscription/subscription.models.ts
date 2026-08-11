@@ -25,7 +25,6 @@ const subscriptionsSchema = new Schema<TSubscriptions>(
     expiresAt: { type: Date, default: null, index: true },
     willRenew: { type: Boolean, default: true },
     rawEventData: { type: Schema.Types.Mixed },
-    isDeleted: { type: Boolean, default: false },
   },
   {
     timestamps: true,
@@ -37,19 +36,6 @@ subscriptionsSchema.index(
   { revenueCatOriginalTransactionId: 1 },
   { unique: true, sparse: true },
 )
-
-// filter out subscription
-subscriptionsSchema.pre('find', function () {
-  this.find({ isDeleted: { $ne: true } })
-})
-
-subscriptionsSchema.pre('findOne', function () {
-  this.find({ isDeleted: { $ne: true } })
-})
-
-subscriptionsSchema.pre('aggregate', function () {
-  this.pipeline().unshift({ $match: { isDeleted: { $ne: true } } })
-})
 
 // Create and export the model
 export const Subscription = model<TSubscriptions, TSubscriptionsModel>(

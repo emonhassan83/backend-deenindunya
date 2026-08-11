@@ -1,4 +1,3 @@
-
 import { initializeApp, cert } from 'firebase-admin/app';
 import AppError from '../errors/AppError';
 import httpStatus from 'http-status'
@@ -30,7 +29,15 @@ export const sendNotification = async (
   // Enqueue notification job for asynchronous processing
   try {
     const queue = getNotificationQueue();
-    await queue.add('send-notification', { fcmToken, payload });
+    await queue.add('send-notification', {
+      channel: 'push',
+      receiver: payload.receiver,
+      message: payload.message,
+      description: payload.description,
+      model_type: payload.model_type,
+      reference: payload.reference,
+      fcmTokens: fcmToken,
+    });
     // Optionally return a placeholder response
     return { enqueued: true };
   } catch (error) {

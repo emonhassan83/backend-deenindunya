@@ -170,7 +170,6 @@ const geUserByIdFromDB = async (id: string) => {
       ],
     },
     $or: [{ expiresAt: null }, { expiresAt: { $gt: now } }],
-    isDeleted: false,
   })
     .populate('package', 'title billingCycle revenueCatProductId entitlementId')
     .lean();

@@ -20,7 +20,6 @@ export interface TSubscriptions {
   expiresAt?: Date | null
   willRenew?: boolean
   rawEventData?: Record<string, unknown>
-  isDeleted: boolean
 }
 
 export type TSubscriptionsModel = Model<TSubscriptions, Record<string, unknown>>

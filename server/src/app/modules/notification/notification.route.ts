@@ -6,9 +6,9 @@ import { NotificationControllers } from './notification.controller'
 const router = express.Router()
 
 router.post(
-  '/general-notification',
+  '/',
   auth(USER_ROLE.admin),
-  NotificationControllers.sentGeneralNotification,
+  NotificationControllers.createNotification,
 )
 
 router.delete(
@@ -34,12 +34,6 @@ router.get(
   '/',
   auth(USER_ROLE.admin, USER_ROLE.user),
   NotificationControllers.getAllNotifications,
-)
-
-router.get(
-  '/:id',
-  auth(USER_ROLE.admin, USER_ROLE.user),
-  NotificationControllers.getANotification,
 )
 
 export const NotificationRoutes = router

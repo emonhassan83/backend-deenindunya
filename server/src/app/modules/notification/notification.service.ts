@@ -3,51 +3,36 @@ import AppError from '../../errors/AppError'
 import QueryBuilder from '../../builder/QueryBuilder'
 import { TNotification } from './notification.interface'
 import { Notification } from './notification.model'
-import moment from 'moment'
 import { User } from '../user/user.model'
+import { getNotificationQueue } from '../../queues/queues'
 
 const createNotificationIntoDB = async (payload: TNotification) => {
-  const notification = await Notification.create(payload)
-  if (!notification) {
-    throw new AppError(httpStatus.CONFLICT, 'Notification not created!')
+  let fcmTokens: string[] = []
+  if (payload.receiver) {
+    const receiver = await User.findById(payload.receiver)
+      .select('fcmToken')
+      .lean()
+    if (receiver?.fcmToken) {
+      fcmTokens = [receiver.fcmToken]
+    }
   }
 
-  //@ts-ignore
-  const io = global?.socketio
-  if (io) {
-    const ver = 'notification::' + payload?.receiver
-    io.emit(ver, { ...payload, createdAt: moment().format('YYYY-MM-DD') })
-  }
-
-  return notification
-}
-
-const sendGeneralNotificationIntoDB = async (payload: TNotification) => {
-  const { message, description, ...othersData } = payload
-
-  const userIds = (await User.distinct('_id', { role: 'user' })).map((id) =>
-    id.toString(),
+  const queue = getNotificationQueue()
+  const job = await queue.add(
+    'send-notification',
+    {
+      channel: 'both',
+      receiver: payload.receiver,
+      message: payload.message,
+      description: payload.description,
+      model_type: payload.model_type,
+      reference: payload.reference,
+      fcmTokens,
+    },
+    { priority: 1, attempts: 3, backoff: { type: 'exponential', delay: 2000 } },
   )
-  const notifications = userIds.map((userId) => ({
-    receiver: userId,
-    message,
-    description,
-    ...othersData,
-  }))
 
-  const notification = await Notification.insertMany(notifications)
-  if (!notification) {
-    throw new AppError(httpStatus.CONFLICT, 'Notification not created!')
-  }
-
-  //@ts-ignore
-  const io = global?.socketio
-  if (io) {
-    const ver = 'notification::' + payload?.receiver
-    io.emit(ver, { ...payload, createdAt: moment().format('YYYY-MM-DD') })
-  }
-
-  // return
+  return { enqueued: true, jobId: job.id }
 }
 
 const getAllNotificationFromDB = async (query: Record<string, unknown>) => {
@@ -67,15 +52,6 @@ const getAllNotificationFromDB = async (query: Record<string, unknown>) => {
     meta,
     result,
   }
-}
-
-const getANotificationFromDB = async (id: string) => {
-  const notification = await Notification.findById(id)
-  if (!notification) {
-    throw new AppError(httpStatus.NOT_FOUND, 'Notification not found!')
-  }
-
-  return notification
 }
 
 const markAsDoneFromDB = async (id: string) => {
@@ -124,9 +100,7 @@ const deleteAllNotificationsFromDB = async (userId: string) => {
 
 export const NotificationService = {
   createNotificationIntoDB,
-  sendGeneralNotificationIntoDB,
   getAllNotificationFromDB,
-  getANotificationFromDB,
   markAsDoneFromDB,
   deleteANotificationFromDB,
   deleteAllNotificationsFromDB,

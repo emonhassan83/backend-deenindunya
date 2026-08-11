@@ -38,22 +38,8 @@ const getAPayment = catchAsync(async (req, res) => {
   })
 })
 
-const getAPaymentByReferenceId = catchAsync(async (req, res) => {
-  const result = await paymentsService.getAPaymentByReferenceIdFromDB(
-    req.params.referenceId as string,
-  );
-
-  sendResponse(res, {
-    success: true,
-    statusCode: 200,
-    message: 'Payment retrieved successfully!',
-    data: result,
-  });
-});
-
 export const paymentsController = {
   dashboardData,
   getAllPayments,
   getAPayment,
-  getAPaymentByReferenceId,
 }

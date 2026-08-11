@@ -2,6 +2,7 @@ import { Worker, Job } from 'bullmq'
 import { getRedisClient } from '../../config/redis.config'
 import emailSender from '../../utils/emailSender'
 import { getOtpEmailTemplate } from '../templates/otp-email.template'
+import { getSubscriptionEmailTemplate } from '../templates/subscription-email.template'
 
 export const initializeEmailWorker = () => {
   const connection = getRedisClient()
@@ -19,6 +20,41 @@ export const initializeEmailWorker = () => {
           console.log(`[Email Worker] Successfully sent OTP email to ${email}`)
         } catch (error) {
           console.error(`[Email Worker] Error sending OTP email to ${email}:`, error)
+          throw error
+        }
+      }
+
+      if (job.name === 'send-subscription-email') {
+        const {
+          email,
+          subject,
+          name,
+          title,
+          description,
+          productId,
+          eventType,
+          expiresAt,
+        } = job.data
+        console.log(`[Email Worker] Processing send-subscription-email for ${email}`)
+
+        try {
+          const html = getSubscriptionEmailTemplate({
+            name,
+            title,
+            description,
+            productId,
+            eventType,
+            expiresAt,
+          })
+          await emailSender(email, subject, html)
+          console.log(
+            `[Email Worker] Successfully sent subscription email to ${email}`,
+          )
+        } catch (error) {
+          console.error(
+            `[Email Worker] Error sending subscription email to ${email}:`,
+            error,
+          )
           throw error
         }
       }

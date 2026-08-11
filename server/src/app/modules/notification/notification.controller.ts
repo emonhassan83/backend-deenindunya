@@ -6,35 +6,10 @@ import { NotificationService } from './notification.service'
 const createNotification = catchAsync(async (req, res) => {
   const result = await NotificationService.createNotificationIntoDB(req.body)
 
-  //@ts-ignore
-  const io = global?.socketio
-  if (io) {
-    io.to()
-  }
-
   sendResponse(res, {
     statusCode: httpStatus.CREATED,
     success: true,
     message: 'Notification create successfully!',
-    data: result,
-  })
-})
-
-const sentGeneralNotification = catchAsync(async (req, res) => {
-  const result = await NotificationService.sendGeneralNotificationIntoDB(
-    req.body,
-  )
-
-  //@ts-ignore
-  const io = global?.socketio
-  if (io) {
-    io.to()
-  }
-
-  sendResponse(res, {
-    statusCode: httpStatus.CREATED,
-    success: true,
-    message: 'General notification create successfully!',
     data: result,
   })
 })
@@ -49,17 +24,6 @@ const getAllNotifications = catchAsync(async (req, res) => {
     message: 'Notifications retrieved successfully!',
     meta: result.meta,
     data: result.result,
-  })
-})
-
-const getANotification = catchAsync(async (req, res) => {
-  const result = await NotificationService.getANotificationFromDB(req.params.id as string)
-
-  sendResponse(res, {
-    success: true,
-    statusCode: 200,
-    message: 'Notification retrieved successfully!',
-    data: result,
   })
 })
 
@@ -99,9 +63,7 @@ const deleteAllNotifications = catchAsync(async (req, res) => {
 
 export const NotificationControllers = {
   createNotification,
-  sentGeneralNotification,
   getAllNotifications,
-  getANotification,
   markAsDoneNotification,
   deleteANotification,
   deleteAllNotifications

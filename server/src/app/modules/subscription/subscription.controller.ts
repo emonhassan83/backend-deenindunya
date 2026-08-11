@@ -70,26 +70,10 @@ const getSubscriptionById = catchAsync(async (req: Request, res: Response) => {
   })
 })
 
-const updateSubscription = catchAsync(async (req: Request, res: Response) => {
-  const result = await subscriptionService.updateSubscription(
-    req.params.id as string,
-    req.body,
-  )
-
-  sendResponse(res, {
-    statusCode: 200,
-    success: true,
-    message: 'Subscription updated successfully',
-    data: result,
-  })
-})
-
-
 export const subscriptionController = {
   syncRevenueCatSubscription,
   handleRevenueCatWebhook,
   getAllSubscription,
   getSubscriptionById,
-  updateSubscription,
   getMySubscription,
 }
