@@ -17,9 +17,10 @@ const verifyOtp = async (token: string, otp: string | number) => {
     throw new AppError(httpStatus.UNAUTHORIZED, 'You are not authorized')
   }
 
+  const authToken = token.replace(/^Bearer\s+/i, '')
   let decode
   try {
-    decode = jwt.verify(token, config.jwt_access_secret as Secret) as JwtPayload
+    decode = jwt.verify(authToken, config.jwt_access_secret as Secret) as JwtPayload
   } catch (err) {
     console.error(err)
     throw new AppError(
@@ -28,8 +29,12 @@ const verifyOtp = async (token: string, otp: string | number) => {
     )
   }
 
+  if (!decode?.email) {
+    throw new AppError(httpStatus.BAD_REQUEST, 'Invalid OTP verification token')
+  }
+
   const user = await User.findOne({ email: decode?.email }).select(
-    'status ',
+    'email _id name role status',
   )
   if (!user) {
     throw new AppError(httpStatus.BAD_REQUEST, 'User not found')
