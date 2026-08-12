@@ -27,6 +27,39 @@ const getAllFromDB = async () => {
   return await Mood.find({ isDeleted: false }).select('title emoji')
 }
 
+const updateIntoDB = async (id: string, payload: Partial<TMood>) => {
+  const mood = await Mood.findOne({ _id: id, isDeleted: false })
+  if (!mood) {
+    throw new AppError(httpStatus.NOT_FOUND, 'Mood not found')
+  }
+
+  if (payload.title) {
+    const existingMood = await Mood.findOne({
+      _id: { $ne: id },
+      title: { $regex: new RegExp(`^${payload.title}$`, 'i') },
+      isDeleted: false,
+    })
+
+    if (existingMood) {
+      throw new AppError(
+        httpStatus.CONFLICT,
+        `Mood with title "${payload.title}" already exists.`,
+      )
+    }
+  }
+
+  const updatedMood = await Mood.findByIdAndUpdate(id, payload, {
+    new: true,
+    runValidators: true,
+  }).select('title emoji')
+
+  if (!updatedMood) {
+    throw new AppError(httpStatus.BAD_REQUEST, 'Mood update failed')
+  }
+
+  return updatedMood
+}
+
 const deleteAFromDB = async (id: string) => {
   return await Mood.findByIdAndDelete(id)
 }
@@ -114,6 +147,7 @@ const getAllMoodLogs = async (userId: string) => {
 
 export const MoodLogsService = {
   insertIntoDB,
+  updateIntoDB,
   insertMoodLogs,
   deleteAFromDB,
   getAllFromDB,

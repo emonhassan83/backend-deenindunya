@@ -24,6 +24,17 @@ const getAllMoods = catchAsync(async (req, res) => {
   })
 })
 
+const updateIntoDB = catchAsync(async (req, res) => {
+  const result = await MoodLogsService.updateIntoDB(req.params.id as string, req.body)
+
+  sendResponse(res, {
+    success: true,
+    statusCode: 200,
+    message: 'Mood updated successfully',
+    data: result,
+  })
+})
+
 const deleteAFromDB = catchAsync(async (req, res) => {
   const result = await MoodLogsService.deleteAFromDB(req.params.id as string)
 
@@ -59,6 +70,7 @@ const getAllMoodLogs = catchAsync(async (req, res) => {
 
 export const MoodsControllers = {
   insertIntoDB,
+  updateIntoDB,
   getAllMoods,
   deleteAFromDB,
   insertMoodLogs,

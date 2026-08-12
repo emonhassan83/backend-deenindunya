@@ -18,6 +18,17 @@ const createValidationSchema = z.object({
   }),
 })
 
+const updateValidationSchema = z.object({
+  body: z.object({
+    title: z
+      .string()
+      .min(1, 'Mood cannot be empty')
+      .max(50, 'Mood cannot exceed 50 characters')
+      .optional(),
+    emoji: z.string().optional(),
+  }),
+})
+
 const moodLogsValidationSchema = z.object({
   body: z.object({
     mood: z.string({
@@ -29,5 +40,6 @@ const moodLogsValidationSchema = z.object({
 
 export const MoodsValidation = {
   createValidationSchema,
+  updateValidationSchema,
   moodLogsValidationSchema,
 }

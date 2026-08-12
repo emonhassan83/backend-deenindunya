@@ -22,6 +22,13 @@ router.post(
   MoodsControllers.insertMoodLogs
 )
 
+router.put(
+  '/:id',
+  auth(USER_ROLE.admin),
+  zodValidationRequest(MoodsValidation.updateValidationSchema),
+  MoodsControllers.updateIntoDB,
+)
+
 router.delete(
   '/logs',
   auth(USER_ROLE.admin),
