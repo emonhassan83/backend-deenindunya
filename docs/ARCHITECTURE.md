@@ -22,6 +22,8 @@ graph TD
 - **API Server**: An Express server running on port `5024` that exposes versioned API endpoints (`/api/v1`).
 - **Real-time Server**: A Socket.IO listener running on port `5024` that handles persistent WebSocket connections.
 - **Database**: MongoDB Atlas cloud cluster connected using Mongoose.
+- **Cache & Queues**: Redis for OTP caching and BullMQ job queues (email, push notifications).
+- **Mail Service**: Optional standalone `nodemailer/` package (pnpm) for SMTP email dispatch.
 
 ---
 
@@ -61,7 +63,8 @@ sequenceDiagram
 - **Functionality**: Extracts request body, parameters, and query parameters, and coordinates with services.
 
 #### 3. Service Layer
-- **Responsibility**: Contains business logic, calculations, integration with third-party APIs (Stripe, Firebase, AWS S3, Nodemailer), and DB manipulation orchestration.
+- **Responsibility**: Contains business logic, calculations, integration with third-party APIs (RevenueCat, Firebase, AWS S3, Nodemailer), and DB manipulation orchestration.
+- **Background Jobs**: Email and push notifications are enqueued via BullMQ workers in `server/src/app/worker/` rather than sent synchronously from controllers.
 
 #### 4. Model / Schema Layer
 - **Responsibility**: Defines database schemas, validations, and helper methods.

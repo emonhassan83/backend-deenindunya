@@ -15,7 +15,18 @@ This document outlines the organization of codebases, schemas, configurations, a
 │   ├── AUTHENTICATION.md      # JWT session lifetimes, status gates, & RBAC
 │   ├── API_GUIDELINES.md      # Success/error formats and versioning
 │   ├── FOLDER_STRUCTURE.md    # Repository layout maps & module conventions
-│   └── DATABASE_SEEDING.md    # Seeding scripts & execution instructions
+│   ├── DATABASE_SEEDING.md    # Seeding scripts & execution instructions
+│   └── REVENUECAT_SUBSCRIPTION_README.md  # RevenueCat subscription integration guide
+├── nodemailer/                # Standalone SMTP mail service (pnpm package)
+│   ├── src/
+│   │   ├── app.ts             # Express app and mail routes
+│   │   ├── index.ts           # HTTP entrypoint
+│   │   └── app/
+│   │       ├── configs/       # Environment & SMTP transporter config
+│   │       └── utils/         # Mail helpers and validation
+│   ├── scripts/               # Build and start shell scripts
+│   ├── package.json           # Package manifest (pnpm)
+│   └── pnpm-lock.yaml         # Dependency lockfile
 ├── server/                    # Express API Server directory
 │   ├── src/
 │   │   ├── app.ts             # App initialization and middleware configuration
@@ -30,10 +41,12 @@ This document outlines the organization of codebases, schemas, configurations, a
 │   │       ├── middleware/    # Auth verification, rate limiting, files parsing
 │   │       ├── modules/       # Feature domain modules (Auth, User, Sunnah, Surah, Room, etc.)
 │   │       ├── routes/        # Router bindings (v1 endpoint index)
+│   │       ├── job/           # Scheduled cron jobs (Islamic events, etc.)
+│   │       ├── worker/        # BullMQ workers (email, notification queues)
 │   │       ├── seeder/        # Administrative seeder scripts
 │   │       └── utils/         # System utility helper methods
 │   ├── tsconfig.json          # TypeScript project mapping
-│   └── package.json           # Node project manifest
+│   └── package.json           # Node project manifest (pnpm)
 └── README.md                  # Main developer onboarding guide
 ```
 

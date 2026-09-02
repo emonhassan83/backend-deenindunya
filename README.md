@@ -34,8 +34,9 @@ This repository houses the backend system for the **Deenindunya** application. I
 - **Database**: MongoDB (via Mongoose v9.6.3)
 - **Third-Party Services**:
   - **AWS S3**: Cloud media storage and retrieval
-  - **Stripe**: Credit card billing and subscription webhooks
-  - **Nodemailer**: Email transaction dispatch
+  - **RevenueCat**: Mobile subscription billing and webhook sync
+  - **Redis + BullMQ**: Background job queues for email and push notifications
+  - **Nodemailer**: Email transaction dispatch (standalone service in `nodemailer/`)
   - **Firebase Admin**: Real-time push notification delivery
 
 ---
@@ -53,7 +54,13 @@ Below is a bird's-eye view of the project's directory structure:
 │   ├── AUTHENTICATION.md      # JWT session lifecycles, status checks, and RBAC
 │   ├── API_GUIDELINES.md      # Standardised response/error structures
 │   ├── FOLDER_STRUCTURE.md    # Naming standards and folder maps
-│   └── DATABASE_SEEDING.md    # Seeding scripts reference
+│   ├── DATABASE_SEEDING.md    # Seeding scripts reference
+│   └── REVENUECAT_SUBSCRIPTION_README.md  # RevenueCat subscription guide
+├── nodemailer/                # Standalone SMTP mail service (pnpm)
+│   ├── src/                   # Express app source
+│   ├── scripts/               # Build and start scripts
+│   ├── package.json           # Nodemailer package manifest
+│   └── pnpm-lock.yaml         # Nodemailer lockfile
 ├── server/                    # API Server source package
 │   ├── Dockerfile             # Production build (multi-stage alpine build)
 │   ├── Dockerfile.dev         # Development build (live hot-reloading)
@@ -84,9 +91,9 @@ cp server/.env.example server/.env
 Ensure all variables are populated correctly:
 - **`DATABASE_URL`**: Connection string to your MongoDB Atlas cloud database cluster.
 - **`JWT_ACCESS_SECRET` / `JWT_REFRESH_SECRET`**: Cryptographic keys for signing user tokens.
-- **`EMAIL` / `APP_PASS`**: Nodemailer mail server credentials.
+- **`EMAIL` / `APP_PASS`**: Nodemailer mail server credentials (or configure the standalone `nodemailer/` service).
 - **`S3_BUCKET_ACCESS_KEY` / `S3_BUCKET_SECRET_ACCESS_KEY` / `AWS_REGION` / `AWS_BUCKET_NAME`**: AWS credentials for file uploads.
-- **`STRIPE_API_KEY` / `STRIPE_API_SECRET`**: Stripe billing secret keys.
+- **`REVENUECAT_API_KEY` / `REVENUECAT_WEBHOOK_SECRET` / `REVENUECAT_PROJECT_ID`**: RevenueCat subscription settings.
 - **`FIREBASE_PROJECT_ID` / `FIREBASE_PRIVATE_KEY` / `FIREBASE_CLIENT_EMAIL`**: Firebase push notification settings.
 
 ---
@@ -201,7 +208,22 @@ All scripts must be executed within the `server` environment.
 
 ---
 
-## 10. Developer Documentation Index
+## 10. Nodemailer Service (Standalone)
+
+The `nodemailer/` directory is a separate pnpm package for sending transactional emails via SMTP. It can run independently or be deployed to Vercel.
+
+```bash
+cd nodemailer
+cp .env.example .env
+pnpm install
+pnpm run start:dev
+```
+
+See [nodemailer/README.md](nodemailer/README.md) for API details.
+
+---
+
+## 11. Developer Documentation Index
 
 Explore the directories in `docs/` to detail conventions used across the project:
 
@@ -210,3 +232,4 @@ Explore the directories in `docs/` to detail conventions used across the project
 - [API Conventions](docs/API_GUIDELINES.md): Return templates and error structure formats.
 - [Workspace Folder Structure](docs/FOLDER_STRUCTURE.md): Layout and module organization.
 - [Database & Seed Routines](docs/DATABASE_SEEDING.md): Seeding scripts and idempotency rules.
+- [RevenueCat Subscription Guide](docs/REVENUECAT_SUBSCRIPTION_README.md): Mobile billing, webhooks, and frontend API flow.
