@@ -27,8 +27,9 @@ services:
       REDIS_HOST: redis
       REDIS_PASSWORD: ${REDIS_PASSWORD:-myStrongRedisPassword}
       REDIS_PORT: 6379
+      PORT: 5000
     ports:
-      - "5024:5024"
+      - "5000:5000"
     volumes:
       - ./server/src:/usr/src/app/src
     depends_on:
