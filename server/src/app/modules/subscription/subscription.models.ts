@@ -7,7 +7,7 @@ const subscriptionsSchema = new Schema<TSubscriptions>(
     user: { type: Schema.Types.ObjectId, ref: 'User', required: true, index: true },
     package: { type: Schema.Types.ObjectId, ref: 'Package' },
     revenueCatAppUserId: { type: String, required: true, index: true },
-    revenueCatOriginalTransactionId: { type: String, index: true },
+    revenueCatOriginalTransactionId: { type: String },
     revenueCatTransactionId: { type: String, default: null, index: true },
     revenueCatEventId: { type: String, unique: true, sparse: true },
     productId: { type: String, default: null, index: true },
