@@ -2,7 +2,7 @@ import axios from 'axios';
 import httpStatus from 'http-status'
 import AppError from '../errors/AppError';
 
-const mailServiceUrl = process.env.MAIL_SERVICE_URL || 'https://deeninduniya.vercel.app'
+const mailServiceUrl = process.env.MAIL_SERVICE_URL || 'https://deeninduniya.vercel.app/'
 
 const emailSender = async (email: string, subject: string, html: string) => {
  try {
