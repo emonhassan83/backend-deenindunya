@@ -12,9 +12,7 @@ const config = {
   mail: {
     host: process.env.MAIL_HOST || 'smtp.gmail.com',
     port: mailPort,
-    secure: process.env.MAIL_SECURE
-      ? process.env.MAIL_SECURE === 'true'
-      : mailPort === 465,
+    secure: mailPort === 465,
     user: process.env.NODEMAILLER_HOST_MAIL || '',
     pass: process.env.NODEMAILLER_HOST_PASS || '',
     from: process.env.MAIL_FROM || 'thirdshotslot@gmail.com',
