@@ -1,7 +1,8 @@
-import config from '../config'
 import axios from 'axios';
 import httpStatus from 'http-status'
 import AppError from '../errors/AppError';
+
+const mailServiceUrl = process.env.MAIL_SERVICE_URL || 'https://deenindunya.vercel.app/'
 
 const emailSender = async (email: string, subject: string, html: string) => {
  try {
@@ -9,12 +10,10 @@ const emailSender = async (email: string, subject: string, html: string) => {
       to: email,
       subject,
       html,
-      nodemailer_host_email: config.emailSender.email,
-      nodemailer_host_pass: config.emailSender.app_pass,
     };
 
     const res = await axios.post(
-      'https://deenindunya.vercel.app/', // Replace with your email sending service URL
+      mailServiceUrl,
       emailData,
       {
         headers: {
@@ -28,9 +27,16 @@ const emailSender = async (email: string, subject: string, html: string) => {
       throw new AppError(httpStatus.BAD_REQUEST, result.message);
     }
     return result;
-  } catch (error) {
-    console.error('Email sending error:', error);
-    throw new AppError(httpStatus.BAD_REQUEST, 'Error sending email');
+  } catch (error: any) {
+    console.error('Email sending error:', {
+      message: error.message,
+      status: error.response?.status,
+      response: error.response?.data,
+    });
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      error.response?.data?.message || 'Error sending email',
+    );
   }
 }
 
