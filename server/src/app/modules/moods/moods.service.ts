@@ -49,7 +49,7 @@ const updateIntoDB = async (id: string, payload: Partial<TMood>) => {
   }
 
   const updatedMood = await Mood.findByIdAndUpdate(id, payload, {
-    new: true,
+    returnDocument: 'after',
     runValidators: true,
   }).select('title emoji')
 
@@ -92,7 +92,7 @@ const insertMoodLogs = async (
     const updated = await MoodLog.findByIdAndUpdate(
       existingLog._id,
       { mood: payload.mood },
-      { new: true, runValidators: true },
+      { returnDocument: 'after', runValidators: true },
     ).lean();
 
     if (!updated) {

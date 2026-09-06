@@ -106,7 +106,7 @@ const setUserPasswordFromDB = async (
       needsPasswordChange: false,
       passwordChangedAt: new Date(),
     },
-    { new: true },
+    { returnDocument: 'after' },
   )
 
   return
@@ -201,7 +201,7 @@ const changeUserStatusFromDB = async (payload: any) => {
   const updateUserStatus = await User.findByIdAndUpdate(
     userId,
     { status },
-    { new: true },
+    { returnDocument: 'after' },
   ).select('_id id name email photoUrl contactNumber status')
   if (!updateUserStatus) {
     throw new AppError(
@@ -227,7 +227,7 @@ const changeUserNotifyFromDB = async (payload: any, userId: string) => {
   const result = await User.findByIdAndUpdate(
     user._id,
     { payload },
-    { new: true },
+    { returnDocument: 'after' },
   ).select('_id id name email photoUrl contactNumber status notificationPreference')
   if (!result) {
     throw new AppError(httpStatus.NOT_FOUND, 'User notify update failed!')
@@ -269,7 +269,7 @@ const updateUserInfoFromDB = async (
   }
 
   return await User.findByIdAndUpdate(userId, updateData, {
-    new: true,
+    returnDocument: 'after',
   })
 }
 
@@ -306,7 +306,7 @@ const updateLocationFromDB = async (
       ...(latitude && { latitude }),
       ...(longitude && { longitude }),
     },
-    { new: true },
+    { returnDocument: 'after' },
   )
 
   return updatedUser
@@ -343,7 +343,7 @@ const enabledFreeTier = async (userId: string) => {
       freeTrialExpiry,
       hasUsedFreeTrial: true,
     },
-    { new: true },
+    { returnDocument: 'after' },
   ).select(
     '_id id name email photoUrl status isEnabledFreeTrial freeTrialExpiry hasUsedFreeTrial',
   )
@@ -369,7 +369,7 @@ const deleteAUserFromDB = async (userId: string) => {
   const updatedUser = await User.findByIdAndUpdate(
     userId,
     { isDeleted: true },
-    { new: true },
+    { returnDocument: 'after' },
   ).select('_id id name email photoUrl contactNumber status isDeleted')
 
   if (!updatedUser) {

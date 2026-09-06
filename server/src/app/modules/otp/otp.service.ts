@@ -67,7 +67,7 @@ const verifyOtp = async (token: string, otp: string | number) => {
         expireAt: null, // set null to prevent verify user deletion data
       },
     },
-    { new: true },
+    { returnDocument: 'after' },
   ).select('email _id name role')
 
   const jwtPayload = {

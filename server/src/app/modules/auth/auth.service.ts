@@ -69,7 +69,7 @@ const loginUser = async (payload: TLoginUser) => {
 
   //* 6. Update user document if needed
   if (Object.keys(updateData).length > 0) {
-    await User.findByIdAndUpdate(user._id, updateData, { new: true })
+    await User.findByIdAndUpdate(user._id, updateData, { returnDocument: 'after' })
   }
 
   return {
@@ -120,7 +120,7 @@ const registerWithGoogle = async (payload: TGoogleLoginPayload ) => {
       const updatedUser = await User.findByIdAndUpdate(
         user._id,
         { ...updateData, isDeleted: false, expireAt: null },
-        { new: true }
+        { returnDocument: 'after' }
       )
 
       if (!updatedUser) {
@@ -131,7 +131,7 @@ const registerWithGoogle = async (payload: TGoogleLoginPayload ) => {
     }
 
     // Otherwise, update coordinates & FCM token silently
-    await User.findByIdAndUpdate(user._id, updateData, { new: true })
+    await User.findByIdAndUpdate(user._id, updateData, { returnDocument: 'after' })
     return generateTokens(user)
   }
 
@@ -182,7 +182,7 @@ const registerWithApple = async (payload: TAppleLoginPayload ) => {
       const updatedUser = await User.findByIdAndUpdate(
         user._id,
         { ...updateData, isDeleted: false, expireAt: null },
-        { new: true }
+        { returnDocument: 'after' }
       )
 
       if (!updatedUser) {
@@ -192,7 +192,7 @@ const registerWithApple = async (payload: TAppleLoginPayload ) => {
       return generateTokens(updatedUser)
     }
 
-    await User.findByIdAndUpdate(user._id, updateData, { new: true })
+    await User.findByIdAndUpdate(user._id, updateData, { returnDocument: 'after' })
     return generateTokens(user)
   }
 

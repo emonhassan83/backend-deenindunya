@@ -289,6 +289,6 @@ export const upsertRevenueCatPayment = async (
       rawEventData: event as Record<string, unknown>,
       isDeleted: false,
     },
-    { new: true, upsert: true },
+    { returnDocument: 'after', upsert: true },
   )
 }

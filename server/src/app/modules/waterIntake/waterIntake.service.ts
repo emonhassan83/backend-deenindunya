@@ -98,7 +98,7 @@ const setDailyTarget = async (
   const result = await User.findByIdAndUpdate(
     userId,
     { dailyGoalMl: payload.dailyGoalMl },
-    { new: true, runValidators: true },
+    { returnDocument: 'after', runValidators: true },
   ).select('dailyGoalMl')
 
   if (!result) {

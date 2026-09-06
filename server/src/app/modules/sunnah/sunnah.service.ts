@@ -59,7 +59,7 @@ const updateIntoDB = async (id: string, payload: Partial<TSunnah>) => {
     throw new AppError(httpStatus.NOT_FOUND, 'Sunnah not found')
   }
 
-  const result = await Sunnah.findByIdAndUpdate(id, payload, { new: true })
+  const result = await Sunnah.findByIdAndUpdate(id, payload, { returnDocument: 'after' })
   if (!result) throw new AppError(httpStatus.NOT_FOUND, 'Sunnah not found')
 
   // Invalidate cache
@@ -78,7 +78,7 @@ const deleteAIntoDB = async (id: string) => {
   const result = await Sunnah.findByIdAndUpdate(
     id,
     { isDeleted: true },
-    { new: true },
+    { returnDocument: 'after' },
   )
   if (!result) throw new AppError(httpStatus.NOT_FOUND, 'Sunnah not found')
 

@@ -35,7 +35,7 @@ const updatePackageFromDB = async (id: string, payload: any) => {
   }
 
   const updatePackage = await Package.findByIdAndUpdate(id, payload, {
-    new: true,
+    returnDocument: 'after',
   })
   if (!updatePackage) {
     throw new AppError(httpStatus.NOT_FOUND, 'Packages not updated')

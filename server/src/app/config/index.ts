@@ -1,7 +1,11 @@
 import dotenv from 'dotenv'
 import path from 'path'
 
-dotenv.config({ path: path.join((process.cwd(), '.env')) })
+dotenv.config({ path: path.join(process.cwd(), '.env') })
+
+const normalizeSpacesUrl = (url?: string) => {
+  return url?.replace('sdy1.digitaloceanspaces.com', 'syd1.digitaloceanspaces.com')
+}
 
 export default {
   node_env: process.env.NODE_ENV,
@@ -44,11 +48,11 @@ export default {
   aws: {
     accessKeyId: process.env.S3_BUCKET_ACCESS_KEY,
     secretAccessKey: process.env.S3_BUCKET_SECRET_ACCESS_KEY,
-    s3BaseUrl: process.env.S3_BASE_URL,
+    s3BaseUrl: normalizeSpacesUrl(process.env.S3_BASE_URL),
     s3_api: process.env.S3_API,
     region: process.env.AWS_REGION,
     bucket: process.env.AWS_BUCKET_NAME,
-    endpoint: process.env.SPACES_API,
+    endpoint: normalizeSpacesUrl(process.env.SPACES_API),
   },
   redis_host: process.env.REDIS_HOST,
   redis_port: process.env.REDIS_PORT,

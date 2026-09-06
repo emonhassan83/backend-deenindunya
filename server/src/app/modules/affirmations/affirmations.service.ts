@@ -140,7 +140,7 @@ const updateIntoDB = async (
   }
 
   const updated = await Affirmation.findByIdAndUpdate(id, payload, {
-    new: true,
+    returnDocument: 'after',
     runValidators: true,
   }).lean()
 
@@ -158,7 +158,7 @@ const deleteFromDB = async (id: string): Promise<TAffirmation> => {
   const result = await Affirmation.findByIdAndUpdate(
     id,
     { isDeleted: true },
-    { new: true }
+    { returnDocument: 'after' }
   ).lean()
 
   if (!result) {

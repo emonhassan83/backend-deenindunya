@@ -81,7 +81,7 @@ const toggleCompleteIntoDB = async (id: string) => {
   const result = await Reminder.findByIdAndUpdate(
     id,
     { isCompleted: updatedStatus },
-    { new: true },
+    { returnDocument: 'after' },
   )
 
   if (!result) {

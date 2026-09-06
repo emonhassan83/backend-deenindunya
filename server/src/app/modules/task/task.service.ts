@@ -98,7 +98,7 @@ const changedStatusIntoDB = async (id: string) => {
   const result = await Task.findByIdAndUpdate(
     id,
     { isCompleted: updatedStatus },
-    { new: true },
+    { returnDocument: 'after' },
   )
   if (!result) {
     throw new AppError(

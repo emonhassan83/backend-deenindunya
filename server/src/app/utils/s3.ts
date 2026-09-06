@@ -9,6 +9,14 @@ import config from '../config';
 import { s3Client } from '../constants/aws';
 import AppError from '../errors/AppError';
 
+const getS3ErrorMessage = (error: any) => {
+  if (error?.code === 'ENOTFOUND') {
+    return `File Upload failed: unable to resolve Spaces endpoint "${error.hostname}". Please check SPACES_API/S3_BASE_URL.`;
+  }
+
+  return 'File Upload failed';
+};
+
 //upload a single file
 export const uploadToS3 = async (
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -30,9 +38,14 @@ export const uploadToS3 = async (
     const url = `${config?.aws?.s3BaseUrl}/${fileName}`;
 
     return url;
-  } catch (error) {
-    console.log(error);
-    throw new AppError(httpStatus.BAD_REQUEST, 'File Upload failed');
+  } catch (error: any) {
+    console.error('S3 upload error:', {
+      message: error.message,
+      code: error.code,
+      hostname: error.hostname,
+      attempts: error.$metadata?.attempts,
+    });
+    throw new AppError(httpStatus.BAD_REQUEST, getS3ErrorMessage(error));
   }
 };
  
@@ -84,8 +97,14 @@ export const uploadManyToS3 = async (
 
     const uploadedUrls = await Promise.all(uploadPromises);
     return uploadedUrls;
-  } catch (error) {
-    throw new Error('File Upload failed');
+  } catch (error: any) {
+    console.error('S3 multi upload error:', {
+      message: error.message,
+      code: error.code,
+      hostname: error.hostname,
+      attempts: error.$metadata?.attempts,
+    });
+    throw new AppError(httpStatus.BAD_REQUEST, getS3ErrorMessage(error));
   }
 };
 

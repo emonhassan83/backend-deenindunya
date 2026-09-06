@@ -126,7 +126,7 @@ const updateIntoDB = async (
   }
 
   const updated = await Duas.findByIdAndUpdate(id, payload, {
-    new: true,
+    returnDocument: 'after',
     runValidators: true,
   })
     .populate('category', 'title')
@@ -146,7 +146,7 @@ const deleteFromDB = async (id: string): Promise<TDuas> => {
   const result = await Duas.findByIdAndUpdate(
     id,
     { isDeleted: true },
-    { new: true }
+    { returnDocument: 'after' }
   ).lean()
 
   if (!result) {

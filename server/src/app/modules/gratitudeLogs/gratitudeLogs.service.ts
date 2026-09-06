@@ -79,7 +79,7 @@ const updateIntoDB = async (
   }
 
   const updated = await GratitudeLog.findByIdAndUpdate(id, payload, {
-    new: true,
+    returnDocument: 'after',
     runValidators: true,
   })
     .select('-isDeleted')

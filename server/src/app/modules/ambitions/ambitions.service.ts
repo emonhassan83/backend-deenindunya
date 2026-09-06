@@ -86,7 +86,7 @@ const toggleCompleteStatus = async (
   }
 
   const updated = await Ambition.findByIdAndUpdate(id, updateData, {
-    new: true,
+    returnDocument: 'after',
   })
     .select('-isDeleted')
     .lean()

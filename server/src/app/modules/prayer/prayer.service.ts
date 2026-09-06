@@ -202,7 +202,7 @@ const togglePrayerStatus = async (
   const result = await Prayer.findOneAndUpdate(
     { user: userId, name: validPrayerName, date },
     updateData,
-    { new: true },
+    { returnDocument: 'after' },
   )
 
   if (!result) {

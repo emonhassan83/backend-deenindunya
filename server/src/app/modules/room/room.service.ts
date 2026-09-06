@@ -181,7 +181,7 @@ const toggleTaskStatus = async (id: string, userId: string) => {
   const result = await RoomTask.findByIdAndUpdate(
     id,
     { isCompleted: updatedStatus },
-    { new: true },
+    { returnDocument: 'after' },
   )
   if (!result) {
     throw new AppError(

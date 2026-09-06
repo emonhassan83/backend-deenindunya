@@ -319,7 +319,7 @@ const updateIntoDB = async (
   }
 
   const result = await Event.findByIdAndUpdate(id, payload, {
-    new: true,
+    returnDocument: 'after',
   })
 
   if (!result) {
@@ -353,7 +353,7 @@ const deleteAIntoDB = async (id: string, userId: string) => {
   const result = await Event.findByIdAndUpdate(
     id,
     { isDeleted: true },
-    { new: true },
+    { returnDocument: 'after' },
   )
 
   if (!result) {

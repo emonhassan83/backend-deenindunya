@@ -43,7 +43,7 @@ const syncRevenueCatSubscription = async (
         willRenew: false,
         rawEventData: subscriber,
       },
-      { new: true, upsert: true },
+      { returnDocument: 'after', upsert: true },
     )
 
     return { isActiveSubscription: false, subscription: result }
@@ -73,7 +73,7 @@ const syncRevenueCatSubscription = async (
       willRenew: true,
       rawEventData: subscriber,
     },
-    { new: true, upsert: true },
+    { returnDocument: 'after', upsert: true },
   )
 
   return {
@@ -156,7 +156,7 @@ const handleRevenueCatWebhook = async (
       willRenew: !['CANCELLATION', 'EXPIRATION', 'REFUND'].includes(event.type),
       rawEventData: event as Record<string, unknown>,
     },
-    { new: true, upsert: true },
+    { returnDocument: 'after', upsert: true },
   )
 
   await upsertRevenueCatPayment(event, subscription._id, user._id)

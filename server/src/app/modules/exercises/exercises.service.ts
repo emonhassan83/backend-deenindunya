@@ -108,7 +108,7 @@ const updateIntoDB = async (
   }
 
   const updated = await Exercise.findByIdAndUpdate(id, payload, {
-    new: true,
+    returnDocument: 'after',
     runValidators: true,
   }).lean()
   if (!updated) {
@@ -140,7 +140,7 @@ const toggleCompleteStatus = async (
   }
 
   const updated = await Exercise.findByIdAndUpdate(id, updateData, {
-    new: true,
+    returnDocument: 'after',
   }).lean()
 
   if (!updated) {

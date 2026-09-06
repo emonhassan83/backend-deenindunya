@@ -112,7 +112,7 @@ const changedStatusIntoDB = async (id: string, userId: string) => {
   const result = await Grocery.findByIdAndUpdate(
     id,
     { isCompleted: updatedStatus },
-    { new: true },
+    { returnDocument: 'after' },
   )
   if (!result) {
     throw new AppError(
