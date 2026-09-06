@@ -17,6 +17,24 @@ const getS3ErrorMessage = (error: any) => {
   return 'File Upload failed';
 };
 
+export const getFileExtension = (file: any) => {
+  const originalNameExtension = file?.originalname?.split('.').pop();
+  if (originalNameExtension && originalNameExtension !== file.originalname) {
+    return originalNameExtension.toLowerCase();
+  }
+
+  const mimetypeExtension = file?.mimetype?.split('/').pop();
+  return mimetypeExtension?.replace('jpeg', 'jpg') || 'bin';
+};
+
+export const buildS3FileName = (directory: string, file: any) => {
+  const cleanDirectory = directory.replace(/\/+$/, '');
+  const extension = getFileExtension(file);
+  const uniqueName = `${Math.floor(100000 + Math.random() * 900000)}-${Date.now()}`;
+
+  return `${cleanDirectory}/${uniqueName}.${extension}`;
+};
+
 //upload a single file
 export const uploadToS3 = async (
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

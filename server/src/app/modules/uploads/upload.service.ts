@@ -1,5 +1,5 @@
 import httpStatus from 'http-status'
-import { uploadManyToS3, uploadToS3 } from '../../utils/s3'
+import { buildS3FileName, uploadManyToS3, uploadToS3 } from '../../utils/s3'
 import AppError from '../../errors/AppError'
 
 const multiple = async (files: any) => {
@@ -196,7 +196,7 @@ const single = async (file: any) => {
   }
   const result = await uploadToS3({
     file,
-    fileName: `images/${Math.floor(100000 + Math.random() * 900000)}`,
+    fileName: buildS3FileName('images', file),
   });
 
   const fileSizeInMB = Number((file.size / (1024 * 1024)).toFixed(4))
