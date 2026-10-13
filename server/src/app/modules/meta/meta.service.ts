@@ -12,15 +12,17 @@ import { getEarningOverview, getUserOverview } from './meta.utils'
 import Payment from '../payments/payments.models'
 import { getCache, setCache } from '../../redis/helpers'
 import { REDIS_KEYS } from '../../redis/keys'
+import { Surah, SurahVerse } from '../surah/surah.models'
+import {
+  calculatePrayerTimes,
+  getTodayInTimezone,
+} from '../../utils/prayerTimes'
 
 dayjs.extend(dayOfYear)
 
-// Total ayahs in the Quran
-const TOTAL_QURAN_AYAHS = 6236
-
 /**
  * Deterministic "Verse of the Day" — same verse for all users on the same day.
- * Fetches Arabic + English from Al-Quran Cloud API, cached in Redis until next day.
+ * Reads from the seeded Surah/SurahVerse collections, cached in Redis until next day.
  */
 const getVerseOfTheDay = async (dateStr: string) => {
   // Check Redis cache first
@@ -28,31 +30,43 @@ const getVerseOfTheDay = async (dateStr: string) => {
   const cached = await getCache<any>(cacheKey)
   if (cached) return cached
 
-  // Deterministic ayah number based on day of year + year
-  const today = dayjs(dateStr)
-  const seed = today.dayOfYear() + today.year()
-  const ayahNumber = (seed % TOTAL_QURAN_AYAHS) + 1
-
   try {
-    const response = await axios.get(
-      `https://api.alquran.cloud/v1/ayah/${ayahNumber}/editions/quran-uthmani,en.asad`,
-      { timeout: 8000 }
-    )
+    const surahs = await Surah.find()
+      .select('number name nameArabic totalVerses')
+      .sort({ number: 1 })
+      .lean()
 
-    if (response.data?.code !== 200 || !response.data?.data?.length) {
-      return null
-    }
+    const totalAyahs = surahs.reduce((sum, s) => sum + s.totalVerses, 0)
+    if (!totalAyahs) return null
 
-    const [arabicEdition, englishEdition] = response.data.data
+    // Deterministic ayah number based on day of year + year
+    const today = dayjs(dateStr)
+    const seed = today.dayOfYear() + today.year()
+    let remaining = (seed % totalAyahs) + 1
+
+    const surah = surahs.find((s) => {
+      if (remaining <= s.totalVerses) return true
+      remaining -= s.totalVerses
+      return false
+    })
+    if (!surah) return null
+
+    const ayah = await SurahVerse.findOne({
+      surahId: surah._id,
+      verseNumber: remaining,
+    })
+      .select('arabicText translation verseNumber')
+      .lean()
+    if (!ayah) return null
 
     const verse = {
-      arabicText: arabicEdition.text,
-      translation: englishEdition.text,
-      surahName: arabicEdition.surah.englishName,
-      surahNameArabic: arabicEdition.surah.name,
-      surahNumber: arabicEdition.surah.number,
-      verseNumber: arabicEdition.numberInSurah,
-      reference: `Qur'an ${arabicEdition.surah.number}:${arabicEdition.numberInSurah}`,
+      arabicText: ayah.arabicText,
+      translation: ayah.translation,
+      surahName: surah.name,
+      surahNameArabic: surah.nameArabic,
+      surahNumber: surah.number,
+      verseNumber: ayah.verseNumber,
+      reference: `Qur'an ${surah.number}:${ayah.verseNumber}`,
     }
 
     // Cache until end of day (max 24h = 86400s)
@@ -130,93 +144,38 @@ const userMeta = async (userId: string, query: Record<string, any>) => {
     )
   }
 
-  // Date format for Aladhan API
-  let targetDate: string
-  if (date) {
-    targetDate = dayjs(date).format('DD-MM-YYYY')
-  } else {
-    targetDate = dayjs().format('DD-MM-YYYY')
-  }
+  const isoDate = date
+    ? dayjs(date).format('YYYY-MM-DD')
+    : getTodayInTimezone(timezone)
+  const targetDate = dayjs(isoDate).format('DD-MM-YYYY')
 
-  // ISO date for verse/adhkar cache keys
-  const isoDate = date ? dayjs(date).format('YYYY-MM-DD') : dayjs().format('YYYY-MM-DD')
+  const prayerTimes = calculatePrayerTimes({
+    latitude,
+    longitude,
+    date: isoDate,
+    timezone,
+  })
 
-  try {
-    // The requested dua has type 0 (both morning and evening) and includes audio.
-    const sharedAdhkar = getMorningAndEveningAdhkar()
+  // The requested dua has type 0 (both morning and evening) and includes audio.
+  const sharedAdhkar = getMorningAndEveningAdhkar()
 
-    // Run all fetches in parallel for performance
-    const [prayerResponse, verseOfTheDay, morningAdhkar, eveningAdhkar, reminders] = await Promise.all([
-      // 1. Prayer Times from Aladhan API
-      axios.get(`https://api.aladhan.com/v1/timings/${targetDate}`, {
-        params: {
-          latitude,
-          longitude,
-          method: 2,
-          ...(timezone && { timezonestring: timezone }),
-        },
-      }),
-
-      // 2. Verse of the Day
+  const [verseOfTheDay, morningAdhkar, eveningAdhkar, reminders] =
+    await Promise.all([
       getVerseOfTheDay(isoDate),
-
-      // 3. Morning Adhkar
       sharedAdhkar,
-
-      // 4. Evening Adhkar
       sharedAdhkar,
-
-      // 5. Reminders for this date
       Reminder.find({
         user: userId,
         logAt: targetDate,
       }).lean(),
     ])
 
-    if (prayerResponse.data.code !== 200) {
-      throw new AppError(
-        httpStatus.BAD_REQUEST,
-        'Failed to fetch prayer times from Aladhan API',
-      )
-    }
-
-    const timings = prayerResponse.data.data.timings
-    const dateInfo = prayerResponse.data.data.date
-
-    const prayerTimes = {
-      fajr: timings.Fajr,
-      sunrise: timings.Sunrise,
-      dhuhr: timings.Dhuhr,
-      asr: timings.Asr,
-      maghrib: timings.Maghrib,
-      isha: timings.Isha,
-      date: {
-        readable: dateInfo.readable,
-        gregorian: dateInfo.gregorian.date,
-        hijri: dateInfo.hijri.date,
-      },
-    }
-
-    return {
-      prayerTimes,
-      verseOfTheDay,
-      morningAdhkar,
-      eveningAdhkar,
-      reminders,
-    }
-  } catch (error: any) {
-    console.error('Prayer Times Error:', {
-      message: error.message,
-      response: error.response?.data,
-      status: error.response?.status,
-    })
-
-    if (error instanceof AppError) throw error
-
-    throw new AppError(
-      httpStatus.INTERNAL_SERVER_ERROR,
-      error.message || 'Failed to fetch prayer times',
-    )
+  return {
+    prayerTimes,
+    verseOfTheDay,
+    morningAdhkar,
+    eveningAdhkar,
+    reminders,
   }
 }
 

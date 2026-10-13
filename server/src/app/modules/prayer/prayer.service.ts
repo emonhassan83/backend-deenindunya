@@ -3,7 +3,11 @@ import AppError from '../../errors/AppError'
 import { User } from '../user/user.model'
 import { Prayer } from './prayer.models'
 import { TPrayer } from './prayer.interface'
-import axios from 'axios'
+import {
+  calculatePrayerTimes,
+  getTodayInTimezone,
+  resolvePrayerTimezone,
+} from '../../utils/prayerTimes'
 import { calculateCurrentStreak, calculateLongestStreak } from './prayer.utils'
 import dayjs from 'dayjs'
 import { isValidDate } from '../../utils/isValidDate'
@@ -322,21 +326,16 @@ const getPrayerTimes = async (userId: string, query: Record<string, any>) => {
     throw new AppError(httpStatus.BAD_REQUEST, 'Invalid coordinates')
   }
 
-  // format date for Aladhan API (DD-MM-YYYY)
-  let targetDate
-  if (date) {
-    // Check format (YYYY-MM-DD)
-    if (!isValidDate(date)) {
-      throw new AppError(
-        httpStatus.BAD_REQUEST,
-        'Invalid date format. Use YYYY-MM-DD',
-      )
-    }
-    targetDate = dayjs(date).format('DD-MM-YYYY')
-  } else {
-    // Use current date
-    targetDate = dayjs().format('DD-MM-YYYY')
+  if (date && !isValidDate(date)) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      'Invalid date format. Use YYYY-MM-DD',
+    )
   }
+
+  const tz = resolvePrayerTimezone(finalTimezone)
+  const isoDate = date || getTodayInTimezone(tz)
+  const targetDate = dayjs(isoDate).format('DD-MM-YYYY')
 
   const cacheKey = REDIS_KEYS.PRAYER_TIMES(userId, targetDate)
   const cachedTimes = await getCache<any>(cacheKey)
@@ -344,68 +343,23 @@ const getPrayerTimes = async (userId: string, query: Record<string, any>) => {
     return cachedTimes
   }
 
-  try {
-    // Using Aladhan API for prayer times
-    const response = await axios.get(
-      `https://api.aladhan.com/v1/timings/${targetDate}`,
-      {
-        params: {
-          latitude: lat,
-          longitude: lng,
-          method: 2, // ISNA calculation method
-          ...(finalTimezone && { timezonestring: finalTimezone }),
-        },
-      },
-    )
-
-    if (response.data.code !== 200) {
-      throw new AppError(
-        httpStatus.BAD_REQUEST,
-        'Failed to fetch prayer times from Aladhan API',
-      )
-    }
-
-    const timings = response.data.data.timings
-    const dateInfo = response.data.data.date
-
-    const prayerTimes = {
-      fajr: timings.Fajr,
-      sunrise: timings.Sunrise, // Bonus
-      dhuhr: timings.Dhuhr,
-      asr: timings.Asr,
-      maghrib: timings.Maghrib,
-      isha: timings.Isha,
-      date: {
-        readable: dateInfo.readable, // e.g., "25 Jan 2025"
-        gregorian: dateInfo.gregorian.date, // e.g., "25-01-2025"
-        hijri: dateInfo.hijri.date, // e.g., "24-07-1446"
-      },
-      location: {
-        latitude: lat,
-        longitude: lng,
-        timezone: finalTimezone || 'UTC',
-      },
-    }
-
-    await setCache(cacheKey, prayerTimes)
-
-    return prayerTimes
-  } catch (error: any) {
-    console.error('Prayer Times Error:', {
-      message: error.message,
-      response: error.response?.data,
-      status: error.response?.status,
-    })
-
-    if (error instanceof AppError) {
-      throw error
-    }
-
-    throw new AppError(
-      httpStatus.INTERNAL_SERVER_ERROR,
-      error.message || 'Failed to fetch prayer times',
-    )
+  const prayerTimes = {
+    ...calculatePrayerTimes({
+      latitude: lat,
+      longitude: lng,
+      date: isoDate,
+      timezone: tz,
+    }),
+    location: {
+      latitude: lat,
+      longitude: lng,
+      timezone: tz,
+    },
   }
+
+  await setCache(cacheKey, prayerTimes)
+
+  return prayerTimes
 }
 
 export const PrayerService = {
