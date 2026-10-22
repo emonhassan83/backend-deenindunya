@@ -42,7 +42,7 @@ app.post('/', async (req: Request, res: Response<SendMailResponse>) => {
     });
   } catch (error: any) {
     console.error('Error sending email:', error);
-    
+
     res.status(500).json({
       success: false,
       message: 'Failed to send email.',
