@@ -7,32 +7,53 @@ import { User } from '../user/user.model'
 import { getNotificationQueue } from '../../queues/queues'
 
 const createNotificationIntoDB = async (payload: TNotification) => {
-  let fcmTokens: string[] = []
-  if (payload.receiver) {
-    const receiver = await User.findById(payload.receiver)
-      .select('fcmToken')
-      .lean()
-    if (receiver?.fcmToken) {
-      fcmTokens = [receiver.fcmToken]
-    }
+  if (!payload.receiver) {
+    throw new AppError(httpStatus.BAD_REQUEST, 'Receiver is required')
   }
+
+  const receiver = await User.findOne({
+    _id: payload.receiver,
+    isDeleted: false,
+  })
+    .select('_id name email fcmToken status')
+    .lean()
+
+  if (!receiver) {
+    throw new AppError(httpStatus.NOT_FOUND, 'Receiver user not found')
+  }
+
+  const fcmTokens = receiver.fcmToken ? [receiver.fcmToken] : []
 
   const queue = getNotificationQueue()
   const job = await queue.add(
     'send-notification',
     {
+      // Save in-app notification + emit socket + send FCM push when token exists
       channel: 'both',
-      receiver: payload.receiver,
+      receiver: receiver._id.toString(),
       message: payload.message,
-      description: payload.description,
+      description: payload.description || '',
       model_type: payload.model_type,
       reference: payload.reference,
       fcmTokens,
     },
-    { priority: 1, attempts: 3, backoff: { type: 'exponential', delay: 2000 } },
+    {
+      priority: 1,
+      attempts: 3,
+      backoff: { type: 'exponential', delay: 2000 },
+    },
   )
 
-  return { enqueued: true, jobId: job.id }
+  return {
+    enqueued: true,
+    jobId: job.id,
+    receiver: {
+      _id: receiver._id,
+      name: receiver.name,
+      email: receiver.email,
+    },
+    pushScheduled: fcmTokens.length > 0,
+  }
 }
 
 const getAllNotificationFromDB = async (query: Record<string, unknown>) => {
@@ -61,9 +82,9 @@ const markAsDoneFromDB = async (id: string) => {
       $set: {
         read: true,
       },
-    }
+    },
   )
-  
+
   return result
 }
 
@@ -85,9 +106,7 @@ const deleteANotificationFromDB = async (id: string) => {
 }
 
 const deleteAllNotificationsFromDB = async (userId: string) => {
-  const result = await Notification.deleteMany(
-    { receiver: userId, isDeleted: false }
-  )
+  const result = await Notification.deleteMany({ receiver: userId })
   if (result.deletedCount === 0) {
     throw new AppError(
       httpStatus.NOT_FOUND,
