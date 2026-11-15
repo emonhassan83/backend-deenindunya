@@ -46,6 +46,12 @@ export const REDIS_KEYS = {
   PRAYER_DATA: (userId: string, date: string) => createRedisKey('prayer:data', userId, date),
   PRAYER_TIMES: (userId: string, date: string) => createRedisKey('prayer:times', userId, date),
   PRAYER_PATTERN: (userId: string) => createRedisKey('prayer', '*', userId, '*'),
+  PRAYER_NOTIFY: (
+    userId: string,
+    date: string,
+    prayer: string,
+    notifyAt: string,
+  ) => createRedisKey('prayer:notify', userId, date, prayer, notifyAt),
 
   // Sunnah keys
   SUNNAH_USER: (userId: string, queryString: string) => createRedisKey('sunnah:user', userId, queryString),

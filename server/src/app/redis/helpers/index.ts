@@ -65,3 +65,20 @@ export const cacheExists = async (key: string): Promise<boolean> => {
     return false
   }
 }
+
+/**
+ * Set key only if missing (NX). Returns true when the key was newly set.
+ */
+export const setCacheIfNotExists = async (
+  key: string,
+  value: string,
+  ttlSeconds: number,
+): Promise<boolean> => {
+  try {
+    const result = await getRedisClient().set(key, value, 'EX', ttlSeconds, 'NX')
+    return result === 'OK'
+  } catch (error) {
+    console.error(`Cache set NX error for key ${key}:`, error)
+    return false
+  }
+}

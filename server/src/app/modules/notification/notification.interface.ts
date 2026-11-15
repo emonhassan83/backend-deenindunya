@@ -5,6 +5,7 @@ export enum modeType {
   User = 'User',
   Payment = 'Payment',
   Subscription = 'Subscription',
+  Prayer = 'Prayer',
 }
 
 export type TNotification = {

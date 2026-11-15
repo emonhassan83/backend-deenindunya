@@ -68,10 +68,39 @@ const getPrayerTimes = catchAsync(async (req: Request, res: Response) => {
   })
 })
 
+const getReminderSettings = catchAsync(async (req: Request, res: Response) => {
+  const result = await PrayerService.getReminderSettings(req.user._id)
+
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: 'Prayer reminder settings retrieved successfully',
+    data: result,
+  })
+})
+
+const updateReminderSettings = catchAsync(
+  async (req: Request, res: Response) => {
+    const result = await PrayerService.updateReminderSettings(
+      req.user._id,
+      req.body,
+    )
+
+    sendResponse(res, {
+      statusCode: 200,
+      success: true,
+      message: 'Prayer reminder settings updated successfully',
+      data: result,
+    })
+  },
+)
+
 export const PrayerController = {
   createBulkPrayers,
   getPrayersByDate,
   togglePrayerStatus,
   getPrayerTimes,
   completedPayers,
+  getReminderSettings,
+  updateReminderSettings,
 }

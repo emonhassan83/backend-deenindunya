@@ -56,3 +56,18 @@ export const calculatePrayerTimes = ({
     },
   }
 }
+
+/** Subtract offset from HH:mm in a timezone; returns HH:mm. */
+export const getNotifyAtTime = (
+  prayerTime: string,
+  offsetMinutes: number,
+  date: string,
+  timezone?: string | null,
+) => {
+  const tz = resolvePrayerTimezone(timezone)
+  return moment
+    .tz(`${date} ${prayerTime}`, 'YYYY-MM-DD HH:mm', tz)
+    .subtract(offsetMinutes, 'minutes')
+    .locale('en')
+    .format('HH:mm')
+}

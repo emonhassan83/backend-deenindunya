@@ -22,6 +22,19 @@ router.get(
   PrayerController.getPrayerTimes,
 )
 
+router.get(
+  '/reminders',
+  auth(USER_ROLE.user),
+  PrayerController.getReminderSettings,
+)
+
+router.patch(
+  '/reminders',
+  auth(USER_ROLE.user),
+  zodValidationRequest(PrayerValidation.updateReminderSettingsValidationSchema),
+  PrayerController.updateReminderSettings,
+)
+
 // Get prayers by date
 router.get(
   '/',

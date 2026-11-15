@@ -22,6 +22,7 @@ export const initializeNotificationWorker = () => {
         model_type,
         reference,
         fcmTokens,
+        data,
       } = job.data
       console.log(`[Notification Worker] Processing job ${job.name}`)
 
@@ -60,17 +61,27 @@ export const initializeNotificationWorker = () => {
 
             if (tokens.length > 0) {
               try {
+                const dataPayload: Record<string, string> = {
+                  type: model_type || 'General',
+                  receiver: receiver ? String(receiver) : '',
+                  reference: reference ? String(reference) : '',
+                }
+
+                if (data && typeof data === 'object') {
+                  for (const [key, value] of Object.entries(data)) {
+                    if (value !== undefined && value !== null) {
+                      dataPayload[key] = String(value)
+                    }
+                  }
+                }
+
                 const response = await getMessaging().sendEachForMulticast({
                   tokens,
                   notification: {
                     title: message,
                     body: description || message,
                   },
-                  data: {
-                    type: model_type || 'General',
-                    receiver: receiver ? String(receiver) : '',
-                    reference: reference ? String(reference) : '',
-                  },
+                  data: dataPayload,
                   apns: {
                     headers: {
                       'apns-push-type': 'alert',

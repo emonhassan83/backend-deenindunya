@@ -5,6 +5,7 @@ import { Prayer } from './prayer.models'
 import { TPrayer } from './prayer.interface'
 import {
   calculatePrayerTimes,
+  getNotifyAtTime,
   getTodayInTimezone,
   resolvePrayerTimezone,
 } from '../../utils/prayerTimes'
@@ -13,7 +14,17 @@ import dayjs from 'dayjs'
 import { isValidDate } from '../../utils/isValidDate'
 import { getCache, setCache, deleteCachePattern } from '../../redis/helpers'
 import { REDIS_KEYS } from '../../redis/keys'
-import { PRAYER_NAME, TPrayerName } from './prayer.constants'
+import {
+  DEFAULT_PRAYER_REMINDER_SETTINGS,
+  PRAYER_NAME,
+  PRAYER_NOTIFICATION_COPY,
+  TPrayerName,
+} from './prayer.constants'
+import { PrayerReminderSetting } from './prayerReminder.model'
+import {
+  TPrayerReminderPref,
+  TPrayerReminderSettingsMap,
+} from './prayerReminder.interface'
 
 const PRAYER_NAMES = Object.values(PRAYER_NAME) as TPrayerName[]
 
@@ -343,23 +354,141 @@ const getPrayerTimes = async (userId: string, query: Record<string, any>) => {
     return cachedTimes
   }
 
+  const times = calculatePrayerTimes({
+    latitude: lat,
+    longitude: lng,
+    date: isoDate,
+    timezone: tz,
+  })
+
+  const settings = await getOrCreateReminderSettings(userId)
+  const reminders = buildReminderPayload(times, settings, isoDate, tz)
+
   const prayerTimes = {
-    ...calculatePrayerTimes({
-      latitude: lat,
-      longitude: lng,
-      date: isoDate,
-      timezone: tz,
-    }),
+    ...times,
     location: {
       latitude: lat,
       longitude: lng,
       timezone: tz,
     },
+    reminders,
   }
 
   await setCache(cacheKey, prayerTimes)
 
   return prayerTimes
+}
+
+const toReminderSettingsMap = (
+  doc: InstanceType<typeof PrayerReminderSetting>,
+): TPrayerReminderSettingsMap => ({
+  fajr: { enabled: doc.fajr.enabled, offsetMinutes: doc.fajr.offsetMinutes },
+  dhuhr: { enabled: doc.dhuhr.enabled, offsetMinutes: doc.dhuhr.offsetMinutes },
+  asr: { enabled: doc.asr.enabled, offsetMinutes: doc.asr.offsetMinutes },
+  maghrib: {
+    enabled: doc.maghrib.enabled,
+    offsetMinutes: doc.maghrib.offsetMinutes,
+  },
+  isha: { enabled: doc.isha.enabled, offsetMinutes: doc.isha.offsetMinutes },
+})
+
+const getOrCreateReminderSettings = async (userId: string) => {
+  let settings = await PrayerReminderSetting.findOne({ user: userId })
+  if (!settings) {
+    settings = await PrayerReminderSetting.create({
+      user: userId,
+      ...DEFAULT_PRAYER_REMINDER_SETTINGS,
+    })
+  }
+  return toReminderSettingsMap(settings)
+}
+
+const getReminderSettings = async (userId: string) => {
+  const user = await User.findById(userId)
+  if (!user || user.isDeleted) {
+    throw new AppError(httpStatus.NOT_FOUND, 'User not found!')
+  }
+  return getOrCreateReminderSettings(userId)
+}
+
+const updateReminderSettings = async (
+  userId: string,
+  payload: Partial<Record<TPrayerName, Partial<TPrayerReminderPref>>>,
+) => {
+  const user = await User.findById(userId)
+  if (!user || user.isDeleted) {
+    throw new AppError(httpStatus.NOT_FOUND, 'User not found!')
+  }
+
+  await getOrCreateReminderSettings(userId)
+
+  const update: Record<string, unknown> = {}
+  for (const prayer of PRAYER_NAMES) {
+    const pref = payload[prayer]
+    if (!pref) continue
+    if (typeof pref.enabled === 'boolean') {
+      update[`${prayer}.enabled`] = pref.enabled
+    }
+    if (typeof pref.offsetMinutes === 'number') {
+      update[`${prayer}.offsetMinutes`] = pref.offsetMinutes
+    }
+  }
+
+  const settings = await PrayerReminderSetting.findOneAndUpdate(
+    { user: userId },
+    { $set: update },
+    { new: true },
+  )
+
+  await deleteCachePattern(REDIS_KEYS.PRAYER_PATTERN(userId))
+
+  return toReminderSettingsMap(settings!)
+}
+
+export const buildReminderPayload = (
+  times: {
+    fajr: string
+    dhuhr: string
+    asr: string
+    maghrib: string
+    isha: string
+  },
+  settings: TPrayerReminderSettingsMap,
+  date: string,
+  timezone?: string | null,
+) => {
+  const reminders: Record<
+    TPrayerName,
+    {
+      enabled: boolean
+      offsetMinutes: number
+      prayerTime: string
+      notifyAt: string
+      title: string
+      body: string
+    }
+  > = {} as any
+
+  for (const prayer of PRAYER_NAMES) {
+    const pref = settings[prayer]
+    const prayerTime = times[prayer]
+    const copy = PRAYER_NOTIFICATION_COPY[prayer]
+    reminders[prayer] = {
+      enabled: pref.enabled,
+      offsetMinutes: pref.offsetMinutes,
+      prayerTime,
+      notifyAt: getNotifyAtTime(
+        prayerTime,
+        pref.offsetMinutes,
+        date,
+        timezone,
+      ),
+      title: copy.title,
+      body: copy.body,
+    }
+  }
+
+  return reminders
 }
 
 export const PrayerService = {
@@ -368,4 +497,6 @@ export const PrayerService = {
   togglePrayerStatus,
   getPrayerTimes,
   completedPayers,
+  getReminderSettings,
+  updateReminderSettings,
 }
