@@ -83,9 +83,15 @@ const getVerseOfTheDay = async (dateStr: string) => {
 
 const ADHKAR_DATA_URL =
   'https://raw.githubusercontent.com/Seen-Arabic/Morning-And-Evening-Adhkar-DB/main/result/en.json'
-const REQUESTED_ADHKAR_REFERENCE = 'Abu Dawood 4/323 | At-Trimithi 5/465'
-const REQUESTED_ADHKAR_TRANSLITERATION =
-  "Bismillah hil’lazee la yadur’oo ma’aas-mihi shai-oon fil-ardi wa’laa fis-samaa; Wa’hu’waas samee’ool aa’leem."
+
+/** Seen-Arabic Adhkar DB: 0 = both, 1 = morning only, 2 = evening only */
+const ADHKAR_TYPE = {
+  both: 0,
+  morning: 1,
+  evening: 2,
+} as const
+
+type TAdhkarPeriod = 'morning' | 'evening'
 
 const fetchAdhkarList = async (): Promise<any[]> => {
   const cacheKey = 'meta:adhkar:raw-list'
@@ -104,27 +110,60 @@ const fetchAdhkarList = async (): Promise<any[]> => {
   }
 }
 
-const getMorningAndEveningAdhkar = async () => {
-  const allAdhkar = await fetchAdhkarList()
-  const selected = allAdhkar.find(
-    (item) =>
-      item.order === 20 &&
-      item.type === 0 &&
-      item.audio &&
-      item.content?.includes('لاَ يَضُرُّ'),
-  )
+const mapAdhkarItem = (item: any) => ({
+  arabic_text: item.content || '',
+  translation: item.translation || '',
+  transliteration: item.transliteration || '',
+  reference: item.source || '',
+  audio_url: item.audio || '',
+  benefit: item.fadl || '',
+  count: item.count ?? 1,
+  count_description: item.count_description || '',
+})
 
-  if (!selected) return null
+const getAdhkarPool = (allAdhkar: any[], period: TAdhkarPeriod) => {
+  const allowedTypes =
+    period === 'morning'
+      ? [ADHKAR_TYPE.both, ADHKAR_TYPE.morning]
+      : [ADHKAR_TYPE.both, ADHKAR_TYPE.evening]
 
-  return {
-    arabic_text: selected.content,
-    translation: selected.translation,
-    transliteration: REQUESTED_ADHKAR_TRANSLITERATION,
-    reference: REQUESTED_ADHKAR_REFERENCE,
-    audio_url: selected.audio,
-    benefit: selected.fadl,
-    count: selected.count,
-    count_description: selected.count_description,
+  const pool = allAdhkar.filter((item) => allowedTypes.includes(item.type))
+  const withAudio = pool.filter((item) => Boolean(item.audio))
+  return withAudio.length > 0 ? withAudio : pool
+}
+
+/**
+ * Deterministic daily adhkar — same pick for all users on the same date+period.
+ * Uses each item's own count / count_description.
+ */
+const getAdhkarOfTheDay = async (period: TAdhkarPeriod, dateStr: string) => {
+  const cacheKey =
+    period === 'morning'
+      ? REDIS_KEYS.ADHKAR_MORNING(dateStr)
+      : REDIS_KEYS.ADHKAR_EVENING(dateStr)
+
+  const cached = await getCache<any>(cacheKey)
+  if (cached) return cached
+
+  try {
+    const allAdhkar = await fetchAdhkarList()
+    const pool = getAdhkarPool(allAdhkar, period)
+    if (!pool.length) return null
+
+    const day = dayjs(dateStr)
+    const periodSalt = period === 'morning' ? 17 : 41
+    const seed = day.dayOfYear() + day.year() + periodSalt
+    const selected = pool[seed % pool.length]
+    const mapped = mapAdhkarItem(selected)
+
+    const secondsLeftInDay = dayjs(dateStr).endOf('day').diff(dayjs(), 'second')
+    const ttl = Math.max(secondsLeftInDay, 60)
+    await setCache(cacheKey, mapped, Math.min(ttl, 86400))
+
+    return mapped
+  } catch (error: any) {
+    console.error(`Adhkar of the day (${period}) error:`, error.message)
+    return null
   }
 }
 
@@ -156,14 +195,11 @@ const userMeta = async (userId: string, query: Record<string, any>) => {
     timezone,
   })
 
-  // The requested dua has type 0 (both morning and evening) and includes audio.
-  const sharedAdhkar = getMorningAndEveningAdhkar()
-
   const [verseOfTheDay, morningAdhkar, eveningAdhkar, reminders] =
     await Promise.all([
       getVerseOfTheDay(isoDate),
-      sharedAdhkar,
-      sharedAdhkar,
+      getAdhkarOfTheDay('morning', isoDate),
+      getAdhkarOfTheDay('evening', isoDate),
       Reminder.find({
         user: userId,
         logAt: targetDate,
