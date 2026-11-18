@@ -17,6 +17,7 @@ import {
   calculatePrayerTimes,
   getTodayInTimezone,
 } from '../../utils/prayerTimes'
+import { isValidDate } from '../../utils/isValidDate'
 
 dayjs.extend(dayOfYear)
 
@@ -183,10 +184,14 @@ const userMeta = async (userId: string, query: Record<string, any>) => {
     )
   }
 
-  const isoDate = date
-    ? dayjs(date).format('YYYY-MM-DD')
-    : getTodayInTimezone(timezone)
-  const targetDate = dayjs(isoDate).format('DD-MM-YYYY')
+  if (date && !isValidDate(date as string)) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      'Invalid date format. Please use YYYY-MM-DD format (e.g., 2026-04-22)',
+    )
+  }
+
+  const isoDate = date ? (date as string) : getTodayInTimezone(timezone)
 
   const prayerTimes = calculatePrayerTimes({
     latitude,
@@ -200,7 +205,7 @@ const userMeta = async (userId: string, query: Record<string, any>) => {
       getVerseOfTheDay(isoDate),
       getAdhkarOfTheDay('morning', isoDate),
       getAdhkarOfTheDay('evening', isoDate),
-      ReminderService.getAllIntoDB(userId, { date: targetDate }),
+      ReminderService.getAllIntoDB(userId, { date: isoDate }),
     ])
 
   return {

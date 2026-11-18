@@ -86,7 +86,6 @@ export const REDIS_KEYS = {
   DUA_ALL: (queryString: string) => createRedisKey('dua:all', queryString),
   DUA_USER_VIEW: (date: string, queryString: string) =>
     createRedisKey('dua:user-view', date, queryString),
-  DUA_USER_VIEW: (date: string, queryString: string) => createRedisKey('dua:user-view', date, queryString),
   DUA_SINGLE: (id: string) => createRedisKey('dua:single', id),
   DUA_PATTERN: 'dua:*',
 
