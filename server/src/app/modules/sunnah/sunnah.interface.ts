@@ -2,6 +2,7 @@ import { Model, Types } from 'mongoose'
 
 export interface TSunnah {
   _id?: string
+  category: string
   title: string
   subtitle: string
   arabicText: string

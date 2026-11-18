@@ -14,6 +14,7 @@ const insertIntoDB = async (payload: TSunnah) => {
   const exist = await Sunnah.findOne({
     title: payload.title,
     subtitle: payload.subtitle,
+    isDeleted: false,
   })
   if (exist) {
     throw new AppError(httpStatus.BAD_REQUEST, 'Sunnah already exists')
@@ -38,7 +39,7 @@ const getAllIntoDB = async (query: Record<string, any>) => {
   }
 
   const qb = new QueryBuilder(Sunnah.find({ isDeleted: false }), query)
-    .search(['title'])
+    .search(['title', 'category', 'subtitle'])
     .filter()
     .paginate()
     .sort()
@@ -59,7 +60,9 @@ const updateIntoDB = async (id: string, payload: Partial<TSunnah>) => {
     throw new AppError(httpStatus.NOT_FOUND, 'Sunnah not found')
   }
 
-  const result = await Sunnah.findByIdAndUpdate(id, payload, { returnDocument: 'after' })
+  const result = await Sunnah.findByIdAndUpdate(id, payload, {
+    returnDocument: 'after',
+  })
   if (!result) throw new AppError(httpStatus.NOT_FOUND, 'Sunnah not found')
 
   // Invalidate cache
@@ -158,10 +161,12 @@ const getUserSunnahs = async (userId: string, query: Record<string, any>) => {
   // Build query for Sunnah documents
   const qb = new QueryBuilder(
     // @ts-ignore
-    Sunnah.find({ isDeleted: false }).select('title subtitle arabicText'),
+    Sunnah.find({ isDeleted: false }).select(
+      'category title subtitle arabicText',
+    ),
     query,
   )
-    .search(['title'])
+    .search(['title', 'category', 'subtitle'])
     .filter()
     .paginate()
     .sort()

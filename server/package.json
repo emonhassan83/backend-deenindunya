@@ -32,7 +32,8 @@
     "seed:lessons:prod": "node dist/app/seeder/lesson.seeder.js",
     "seed:admin": "ts-node src/app/seeder/admin.seed.ts",
     "seed:contents": "ts-node src/app/seeder/contents.seed.ts",
-    "seed:moods": "ts-node src/app/seeder/moods.seed.ts"
+    "seed:moods": "ts-node src/app/seeder/moods.seed.ts",
+    "seed:sunnah": "tsx src/app/seeder/sunnah.seed.ts"
   },
   "keywords": [],
   "author": "",
@@ -127,7 +128,16 @@
       "proxy-addr@>=1.1.0 <2.0.8": ">=2.0.8",
       "@fastify/busboy@<3.2.2": ">=3.2.2",
       "follow-redirects": ">=1.16.2",
-      "body-parser": ">=2.4.0"
+      "body-parser": ">=2.4.0",
+      "picomatch": ">=4.0.7"
+    },
+    "auditConfig": {
+      "ignoreGhsas": [
+        "GHSA-fc5q-39xc-vjpf"
+      ],
+      "ignoreCves": [
+        "CVE-2026-112366"
+      ]
     }
   }
 }

@@ -8,13 +8,20 @@ import {
 
 const sunnahSchema = new Schema<TSunnah>(
   {
+    category: {
+      type: String,
+      required: true,
+      trim: true,
+    },
     title: {
       type: String,
       required: true,
+      trim: true,
     },
     subtitle: {
       type: String,
       required: true,
+      trim: true,
     },
     arabicText: {
       type: String,
