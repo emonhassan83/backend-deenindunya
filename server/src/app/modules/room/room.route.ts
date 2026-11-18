@@ -27,22 +27,10 @@ router.patch(
   RoomController.toggleTaskStatus,
 )
 
-router.get(
-  '/',
-  auth(USER_ROLE.user),
-  RoomController.getAllIntoDB,
-)
+router.get('/', auth(USER_ROLE.user), RoomController.getAllIntoDB)
 
-router.delete(
-  '/task/:id',
-  auth(USER_ROLE.user),
-  RoomController.deleteARoomTask,
-)
+router.delete('/task/:id', auth(USER_ROLE.user), RoomController.deleteARoomTask)
 
-router.delete(
-  '/:id',
-  auth(USER_ROLE.user),
-  RoomController.deleteAIntoDB,
-)
+router.delete('/:id', auth(USER_ROLE.user), RoomController.deleteAIntoDB)
 
 export const RoomRoutes = router

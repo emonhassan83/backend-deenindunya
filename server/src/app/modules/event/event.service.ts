@@ -29,7 +29,7 @@ const insertIntoDB = async (payload: TEvent, userId: string) => {
   if (exist) {
     throw new AppError(
       httpStatus.BAD_REQUEST,
-      `Event "${title}" on ${date} already exists`
+      `Event "${title}" on ${date} already exists`,
     )
   }
 
@@ -323,10 +323,7 @@ const updateIntoDB = async (
   })
 
   if (!result) {
-    throw new AppError(
-      httpStatus.INTERNAL_SERVER_ERROR,
-      'Event update failed!',
-    )
+    throw new AppError(httpStatus.INTERNAL_SERVER_ERROR, 'Event update failed!')
   }
 
   // Invalidate event caches

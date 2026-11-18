@@ -8,7 +8,7 @@ const userMeta = catchAsync(async (req, res) => {
   sendResponse(res, {
     success: true,
     statusCode: 200,
-    message: "User meta retrieve successfully",
+    message: 'User meta retrieve successfully',
     data: result,
   })
 })
@@ -27,5 +27,5 @@ const adminMeta = catchAsync(async (req, res) => {
 
 export const MetaControllers = {
   userMeta,
-  adminMeta
+  adminMeta,
 }

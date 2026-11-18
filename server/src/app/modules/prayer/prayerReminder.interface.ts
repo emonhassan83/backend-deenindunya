@@ -6,7 +6,10 @@ export type TPrayerReminderPref = {
   offsetMinutes: TPrayerReminderOffset
 }
 
-export type TPrayerReminderSettingsMap = Record<TPrayerName, TPrayerReminderPref>
+export type TPrayerReminderSettingsMap = Record<
+  TPrayerName,
+  TPrayerReminderPref
+>
 
 export type TPrayerReminderSetting = {
   _id?: Types.ObjectId

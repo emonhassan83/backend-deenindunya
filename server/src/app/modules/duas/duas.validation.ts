@@ -34,11 +34,13 @@ const createValidationSchema = z.object({
         message: 'Benefit is required',
       })
       .min(1, 'Benefit cannot be empty'),
+    recited_count: z.number().int().positive().optional().default(1),
   }),
 })
 
 const updateValidationSchema = z.object({
   body: z.object({
+    category: z.string().optional(),
     arabic_text: z.string().min(1, 'Arabic text cannot be empty').optional(),
     banner: z
       .string({
@@ -56,6 +58,7 @@ const updateValidationSchema = z.object({
     reference: z.string().min(1, 'Reference cannot be empty').optional(),
     audio_url: z.string().optional(),
     benefit: z.string().min(1, 'Benefit cannot be empty').optional(),
+    recited_count: z.number().int().positive().optional(),
   }),
 })
 

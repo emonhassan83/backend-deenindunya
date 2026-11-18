@@ -90,7 +90,10 @@ const handleRevenueCatWebhook = async (
 
   const event = payload.event
   if (!event || !event.app_user_id || !event.type) {
-    throw new AppError(httpStatus.BAD_REQUEST, 'Invalid RevenueCat webhook payload')
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      'Invalid RevenueCat webhook payload',
+    )
   }
 
   let user = Types.ObjectId.isValid(event.app_user_id)

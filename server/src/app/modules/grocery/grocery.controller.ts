@@ -26,7 +26,10 @@ const getAllIntoDB = catchAsync(async (req: Request, res: Response) => {
 })
 
 const toggleComplete = catchAsync(async (req: Request, res: Response) => {
-  const result = await GroceryService.changedStatusIntoDB(req.params.id as string, req.user._id)
+  const result = await GroceryService.changedStatusIntoDB(
+    req.params.id as string,
+    req.user._id,
+  )
 
   sendResponse(res, {
     statusCode: 200,
@@ -51,5 +54,5 @@ export const GroceryController = {
   insertIntoDB,
   getAllIntoDB,
   toggleComplete,
-  deleteAIntoDB
+  deleteAIntoDB,
 }

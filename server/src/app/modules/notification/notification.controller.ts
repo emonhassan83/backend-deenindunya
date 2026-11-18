@@ -15,7 +15,7 @@ const createNotification = catchAsync(async (req, res) => {
 })
 
 const getAllNotifications = catchAsync(async (req, res) => {
-  req.query['receiver'] = req.user._id 
+  req.query['receiver'] = req.user._id
   const result = await NotificationService.getAllNotificationFromDB(req.query)
 
   sendResponse(res, {
@@ -51,7 +51,9 @@ const deleteANotification = catchAsync(async (req, res) => {
 })
 
 const deleteAllNotifications = catchAsync(async (req, res) => {
-  const result = await NotificationService.deleteAllNotificationsFromDB(req.user._id )
+  const result = await NotificationService.deleteAllNotificationsFromDB(
+    req.user._id,
+  )
 
   sendResponse(res, {
     success: true,
@@ -66,5 +68,5 @@ export const NotificationControllers = {
   getAllNotifications,
   markAsDoneNotification,
   deleteANotification,
-  deleteAllNotifications
+  deleteAllNotifications,
 }

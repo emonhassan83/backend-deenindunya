@@ -44,10 +44,9 @@ const updateReminderSettingsValidationSchema = z.object({
       isha: prayerReminderPrefSchema.optional(),
     })
     .strict()
-    .refine(
-      (body) => Object.keys(body).length > 0,
-      { message: 'At least one prayer reminder update is required' },
-    ),
+    .refine((body) => Object.keys(body).length > 0, {
+      message: 'At least one prayer reminder update is required',
+    }),
 })
 
 export const PrayerValidation = {

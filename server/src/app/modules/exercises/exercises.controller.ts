@@ -28,7 +28,7 @@ const updateExercise = catchAsync(async (req, res) => {
   const result = await ExerciseService.updateIntoDB(
     req.params.id as string,
     req.user._id,
-    req.body
+    req.body,
   )
 
   sendResponse(res, {
@@ -42,7 +42,7 @@ const updateExercise = catchAsync(async (req, res) => {
 const toggleComplete = catchAsync(async (req, res) => {
   const result = await ExerciseService.toggleCompleteStatus(
     req.params.id as string,
-    req.user._id
+    req.user._id,
   )
 
   sendResponse(res, {
@@ -54,7 +54,10 @@ const toggleComplete = catchAsync(async (req, res) => {
 })
 
 const deleteExercise = catchAsync(async (req, res) => {
-  const result = await ExerciseService.deleteFromDB(req.params.id as string, req.user._id)
+  const result = await ExerciseService.deleteFromDB(
+    req.params.id as string,
+    req.user._id,
+  )
 
   sendResponse(res, {
     success: true,

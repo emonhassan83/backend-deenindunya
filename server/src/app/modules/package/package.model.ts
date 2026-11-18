@@ -10,7 +10,12 @@ const packageSchema = new Schema<TPackage>(
       enum: Object.values(durationType),
       required: true,
     },
-    revenueCatProductId: { type: String, trim: true, unique: true, sparse: true },
+    revenueCatProductId: {
+      type: String,
+      trim: true,
+      unique: true,
+      sparse: true,
+    },
     entitlementId: { type: String, trim: true },
     description: { type: [String], required: true },
     price: { type: Number, required: true },

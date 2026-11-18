@@ -147,17 +147,17 @@ const getAllUsersFromDB = async (query: Record<string, unknown>) => {
 const geUserByIdFromDB = async (id: string) => {
   const user = await User.findById(id).select(
     '_id id name email photoUrl country address contractNumber location locationUrl timezone notificationPreference status isEnabledFreeTrial freeTrialExpiry hasUsedFreeTrial createdAt',
-  );
+  )
 
   if (!user || user?.isDeleted) {
-    throw new AppError(httpStatus.NOT_FOUND, 'User not found!');
+    throw new AppError(httpStatus.NOT_FOUND, 'User not found!')
   }
 
-  const now = new Date();
+  const now = new Date()
   const isActiveFreeTrial =
     user.isEnabledFreeTrial &&
     user.freeTrialExpiry &&
-    new Date(user.freeTrialExpiry) > now;
+    new Date(user.freeTrialExpiry) > now
 
   const activeSubscription = await Subscription.findOne({
     user: id,
@@ -172,22 +172,22 @@ const geUserByIdFromDB = async (id: string) => {
     $or: [{ expiresAt: null }, { expiresAt: { $gt: now } }],
   })
     .populate('package', 'title billingCycle revenueCatProductId entitlementId')
-    .lean();
+    .lean()
 
-  const userObject = user.toObject();
-  (userObject as any).isActiveSubscription = !!activeSubscription;
-  (userObject as any).subscriptionType =
-    activeSubscription?.productId || activeSubscription?.entitlementId || null;
-  (userObject as any).billingCycle =
-    (activeSubscription?.package as any)?.billingCycle || null;
-  (userObject as any).expiresAt = activeSubscription?.expiresAt || null;
-  (userObject as any).entitlementId = activeSubscription?.entitlementId || null;
-  (userObject as any).revenueCatProductId =
-    activeSubscription?.productId || null;
-  (userObject as any).isActiveFreeTrial = !!isActiveFreeTrial;
+  const userObject = user.toObject()
+  ;(userObject as any).isActiveSubscription = !!activeSubscription
+  ;(userObject as any).subscriptionType =
+    activeSubscription?.productId || activeSubscription?.entitlementId || null
+  ;(userObject as any).billingCycle =
+    (activeSubscription?.package as any)?.billingCycle || null
+  ;(userObject as any).expiresAt = activeSubscription?.expiresAt || null
+  ;(userObject as any).entitlementId = activeSubscription?.entitlementId || null
+  ;(userObject as any).revenueCatProductId =
+    activeSubscription?.productId || null
+  ;(userObject as any).isActiveFreeTrial = !!isActiveFreeTrial
 
-  return userObject;
-};
+  return userObject
+}
 
 const changeUserStatusFromDB = async (payload: any) => {
   const { userId, status } = payload
@@ -228,7 +228,9 @@ const changeUserNotifyFromDB = async (payload: any, userId: string) => {
     user._id,
     { payload },
     { returnDocument: 'after' },
-  ).select('_id id name email photoUrl contactNumber status notificationPreference')
+  ).select(
+    '_id id name email photoUrl contactNumber status notificationPreference',
+  )
   if (!result) {
     throw new AppError(httpStatus.NOT_FOUND, 'User notify update failed!')
   }

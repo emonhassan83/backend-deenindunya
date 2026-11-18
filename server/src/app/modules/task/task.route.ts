@@ -14,22 +14,10 @@ router.post(
   TaskController.insertIntoDB,
 )
 
-router.patch(
-  '/status/:id',
-  auth(USER_ROLE.user),
-  TaskController.changedStatus,
-)
+router.patch('/status/:id', auth(USER_ROLE.user), TaskController.changedStatus)
 
-router.get(
-  '/',
-  auth(USER_ROLE.user),
-  TaskController.getAllIntoDB,
-)
+router.get('/', auth(USER_ROLE.user), TaskController.getAllIntoDB)
 
-router.delete(
-  '/:id',
-  auth(USER_ROLE.user),
-  TaskController.deleteAIntoDB,
-)
+router.delete('/:id', auth(USER_ROLE.user), TaskController.deleteAIntoDB)
 
 export const TaskRoutes = router

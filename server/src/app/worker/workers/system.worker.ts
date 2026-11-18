@@ -11,12 +11,15 @@ export const initializeSystemWorker = () => {
       if (job.name === 'system-cleanup') {
         console.log('[System Worker] Running system cleanup tasks...')
       } else {
-        console.log(`[System Worker] Job type ${job.name} not implemented, data:`, job.data)
+        console.log(
+          `[System Worker] Job type ${job.name} not implemented, data:`,
+          job.data,
+        )
       }
     },
     {
       connection: connection as any,
-    }
+    },
   )
 
   worker.on('failed', (job, err) => {

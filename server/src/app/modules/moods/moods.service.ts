@@ -69,23 +69,23 @@ const insertMoodLogs = async (
   userId: string,
 ): Promise<TMoodLogs> => {
   // Validate user exists
-  const userExists = await User.findById(userId);
+  const userExists = await User.findById(userId)
   if (!userExists || userExists.isDeleted) {
-    throw new AppError(httpStatus.NOT_FOUND, 'User not found!');
+    throw new AppError(httpStatus.NOT_FOUND, 'User not found!')
   }
 
   // Determine log date as YYYY-MM-DD string (no time)
-  const logDateStr = payload.logAt || new Date().toISOString().slice(0, 10);
-  payload.logAt = logDateStr;
+  const logDateStr = payload.logAt || new Date().toISOString().slice(0, 10)
+  payload.logAt = logDateStr
 
   // Assign user
-  payload.user = userExists._id;
+  payload.user = userExists._id
 
   // Check if a mood log already exists for this user on the exact same date
   const existingLog = await MoodLog.findOne({
     user: userExists._id,
-    logAt: logDateStr
-  });
+    logAt: logDateStr,
+  })
 
   if (existingLog) {
     // Replace: update mood only, keep the same logAt
@@ -93,41 +93,43 @@ const insertMoodLogs = async (
       existingLog._id,
       { mood: payload.mood },
       { returnDocument: 'after', runValidators: true },
-    ).lean();
+    ).lean()
 
     if (!updated) {
-      throw new AppError(httpStatus.BAD_REQUEST, 'Failed to update mood log');
+      throw new AppError(httpStatus.BAD_REQUEST, 'Failed to update mood log')
     }
-    return updated;
+    return updated
   }
 
   // No existing log – create new one
-  const result = await MoodLog.create(payload);
-  return result;
-};
+  const result = await MoodLog.create(payload)
+  return result
+}
 
 const getAllMoodLogs = async (userId: string) => {
   // Validate user exists
-  const userExists = await User.findById(userId);
+  const userExists = await User.findById(userId)
   if (!userExists || userExists.isDeleted) {
-    throw new AppError(httpStatus.NOT_FOUND, 'User not found!');
+    throw new AppError(httpStatus.NOT_FOUND, 'User not found!')
   }
 
-  const today = new Date().toISOString().slice(0, 10); // 'YYYY-MM-DD'
+  const today = new Date().toISOString().slice(0, 10) // 'YYYY-MM-DD'
 
   // Get today's mood log (if any)
   const todayLog = await MoodLog.findOne({
     user: userId,
-    logAt: today
-  }).populate('mood', 'title emoji').lean();
+    logAt: today,
+  })
+    .populate('mood', 'title emoji')
+    .lean()
 
-  const todayMood = todayLog?.mood || null;
-  const todayLogged = !!todayLog;
+  const todayMood = todayLog?.mood || null
+  const todayLogged = !!todayLog
 
   // Get logs from last 7 days (including today)
-  const sevenDaysAgo = new Date();
-  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6); // last 7 days inclusive of today
-  const startDateStr = sevenDaysAgo.toISOString().slice(0, 10); // YYYY-MM-DD
+  const sevenDaysAgo = new Date()
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6) // last 7 days inclusive of today
+  const startDateStr = sevenDaysAgo.toISOString().slice(0, 10) // YYYY-MM-DD
 
   const lastSevenDaysLogs = await MoodLog.find({
     user: userId,
@@ -136,14 +138,14 @@ const getAllMoodLogs = async (userId: string) => {
     .populate('mood', 'title emoji')
     .select('mood logAt')
     .sort({ logAt: 1 }) // ascending order by date
-    .lean();
+    .lean()
 
   return {
     todayMood,
     todayLogged,
     lastSevenDaysLogs,
-  };
-};
+  }
+}
 
 export const MoodLogsService = {
   insertIntoDB,

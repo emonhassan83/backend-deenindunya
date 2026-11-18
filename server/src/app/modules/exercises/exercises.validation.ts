@@ -46,7 +46,7 @@ const updateValidationSchema = z.object({
       .string()
       .min(2, 'Category must be at least 2 characters')
       .max(100, 'Category cannot exceed 100 characters')
-      .optional()
+      .optional(),
   }),
 })
 

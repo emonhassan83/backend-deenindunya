@@ -50,7 +50,9 @@ const getAllFromDB = async (userId: string) => {
   const todayExercises = await Exercise.find({
     user: userId,
     logAt: today,
-  }).select('name reps category isCompleted logAt').lean()
+  })
+    .select('name reps category isCompleted logAt')
+    .lean()
 
   // 4. Compute stats
   const total = todayExercises.length

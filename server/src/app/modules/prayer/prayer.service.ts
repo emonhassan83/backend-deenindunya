@@ -288,12 +288,10 @@ const completedPayers = async (userId: string, query: Record<string, any>) => {
   )
 
   // Get all prayers for the date to return
-  const prayers = await Prayer.find(
-    {
-      user: userId,
-      date: date,
-    } as any,
-  ).sort({ name: 1 })
+  const prayers = await Prayer.find({
+    user: userId,
+    date: date,
+  } as any).sort({ name: 1 })
 
   // Invalidate cache
   await deleteCachePattern(REDIS_KEYS.PRAYER_PATTERN(userId))
@@ -477,12 +475,7 @@ export const buildReminderPayload = (
       enabled: pref.enabled,
       offsetMinutes: pref.offsetMinutes,
       prayerTime,
-      notifyAt: getNotifyAtTime(
-        prayerTime,
-        pref.offsetMinutes,
-        date,
-        timezone,
-      ),
+      notifyAt: getNotifyAtTime(prayerTime, pref.offsetMinutes, date, timezone),
       title: copy.title,
       body: copy.body,
     }

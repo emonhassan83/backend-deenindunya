@@ -81,7 +81,10 @@ const changeUserStatus = catchAsync(async (req, res) => {
 })
 
 const changeUserNotify = catchAsync(async (req, res) => {
-  const result = await UserService.changeUserNotifyFromDB(req.body, req.user._id)
+  const result = await UserService.changeUserNotifyFromDB(
+    req.body,
+    req.user._id,
+  )
 
   sendResponse(res, {
     success: true,
@@ -99,7 +102,10 @@ const updateUserInfo = catchAsync(async (req, res) => {
     })
   }
 
-  const result = await UserService.updateUserInfoFromDB(req.params.id as string, req.body)
+  const result = await UserService.updateUserInfoFromDB(
+    req.params.id as string,
+    req.body,
+  )
 
   sendResponse(res, {
     success: true,

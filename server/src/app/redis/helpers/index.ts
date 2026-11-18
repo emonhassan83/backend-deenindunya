@@ -16,7 +16,11 @@ export const getCache = async <T>(key: string): Promise<T | null> => {
 /**
  * Set data in cache
  */
-export const setCache = async (key: string, value: any, ttl?: number): Promise<void> => {
+export const setCache = async (
+  key: string,
+  value: any,
+  ttl?: number,
+): Promise<void> => {
   try {
     if (ttl) {
       await getRedisClient().set(key, JSON.stringify(value), 'EX', ttl)
@@ -75,7 +79,13 @@ export const setCacheIfNotExists = async (
   ttlSeconds: number,
 ): Promise<boolean> => {
   try {
-    const result = await getRedisClient().set(key, value, 'EX', ttlSeconds, 'NX')
+    const result = await getRedisClient().set(
+      key,
+      value,
+      'EX',
+      ttlSeconds,
+      'NX',
+    )
     return result === 'OK'
   } catch (error) {
     console.error(`Cache set NX error for key ${key}:`, error)

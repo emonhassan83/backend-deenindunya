@@ -23,7 +23,9 @@ const createValidationSchema = z.object({
 
 const updateValidationSchema = z.object({
   body: z.object({
-    type: z.enum(Object.values(AmbitionsType) as [string, ...string[]]).optional(),
+    type: z
+      .enum(Object.values(AmbitionsType) as [string, ...string[]])
+      .optional(),
     title: z
       .string()
       .min(1, 'Title cannot be empty')

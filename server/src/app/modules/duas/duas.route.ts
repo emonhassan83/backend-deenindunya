@@ -12,7 +12,7 @@ router.post(
   '/',
   auth(USER_ROLE.admin),
   zodValidationRequest(DuasValidation.createValidationSchema),
-  DuasControllers.insertIntoDB
+  DuasControllers.insertIntoDB,
 )
 
 // Update dua (Admin only)
@@ -20,20 +20,20 @@ router.put(
   '/:id',
   auth(USER_ROLE.admin),
   zodValidationRequest(DuasValidation.updateValidationSchema),
-  DuasControllers.updateDua
+  DuasControllers.updateDua,
 )
 
 // Delete dua (Admin only)
-router.delete(
-  '/:id',
-  auth(USER_ROLE.admin),
-  DuasControllers.deleteDua
-)
+router.delete('/:id', auth(USER_ROLE.admin), DuasControllers.deleteDua)
 
-// Get all duas (Public - with filters)
-router.get('/', DuasControllers.getAllDuas)
+// User view: Get todaysDua + duaLists with category filter & pagination
+router.get('/user-view', DuasControllers.getUserViewDuas)
+router.get('/user-view-duas', DuasControllers.getUserViewDuas)
 
-// Get single dua (Public)
+// Get all duas (Admin view only)
+router.get('/', auth(USER_ROLE.admin), DuasControllers.getAllDuas)
+
+// Get single dua (Public / User)
 router.get('/:id', DuasControllers.getSingleDua)
 
 export const DuasRoutes = router

@@ -20,7 +20,10 @@ const verifyOtp = async (token: string, otp: string | number) => {
   const authToken = token.replace(/^Bearer\s+/i, '')
   let decode
   try {
-    decode = jwt.verify(authToken, config.jwt_access_secret as Secret) as JwtPayload
+    decode = jwt.verify(
+      authToken,
+      config.jwt_access_secret as Secret,
+    ) as JwtPayload
   } catch (err) {
     console.error(err)
     throw new AppError(
@@ -116,7 +119,7 @@ const resendOtp = async (email: string) => {
       otp,
       expiresAt: expiresAt.format('LT'),
     },
-    { priority: 1, attempts: 3, backoff: { type: 'exponential', delay: 2000 } }
+    { priority: 1, attempts: 3, backoff: { type: 'exponential', delay: 2000 } },
   )
 
   return { token }

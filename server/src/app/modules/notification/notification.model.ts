@@ -30,7 +30,7 @@ const notificationSchema = new Schema<TNotification>(
     read: {
       type: Boolean,
       default: false,
-    }
+    },
   },
   {
     timestamps: true,

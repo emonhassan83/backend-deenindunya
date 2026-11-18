@@ -43,7 +43,7 @@ const exerciseSchema = new Schema<TExercise>(
   },
   {
     timestamps: true,
-  }
+  },
 )
 
 // TTL Index: MongoDB will automatically delete documents when deleteAt is reached
@@ -63,5 +63,5 @@ exerciseSchema.index({ name: 'text' })
 
 export const Exercise = model<TExercise, TExerciseModel>(
   'Exercise',
-  exerciseSchema
+  exerciseSchema,
 )

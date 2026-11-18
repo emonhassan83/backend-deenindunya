@@ -8,7 +8,10 @@ const getAllPaymentsFromDB = async (query: Record<string, any>) => {
   const paymentModel = new QueryBuilder(
     Payment.find({ isDeleted: false }).populate([
       { path: 'user', select: 'name email photoUrl' },
-      { path: 'subscription', select: 'productId entitlementId status expiresAt' },
+      {
+        path: 'subscription',
+        select: 'productId entitlementId status expiresAt',
+      },
     ]),
     query,
   )
@@ -31,7 +34,10 @@ const dashboardData = async (query: Record<string, any>) => {
   const paymentModel = new QueryBuilder(
     Payment.find({ isDeleted: false, status: PAYMENT_STATUS.paid }).populate([
       { path: 'user', select: 'name email photoUrl' },
-      { path: 'subscription', select: 'productId entitlementId status expiresAt' },
+      {
+        path: 'subscription',
+        select: 'productId entitlementId status expiresAt',
+      },
     ]),
     query,
   )

@@ -32,11 +32,7 @@ router.get(
 )
 
 // Get all Sunnahs (Admin view only - excludes isMemorized & updatedAt)
-router.get(
-  '/',
-  auth(USER_ROLE.admin),
-  SunnahController.getAllIntoDB,
-)
+router.get('/', auth(USER_ROLE.admin), SunnahController.getAllIntoDB)
 
 // Get single Sunnah by ID
 router.get(

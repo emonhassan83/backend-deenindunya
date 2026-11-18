@@ -19,7 +19,11 @@ const paymentSchema = new Schema<TPayment>(
     revenueCatEventType: { type: String, default: null, index: true },
     revenueCatProductId: { type: String, default: null, index: true },
     revenueCatTransactionId: { type: String },
-    revenueCatOriginalTransactionId: { type: String, default: null, index: true },
+    revenueCatOriginalTransactionId: {
+      type: String,
+      default: null,
+      index: true,
+    },
     entitlementId: { type: String, default: null },
     amount: {
       type: Number,

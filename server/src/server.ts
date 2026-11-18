@@ -4,7 +4,7 @@ import mongoose from 'mongoose'
 import config from './app/config'
 import { errorlogger, logger } from './app/utils/logger'
 import initializeSocketIO from './socket'
-import colors from 'colors';
+import colors from 'colors'
 import { connectRedis } from './app/config/redis.config'
 import { startWorkers } from './app/worker'
 import { startJobScheduler } from './app/job/jobScheduler'
@@ -27,7 +27,7 @@ async function main() {
         colors.italic.green.bold(
           `💫 Simple Server Listening on  http://${config?.ip}:${config.port} `,
         ),
-      );
+      )
       logger.info(`app is listening on  http://${config?.ip}:${config.port}`)
     })
 
@@ -35,7 +35,7 @@ async function main() {
       colors.yellow.bold(
         `⚡Socket.io running on  http://${config.ip}:${config.port}`,
       ),
-    );
+    )
     logger.info(`Socket is listening on http://${config.ip}:${config.port}`)
 
     //@ts-ignore

@@ -68,7 +68,8 @@ const getAllFromDB = async (userId: string) => {
   )
   const remainingMl = Math.max(dailyGoalMl - totalWaterToday, 0)
 
-  const waterLogs = await WaterIntake.find({ user: userId, logAt: today }).select('amountMl logAt')
+  const waterLogs = await WaterIntake.find({ user: userId, logAt: today })
+    .select('amountMl logAt')
     .sort({ logAt: -1, createdAt: -1 })
     .lean()
 
@@ -102,7 +103,10 @@ const setDailyTarget = async (
   ).select('dailyGoalMl')
 
   if (!result) {
-    throw new AppError(httpStatus.BAD_REQUEST, 'Daily water target update failed')
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      'Daily water target update failed',
+    )
   }
 
   await deleteCachePattern(REDIS_KEYS.WATER_INTAKE(userId))

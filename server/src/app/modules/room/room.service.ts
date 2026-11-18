@@ -143,7 +143,8 @@ const getAllIntoDB = async (query: Record<string, any>, userId: string) => {
     const roomTasks = tasksByRoom[room._id.toString()] || []
     const totalTasks = roomTasks.length
     const completedTasks = roomTasks.filter((t) => t.isCompleted).length
-    const progress = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0
+    const progress =
+      totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0
 
     return {
       ...room,
@@ -155,7 +156,10 @@ const getAllIntoDB = async (query: Record<string, any>, userId: string) => {
   // Calculate overall progress across all rooms
   const totalTasksAllRooms = tasks.length
   const totalCompletedTasks = tasks.filter((t) => t.isCompleted).length
-  const overallProgress = totalTasksAllRooms > 0 ? Math.round((totalCompletedTasks / totalTasksAllRooms) * 100) : 0
+  const overallProgress =
+    totalTasksAllRooms > 0
+      ? Math.round((totalCompletedTasks / totalTasksAllRooms) * 100)
+      : 0
 
   const result = {
     totalRoom: rooms.length,

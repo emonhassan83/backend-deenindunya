@@ -12,7 +12,7 @@ router.post(
   '/',
   auth(USER_ROLE.user, USER_ROLE.admin),
   zodValidationRequest(GratitudeLogsValidation.createValidationSchema),
-  GratitudeLogsControllers.insertIntoDB
+  GratitudeLogsControllers.insertIntoDB,
 )
 
 // Update gratitude log (Authenticated users)
@@ -20,21 +20,21 @@ router.put(
   '/:id',
   auth(USER_ROLE.user, USER_ROLE.admin),
   zodValidationRequest(GratitudeLogsValidation.updateValidationSchema),
-  GratitudeLogsControllers.updateGratitudeLog
+  GratitudeLogsControllers.updateGratitudeLog,
 )
 
 // Delete gratitude log (Authenticated users)
 router.delete(
   '/:id',
   auth(USER_ROLE.user, USER_ROLE.admin),
-  GratitudeLogsControllers.deleteGratitudeLog
+  GratitudeLogsControllers.deleteGratitudeLog,
 )
 
 // Get all user gratitude logs (Authenticated users)
 router.get(
   '/',
   auth(USER_ROLE.user, USER_ROLE.admin),
-  GratitudeLogsControllers.getAllGratitudeLogs
+  GratitudeLogsControllers.getAllGratitudeLogs,
 )
 
 export const GratitudeLogsRoutes = router

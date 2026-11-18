@@ -37,7 +37,10 @@ const getAllIntoDB = catchAsync(async (req: Request, res: Response) => {
 })
 
 const toggleTaskStatus = catchAsync(async (req: Request, res: Response) => {
-  const result = await RoomService.toggleTaskStatus(req.params.id as string, req.user._id)
+  const result = await RoomService.toggleTaskStatus(
+    req.params.id as string,
+    req.user._id,
+  )
 
   sendResponse(res, {
     statusCode: 200,
@@ -75,5 +78,5 @@ export const RoomController = {
   getAllIntoDB,
   toggleTaskStatus,
   deleteAIntoDB,
-  deleteARoomTask
+  deleteARoomTask,
 }

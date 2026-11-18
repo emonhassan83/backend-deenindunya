@@ -55,7 +55,8 @@ const getAllFromDB = async (userId: string) => {
       $gte: formatDate(sevenDaysAgo),
       $lte: formatDate(today),
     },
-  }).select('type title logAt')
+  })
+    .select('type title logAt')
     .sort({ logAt: -1, createdAt: -1 })
     .lean()
 
@@ -98,7 +99,7 @@ const updateIntoDB = async (
 const deleteFromDB = async (
   id: string,
   userId: string,
- ): Promise<TGratitudeLogs> => {
+): Promise<TGratitudeLogs> => {
   const existing = await GratitudeLog.findOne({
     _id: id,
     user: userId,

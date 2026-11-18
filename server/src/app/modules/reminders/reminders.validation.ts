@@ -12,5 +12,5 @@ const createValidationSchema = z.object({
 })
 
 export const ReminderValidation = {
-  createValidationSchema
+  createValidationSchema,
 }

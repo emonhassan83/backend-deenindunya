@@ -4,7 +4,12 @@ import { REDIS_KEYS } from '../keys'
 export const OtpRedisService = {
   // Save OTP with expiration time in seconds
   saveOtp: async (email: string, otp: string, duration: number) => {
-    await getRedisClient().set(REDIS_KEYS.REGISTER_OTP(email), otp, 'EX', duration)
+    await getRedisClient().set(
+      REDIS_KEYS.REGISTER_OTP(email),
+      otp,
+      'EX',
+      duration,
+    )
   },
 
   // Get OTP
@@ -15,5 +20,5 @@ export const OtpRedisService = {
   // Delete OTP
   deleteOtp: async (email: string) => {
     await getRedisClient().del(REDIS_KEYS.REGISTER_OTP(email))
-  }
+  },
 }

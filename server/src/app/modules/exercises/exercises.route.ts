@@ -12,7 +12,7 @@ router.post(
   '/',
   auth(USER_ROLE.user, USER_ROLE.admin),
   zodValidationRequest(ExerciseValidation.createValidationSchema),
-  ExerciseControllers.insertIntoDB
+  ExerciseControllers.insertIntoDB,
 )
 
 // Update exercise (Authenticated users)
@@ -20,28 +20,28 @@ router.put(
   '/:id',
   auth(USER_ROLE.user, USER_ROLE.admin),
   zodValidationRequest(ExerciseValidation.updateValidationSchema),
-  ExerciseControllers.updateExercise
+  ExerciseControllers.updateExercise,
 )
 
 // Toggle completion status (Authenticated users)
 router.patch(
   '/toggle/:id',
   auth(USER_ROLE.user, USER_ROLE.admin),
-  ExerciseControllers.toggleComplete
+  ExerciseControllers.toggleComplete,
 )
 
 // Delete exercise (Authenticated users)
 router.delete(
   '/:id',
   auth(USER_ROLE.user, USER_ROLE.admin),
-  ExerciseControllers.deleteExercise
+  ExerciseControllers.deleteExercise,
 )
 
 // Get all user exercises (Authenticated users)
 router.get(
   '/',
   auth(USER_ROLE.user, USER_ROLE.admin),
-  ExerciseControllers.getAllExercises
+  ExerciseControllers.getAllExercises,
 )
 
 export const ExerciseRoutes = router

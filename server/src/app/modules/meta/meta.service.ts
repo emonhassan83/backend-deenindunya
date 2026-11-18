@@ -213,34 +213,34 @@ const userMeta = async (userId: string, query: Record<string, any>) => {
 }
 
 const adminMeta = async (userId: string, query: Record<string, any>) => {
-  const { earning_year, user_year, ...othersQuery } = query;
+  const { earning_year, user_year, ...othersQuery } = query
 
   const activeUserCount = await User.countDocuments({
     isDeleted: false,
     role: { $ne: USER_ROLE.admin },
     status: USER_STATUS.active,
-  });
+  })
 
   const recentNotifications = await Notification.find({
     receiver: userId,
-  }).limit(10);
+  }).limit(10)
 
   const totalRevenue = await Payment.aggregate([
     { $match: { status: 'paid' } },
     { $group: { _id: null, total: { $sum: '$amount' } } },
-  ]);
-  const revenue = totalRevenue.length > 0 ? totalRevenue[0].total : 0;
+  ])
+  const revenue = totalRevenue.length > 0 ? totalRevenue[0].total : 0
 
   const selectedEarningYear = earning_year
     ? parseInt(earning_year as string, 10) || new Date().getFullYear()
-    : new Date().getFullYear();
+    : new Date().getFullYear()
 
   const selectedUserYear = user_year
     ? parseInt(user_year as string, 10) || new Date().getFullYear()
-    : new Date().getFullYear();
+    : new Date().getFullYear()
 
-  const earningOverview = await getEarningOverview(selectedEarningYear);
-  const userOverview = await getUserOverview(selectedUserYear);
+  const earningOverview = await getEarningOverview(selectedEarningYear)
+  const userOverview = await getUserOverview(selectedUserYear)
 
   const usersQuery = new QueryBuilder(
     User.find({ isDeleted: false, role: { $ne: USER_ROLE.admin } }).select(
@@ -252,10 +252,10 @@ const adminMeta = async (userId: string, query: Record<string, any>) => {
     .filter()
     .sort()
     .paginate()
-    .fields();
+    .fields()
 
-  const result = await usersQuery.modelQuery;
-  const meta = await usersQuery.countTotal();
+  const result = await usersQuery.modelQuery
+  const meta = await usersQuery.countTotal()
 
   return {
     meta,
@@ -268,8 +268,8 @@ const adminMeta = async (userId: string, query: Record<string, any>) => {
       earningOverview,
       userOverview,
     },
-  };
-};
+  }
+}
 
 export const MetaService = {
   userMeta,

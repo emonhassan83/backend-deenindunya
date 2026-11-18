@@ -17,7 +17,7 @@ const getModules = catchAsync(async (req: Request, res: Response) => {
 const getModuleLessons = catchAsync(async (req: Request, res: Response) => {
   const result = await EducationHubService.getModuleLessons(
     req.params.moduleId as string,
-    req.user._id
+    req.user._id,
   )
 
   sendResponse(res, {
@@ -31,7 +31,7 @@ const getModuleLessons = catchAsync(async (req: Request, res: Response) => {
 const getLessonsByType = catchAsync(async (req: Request, res: Response) => {
   const result = await EducationHubService.getLessonsByType(
     req.query,
-    req.user._id
+    req.user._id,
   )
 
   sendResponse(res, {

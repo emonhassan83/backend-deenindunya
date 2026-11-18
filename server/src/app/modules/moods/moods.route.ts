@@ -12,14 +12,14 @@ router.post(
   '/',
   auth(USER_ROLE.admin),
   zodValidationRequest(MoodsValidation.createValidationSchema),
-  MoodsControllers.insertIntoDB
+  MoodsControllers.insertIntoDB,
 )
 
 router.post(
   '/logs',
   auth(USER_ROLE.user),
   zodValidationRequest(MoodsValidation.moodLogsValidationSchema),
-  MoodsControllers.insertMoodLogs
+  MoodsControllers.insertMoodLogs,
 )
 
 router.put(
@@ -29,23 +29,15 @@ router.put(
   MoodsControllers.updateIntoDB,
 )
 
-router.delete(
-  '/logs',
-  auth(USER_ROLE.admin),
-  MoodsControllers.deleteAFromDB
-)
+router.delete('/logs', auth(USER_ROLE.admin), MoodsControllers.deleteAFromDB)
 
 // Get all user mood logs (Authenticated users)
 router.get(
   '/',
   auth(USER_ROLE.user, USER_ROLE.admin),
-  MoodsControllers.getAllMoods
+  MoodsControllers.getAllMoods,
 )
 
-router.get(
-  '/logs',
-  auth(USER_ROLE.user),
-  MoodsControllers.getAllMoodLogs
-)
+router.get('/logs', auth(USER_ROLE.user), MoodsControllers.getAllMoodLogs)
 
 export const MoodsRoutes = router

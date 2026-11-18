@@ -7,16 +7,7 @@ import { sendNotification } from '../../utils/sentNotification'
 import config from '../../config'
 
 export type TExpiresIn =
-  | number
-  | '30s'
-  | '1m'
-  | '5m'
-  | '10m'
-  | '1h'
-  | '1d'
-  | '7d'
-  | '30d'
-  | '365d'
+  number | '30s' | '1m' | '5m' | '10m' | '1h' | '1d' | '7d' | '30d' | '365d'
 
 export const createToken = (
   jwtPayload: { _id: Types.ObjectId; email: string; role: string },
@@ -36,18 +27,17 @@ export const generateTokens = (user: TUser) => {
   const accessToken = createToken(
     jwtPayload,
     config.jwt_access_secret as string,
-    config.jwt_access_expires_in as TExpiresIn
+    config.jwt_access_expires_in as TExpiresIn,
   )
 
   const refreshToken = createToken(
     jwtPayload,
     config.jwt_refresh_secret as string,
-    config.jwt_refresh_expires_in as TExpiresIn
+    config.jwt_refresh_expires_in as TExpiresIn,
   )
 
   return { user, accessToken, refreshToken }
 }
-
 
 export const authNotifyUser = async (
   action: 'PASSWORD_CHANGE' | 'PASSWORD_FORGET' | 'PASSWORD_RESET',

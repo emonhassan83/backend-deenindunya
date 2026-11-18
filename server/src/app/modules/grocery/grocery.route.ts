@@ -20,16 +20,8 @@ router.patch(
   GroceryController.toggleComplete,
 )
 
-router.get(
-  '/',
-  auth(USER_ROLE.user),
-  GroceryController.getAllIntoDB,
-)
+router.get('/', auth(USER_ROLE.user), GroceryController.getAllIntoDB)
 
-router.delete(
-  '/:id',
-  auth(USER_ROLE.user),
-  GroceryController.deleteAIntoDB,
-)
+router.delete('/:id', auth(USER_ROLE.user), GroceryController.deleteAIntoDB)
 
 export const GroceryRoutes = router

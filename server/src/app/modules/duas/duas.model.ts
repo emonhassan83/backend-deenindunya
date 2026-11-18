@@ -6,6 +6,7 @@ const duasSchema = new Schema<TDuas>(
     category: {
       type: String,
       required: [true, 'Category is required'],
+      trim: true,
     },
     banner: {
       type: String,
@@ -42,6 +43,11 @@ const duasSchema = new Schema<TDuas>(
       required: [true, 'Benefit is required'],
       trim: true,
     },
+    recited_count: {
+      type: Number,
+      required: [true, 'Recited count is required'],
+      default: 1,
+    },
     isDeleted: {
       type: Boolean,
       default: false,
@@ -49,10 +55,15 @@ const duasSchema = new Schema<TDuas>(
   },
   {
     timestamps: true,
-  }
+  },
 )
 
-// Index for search
-duasSchema.index({ arabic_text: 'text', transliteration: 'text', english_meaning: 'text' })
+// Index for search & filtering
+duasSchema.index({
+  arabic_text: 'text',
+  transliteration: 'text',
+  english_meaning: 'text',
+})
+duasSchema.index({ category: 1, isDeleted: 1 })
 
 export const Duas = model<TDuas, TDuasModel>('Duas', duasSchema)

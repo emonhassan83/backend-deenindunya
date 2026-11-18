@@ -12,14 +12,19 @@ export const initializeEmailWorker = () => {
     async (job: Job) => {
       if (job.name === 'send-verification-email') {
         const { email, name, otp, expiresAt } = job.data
-        console.log(`[Email Worker] Processing send-verification-email for ${email}`)
+        console.log(
+          `[Email Worker] Processing send-verification-email for ${email}`,
+        )
 
         try {
           const html = getOtpEmailTemplate(name, otp, expiresAt)
           await emailSender(email, 'Your One-Time OTP', html)
           console.log(`[Email Worker] Successfully sent OTP email to ${email}`)
         } catch (error) {
-          console.error(`[Email Worker] Error sending OTP email to ${email}:`, error)
+          console.error(
+            `[Email Worker] Error sending OTP email to ${email}:`,
+            error,
+          )
           throw error
         }
       }
@@ -35,7 +40,9 @@ export const initializeEmailWorker = () => {
           eventType,
           expiresAt,
         } = job.data
-        console.log(`[Email Worker] Processing send-subscription-email for ${email}`)
+        console.log(
+          `[Email Worker] Processing send-subscription-email for ${email}`,
+        )
 
         try {
           const html = getSubscriptionEmailTemplate({
@@ -61,7 +68,7 @@ export const initializeEmailWorker = () => {
     },
     {
       connection: connection as any,
-    }
+    },
   )
 
   worker.on('failed', (job, err) => {

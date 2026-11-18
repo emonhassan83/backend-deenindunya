@@ -1,14 +1,14 @@
-import { endOfYear, startOfYear } from "date-fns"
-import Payment from "../payments/payments.models"
-import { User } from "../user/user.model"
+import { endOfYear, startOfYear } from 'date-fns'
+import Payment from '../payments/payments.models'
+import { User } from '../user/user.model'
 
 export const getEarningOverview = async (year: number) => {
-  const now = new Date();
-  const currentYear = now.getFullYear();
-  const isCurrentYear = year === currentYear;
+  const now = new Date()
+  const currentYear = now.getFullYear()
+  const isCurrentYear = year === currentYear
 
-  const yearStart = startOfYear(new Date(year, 0, 1));
-  const yearEnd = endOfYear(new Date(year, 11, 31));
+  const yearStart = startOfYear(new Date(year, 0, 1))
+  const yearEnd = endOfYear(new Date(year, 11, 31))
 
   const monthlyRevenue = await Payment.aggregate([
     {
@@ -24,30 +24,43 @@ export const getEarningOverview = async (year: number) => {
       },
     },
     { $sort: { _id: 1 } },
-  ]);
+  ])
 
   // Short month names
-  const months = ['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'];
+  const months = [
+    'jan',
+    'feb',
+    'mar',
+    'apr',
+    'may',
+    'jun',
+    'jul',
+    'aug',
+    'sep',
+    'oct',
+    'nov',
+    'dec',
+  ]
 
   const filteredMonths = isCurrentYear
     ? months.slice(0, now.getMonth() + 1)
-    : months;
+    : months
 
   const barChartData = filteredMonths.map((month, index) => {
-    const data = monthlyRevenue.find((m: any) => m._id === index + 1);
-    return { month, amount: data ? data.amount : 0 };
-  });
+    const data = monthlyRevenue.find((m: any) => m._id === index + 1)
+    return { month, amount: data ? data.amount : 0 }
+  })
 
-  return barChartData;
-};
+  return barChartData
+}
 
 export const getUserOverview = async (year: number) => {
-  const now = new Date();
-  const currentYear = now.getFullYear();
-  const isCurrentYear = year === currentYear;
+  const now = new Date()
+  const currentYear = now.getFullYear()
+  const isCurrentYear = year === currentYear
 
-  const yearStart = startOfYear(new Date(year, 0, 1));
-  const yearEnd = endOfYear(new Date(year, 11, 31));
+  const yearStart = startOfYear(new Date(year, 0, 1))
+  const yearEnd = endOfYear(new Date(year, 11, 31))
 
   const monthlyUsers = await User.aggregate([
     {
@@ -62,18 +75,31 @@ export const getUserOverview = async (year: number) => {
       },
     },
     { $sort: { _id: 1 } },
-  ]);
+  ])
 
-  const months = ['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'];
+  const months = [
+    'jan',
+    'feb',
+    'mar',
+    'apr',
+    'may',
+    'jun',
+    'jul',
+    'aug',
+    'sep',
+    'oct',
+    'nov',
+    'dec',
+  ]
 
   const filteredMonths = isCurrentYear
     ? months.slice(0, now.getMonth() + 1)
-    : months;
+    : months
 
   const userOverview = filteredMonths.map((month, index) => {
-    const data = monthlyUsers.find((m: any) => m._id === index + 1);
-    return { month, count: data ? data.count : 0 };
-  });
+    const data = monthlyUsers.find((m: any) => m._id === index + 1)
+    return { month, count: data ? data.count : 0 }
+  })
 
-  return userOverview;
-};
+  return userOverview
+}

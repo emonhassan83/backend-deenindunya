@@ -16,11 +16,7 @@ router.post(
 )
 
 // Get prayer times based on location
-router.get(
-  '/times',
-  auth(USER_ROLE.user),
-  PrayerController.getPrayerTimes,
-)
+router.get('/times', auth(USER_ROLE.user), PrayerController.getPrayerTimes)
 
 router.get(
   '/reminders',
@@ -36,11 +32,7 @@ router.patch(
 )
 
 // Get prayers by date
-router.get(
-  '/',
-  auth(USER_ROLE.user),
-  PrayerController.getPrayersByDate,
-)
+router.get('/', auth(USER_ROLE.user), PrayerController.getPrayersByDate)
 
 // Completed payers
 router.patch(

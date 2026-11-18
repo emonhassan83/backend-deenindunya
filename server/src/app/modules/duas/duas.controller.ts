@@ -25,6 +25,18 @@ const getAllDuas = catchAsync(async (req, res) => {
   })
 })
 
+const getUserViewDuas = catchAsync(async (req, res) => {
+  const result = await DuasService.getUserViewDuas(req.query)
+
+  sendResponse(res, {
+    success: true,
+    statusCode: 200,
+    message: 'User view duas retrieved successfully',
+    data: result.data,
+    meta: result.meta,
+  })
+})
+
 const getSingleDua = catchAsync(async (req, res) => {
   const result = await DuasService.getSingleFromDB(req.params.id as string)
 
@@ -37,7 +49,10 @@ const getSingleDua = catchAsync(async (req, res) => {
 })
 
 const updateDua = catchAsync(async (req, res) => {
-  const result = await DuasService.updateIntoDB(req.params.id as string, req.body)
+  const result = await DuasService.updateIntoDB(
+    req.params.id as string,
+    req.body,
+  )
 
   sendResponse(res, {
     success: true,
@@ -61,6 +76,7 @@ const deleteDua = catchAsync(async (req, res) => {
 export const DuasControllers = {
   insertIntoDB,
   getAllDuas,
+  getUserViewDuas,
   getSingleDua,
   updateDua,
   deleteDua,

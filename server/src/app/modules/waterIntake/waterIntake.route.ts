@@ -12,7 +12,7 @@ router.post(
   '/',
   auth(USER_ROLE.user, USER_ROLE.admin),
   zodValidationRequest(WaterIntakeValidation.createValidationSchema),
-  WaterIntakeControllers.insertIntoDB
+  WaterIntakeControllers.insertIntoDB,
 )
 
 // Set daily water target (Authenticated users)
@@ -20,14 +20,14 @@ router.patch(
   '/daily-target',
   auth(USER_ROLE.user, USER_ROLE.admin),
   zodValidationRequest(WaterIntakeValidation.setDailyTargetValidationSchema),
-  WaterIntakeControllers.setDailyTarget
+  WaterIntakeControllers.setDailyTarget,
 )
 
 // Get all user water intake records (Authenticated users)
 router.get(
   '/',
   auth(USER_ROLE.user, USER_ROLE.admin),
-  WaterIntakeControllers.getAllWaterIntakes
+  WaterIntakeControllers.getAllWaterIntakes,
 )
 
 export const WaterIntakeRoutes = router

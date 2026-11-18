@@ -31,7 +31,9 @@ const seedContents = async () => {
         await Contents.create(item)
         console.log(`✅ Default Content "${item.key}" seeded successfully!`)
       } else {
-        console.log(`⚠️ Default Content "${item.key}" already exists – skipping.`)
+        console.log(
+          `⚠️ Default Content "${item.key}" already exists – skipping.`,
+        )
       }
     }
 

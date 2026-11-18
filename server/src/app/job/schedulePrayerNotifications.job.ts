@@ -107,12 +107,7 @@ export const schedulePrayerNotifications = async () => {
       if (!pref.enabled) continue
 
       const prayerTime = times[prayer]
-      const notifyAt = getNotifyAtTime(
-        prayerTime,
-        pref.offsetMinutes,
-        date,
-        tz,
-      )
+      const notifyAt = getNotifyAtTime(prayerTime, pref.offsetMinutes, date, tz)
 
       if (notifyAt !== currentHHmm) continue
 

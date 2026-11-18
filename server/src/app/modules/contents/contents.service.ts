@@ -57,7 +57,7 @@ const createOrUpdate = async (key: string, payload: any) => {
   const content = await Contents.findOneAndUpdate(
     { key },
     { key, value: payload.value ?? payload },
-    { returnDocument: 'after', upsert: true }
+    { returnDocument: 'after', upsert: true },
   ).select('-__v')
 
   // Invalidate related cache entries
@@ -83,9 +83,9 @@ const updateGenerals = async (payload: Record<string, any>) => {
       Contents.findOneAndUpdate(
         { key },
         { value: payload[key] },
-        { upsert: true, returnDocument: 'after' }
-      ).select('-__v')
-    )
+        { upsert: true, returnDocument: 'after' },
+      ).select('-__v'),
+    ),
   )
 
   // Invalidate cache for contents

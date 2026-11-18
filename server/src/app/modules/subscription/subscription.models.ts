@@ -4,7 +4,12 @@ import { SUBSCRIPTION_STATUS } from './subscription.constants'
 
 const subscriptionsSchema = new Schema<TSubscriptions>(
   {
-    user: { type: Schema.Types.ObjectId, ref: 'User', required: true, index: true },
+    user: {
+      type: Schema.Types.ObjectId,
+      ref: 'User',
+      required: true,
+      index: true,
+    },
     package: { type: Schema.Types.ObjectId, ref: 'Package' },
     revenueCatAppUserId: { type: String, required: true, index: true },
     revenueCatOriginalTransactionId: { type: String },

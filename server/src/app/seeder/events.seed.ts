@@ -56,7 +56,9 @@ const runSeeder = async () => {
 
       case '--range':
         if (!param1 || !param2) {
-          console.error('❌ Please provide start and end years (e.g., --range 1440 1450)')
+          console.error(
+            '❌ Please provide start and end years (e.g., --range 1440 1450)',
+          )
           console.log('\n💡 Example: npm run seed:events:range 1440 1450')
           process.exit(1)
         }
@@ -67,7 +69,10 @@ const runSeeder = async () => {
           process.exit(1)
         }
         console.log(`📅 Seeding Hijri years ${startYear} to ${endYear}...`)
-        await IslamicEventSeeder.generateIslamicEventsForYears(startYear, endYear)
+        await IslamicEventSeeder.generateIslamicEventsForYears(
+          startYear,
+          endYear,
+        )
         break
 
       case '--fix':
@@ -98,7 +103,9 @@ const runSeeder = async () => {
         } else if (param1) {
           const year = parseInt(param1)
           if (isNaN(year)) {
-            console.error('❌ Invalid year format. Please provide a valid year.')
+            console.error(
+              '❌ Invalid year format. Please provide a valid year.',
+            )
             console.log('\n💡 Examples:')
             console.log('   npm run seed:events:delete')
             console.log('   npm run seed:events:delete-all')
@@ -117,7 +124,9 @@ const runSeeder = async () => {
 
       case '--regenerate':
         if (!param1) {
-          console.error('❌ Please provide a Hijri year (e.g., --regenerate 1446)')
+          console.error(
+            '❌ Please provide a Hijri year (e.g., --regenerate 1446)',
+          )
           console.log('\n💡 Example: npm run seed:events:regenerate 1446')
           process.exit(1)
         }

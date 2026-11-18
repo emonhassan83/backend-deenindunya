@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from 'zod'
 
 const verifyOtpZodSchema = z.object({
   body: z.object({
@@ -6,7 +6,7 @@ const verifyOtpZodSchema = z.object({
       .string({ message: 'otp is required' })
       .length(6, { message: 'otp must be exactly 6 characters long' }),
   }),
-});
+})
 
 const resentOtpZodSchema = z.object({
   body: z.object({
@@ -16,9 +16,9 @@ const resentOtpZodSchema = z.object({
       })
       .email(),
   }),
-});
+})
 
 export const resentOtpValidations = {
   resentOtpZodSchema,
   verifyOtpZodSchema,
-};
+}

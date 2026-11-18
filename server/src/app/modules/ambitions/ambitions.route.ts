@@ -12,28 +12,24 @@ router.post(
   '/',
   auth(USER_ROLE.user, USER_ROLE.admin),
   zodValidationRequest(AmbitionValidation.createValidationSchema),
-  AmbitionControllers.insertIntoDB
+  AmbitionControllers.insertIntoDB,
 )
 
 // Toggle completion status (Authenticated users)
 router.patch(
   '/toggle/:id',
   auth(USER_ROLE.user, USER_ROLE.admin),
-  AmbitionControllers.toggleComplete
+  AmbitionControllers.toggleComplete,
 )
 
 // Delete ambition (Authenticated users)
 router.delete(
   '/:id',
   auth(USER_ROLE.user, USER_ROLE.admin),
-  AmbitionControllers.deleteAmbition
+  AmbitionControllers.deleteAmbition,
 )
 
 // Get all user ambitions (Authenticated users)
-router.get(
-  '/',
-  auth(USER_ROLE.user),
-  AmbitionControllers.getAllAmbitions
-)
+router.get('/', auth(USER_ROLE.user), AmbitionControllers.getAllAmbitions)
 
 export const AmbitionRoutes = router

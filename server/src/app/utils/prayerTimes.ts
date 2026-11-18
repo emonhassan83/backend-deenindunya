@@ -9,10 +9,7 @@ export const resolvePrayerTimezone = (timezone?: string | null) =>
 
 // moment-hijri switches the global moment locale to Arabic, so every instance pins 'en'.
 export const getTodayInTimezone = (timezone?: string | null) =>
-  moment()
-    .tz(resolvePrayerTimezone(timezone))
-    .locale('en')
-    .format('YYYY-MM-DD')
+  moment().tz(resolvePrayerTimezone(timezone)).locale('en').format('YYYY-MM-DD')
 
 // Matches Aladhan `method: 2` (ISNA, Fajr/Isha 15°, Shafi Asr).
 export const calculatePrayerTimes = ({

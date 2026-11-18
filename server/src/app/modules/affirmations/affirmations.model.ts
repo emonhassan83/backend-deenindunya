@@ -35,11 +35,15 @@ const affirmationSchema = new Schema<TAffirmation>(
   },
   {
     timestamps: true,
-  }
+  },
 )
 
 // Index for search
-affirmationSchema.index({ arabic_text: 'text', transliteration: 'text', english_meaning: 'text' })
+affirmationSchema.index({
+  arabic_text: 'text',
+  transliteration: 'text',
+  english_meaning: 'text',
+})
 
 // Filter out deleted affirmations by default
 affirmationSchema.pre('find', function () {
@@ -52,5 +56,5 @@ affirmationSchema.pre('findOne', function () {
 
 export const Affirmation = model<TAffirmation, TAffirmationModel>(
   'Affirmation',
-  affirmationSchema
+  affirmationSchema,
 )

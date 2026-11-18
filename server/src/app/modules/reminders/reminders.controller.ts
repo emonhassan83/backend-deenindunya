@@ -26,7 +26,9 @@ const getAllIntoDB = catchAsync(async (req: Request, res: Response) => {
 })
 
 const toggleCompleteIntoDB = catchAsync(async (req: Request, res: Response) => {
-  const result = await ReminderService.toggleCompleteIntoDB(req.params.id as string)
+  const result = await ReminderService.toggleCompleteIntoDB(
+    req.params.id as string,
+  )
 
   sendResponse(res, {
     statusCode: 200,
@@ -51,5 +53,5 @@ export const ReminderController = {
   insertIntoDB,
   getAllIntoDB,
   toggleCompleteIntoDB,
-  deleteAIntoDB
+  deleteAIntoDB,
 }

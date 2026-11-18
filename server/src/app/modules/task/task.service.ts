@@ -76,7 +76,8 @@ const getAllIntoDB = async (query: Record<string, any>, userId: string) => {
   const tasks = await Task.find({
     user: userId,
     type: type,
-  }).select('type title logAt isCompleted')
+  })
+    .select('type title logAt isCompleted')
     .sort({ logAt: -1, createdAt: -1 })
     .lean()
 

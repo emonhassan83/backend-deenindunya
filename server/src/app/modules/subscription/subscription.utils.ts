@@ -82,11 +82,18 @@ export const verifyRevenueCatWebhookSecret = (
     : webhookSecret
   const normalizedAuth = authorization?.replace(/^Bearer\s+/i, '')
 
-  if (candidate === secret || normalizedAuth === secret || authorization === secret) {
+  if (
+    candidate === secret ||
+    normalizedAuth === secret ||
+    authorization === secret
+  ) {
     return
   }
 
-  throw new AppError(httpStatus.UNAUTHORIZED, 'Invalid RevenueCat webhook secret')
+  throw new AppError(
+    httpStatus.UNAUTHORIZED,
+    'Invalid RevenueCat webhook secret',
+  )
 }
 
 export const findPackageByProduct = async (productId?: string | null) => {
@@ -231,7 +238,11 @@ export const notifyUserAboutRevenueCatEvent = async (
         eventType: event.type,
         expiresAt,
       },
-      { priority: 1, attempts: 3, backoff: { type: 'exponential', delay: 2000 } },
+      {
+        priority: 1,
+        attempts: 3,
+        backoff: { type: 'exponential', delay: 2000 },
+      },
     )
   }
 }

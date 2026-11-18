@@ -20,14 +20,14 @@ const getAllAmbitions = catchAsync(async (req, res) => {
     success: true,
     statusCode: 200,
     message: 'Ambitions retrieved successfully',
-    data: result
+    data: result,
   })
 })
 
 const toggleComplete = catchAsync(async (req, res) => {
   const result = await AmbitionService.toggleCompleteStatus(
     req.params.id as string,
-    req.user._id
+    req.user._id,
   )
 
   sendResponse(res, {
@@ -39,7 +39,10 @@ const toggleComplete = catchAsync(async (req, res) => {
 })
 
 const deleteAmbition = catchAsync(async (req, res) => {
-  const result = await AmbitionService.deleteFromDB(req.params.id as string, req.user._id)
+  const result = await AmbitionService.deleteFromDB(
+    req.params.id as string,
+    req.user._id,
+  )
 
   sendResponse(res, {
     success: true,

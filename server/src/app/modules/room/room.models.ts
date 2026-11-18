@@ -99,4 +99,7 @@ roomTaskSchema.pre('save', function () {
 })
 
 export const Room = model<TRoom, TRoomModel>('Room', roomSchema)
-export const RoomTask = model<TRoomTask, TRoomTaskModel>('RoomTask', roomTaskSchema);
+export const RoomTask = model<TRoomTask, TRoomTaskModel>(
+  'RoomTask',
+  roomTaskSchema,
+)

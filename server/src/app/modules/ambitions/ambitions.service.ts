@@ -39,7 +39,9 @@ const getAllFromDB = async (userId: string) => {
   // Get all ambitions for the user (not deleted)
   const allAmbitions = await Ambition.find({
     user: userId,
-  }).select('title type description isCompleted createdAt').lean()
+  })
+    .select('title type description isCompleted createdAt')
+    .lean()
 
   // Calculate counts
   const totalCount = allAmbitions.length

@@ -31,11 +31,11 @@ const ambitionSchema = new Schema<TAmbition>(
     completedAt: {
       type: Date,
       default: null,
-    }
+    },
   },
   {
     timestamps: true,
-  }
+  },
 )
 
 // Index for search and filtering
@@ -43,5 +43,5 @@ ambitionSchema.index({ user: 1, type: 1 })
 
 export const Ambition = model<TAmbition, TAmbitionModel>(
   'Ambition',
-  ambitionSchema
+  ambitionSchema,
 )

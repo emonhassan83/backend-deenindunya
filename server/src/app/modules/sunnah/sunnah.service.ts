@@ -47,9 +47,7 @@ const getAllIntoDB = async (query: Record<string, any>) => {
   }
 
   const qb = new QueryBuilder(Sunnah.find({ isDeleted: false }), query)
-    .search([
-      'title'
-    ])
+    .search(['title'])
     .filter()
     .paginate()
     .sort()
@@ -84,9 +82,7 @@ const getUserViewSunnahs = async (
 
   // 1. Query for sunnahList
   const qb = new QueryBuilder(Sunnah.find({ isDeleted: false }), query)
-    .search([
-      'title'
-    ])
+    .search(['title'])
     .filter()
     .paginate()
     .sort()
@@ -129,7 +125,7 @@ const getUserViewSunnahs = async (
     const now = new Date()
     const dayNumber = Math.floor(
       Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()) /
-      (1000 * 60 * 60 * 24),
+        (1000 * 60 * 60 * 24),
     )
     const selectedIndex = dayNumber % candidateSunnahs.length
     const candidate = candidateSunnahs[selectedIndex]

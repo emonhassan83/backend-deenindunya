@@ -4,7 +4,10 @@ import path from 'path'
 dotenv.config({ path: path.join(process.cwd(), '.env') })
 
 const normalizeSpacesUrl = (url?: string) => {
-  return url?.replace('sdy1.digitaloceanspaces.com', 'syd1.digitaloceanspaces.com')
+  return url?.replace(
+    'sdy1.digitaloceanspaces.com',
+    'syd1.digitaloceanspaces.com',
+  )
 }
 
 export default {

@@ -24,7 +24,9 @@ const getSurahs = async (query: Record<string, any>, userId: string) => {
   try {
     const surahQuery = new QueryBuilder(
       // @ts-ignore
-      Surah.find().select('name nameArabic nameTranslation revelationPlace number totalVerses'),
+      Surah.find().select(
+        'name nameArabic nameTranslation revelationPlace number totalVerses',
+      ),
       query,
     )
       .search(['name']) // Search by surah name
@@ -85,7 +87,10 @@ const getSurahVerses = async (
     throw new AppError(httpStatus.BAD_REQUEST, 'Invalid Surah number')
   }
 
-  const cacheKey = REDIS_KEYS.SURAH_VERSES(String(surahNum), JSON.stringify(query))
+  const cacheKey = REDIS_KEYS.SURAH_VERSES(
+    String(surahNum),
+    JSON.stringify(query),
+  )
   const cachedData = await getCache<any>(cacheKey)
   if (cachedData) {
     return cachedData
@@ -97,7 +102,9 @@ const getSurahVerses = async (
       SurahVerse.find({
         // match by exact ObjectId (getSurahObjectId returns an ObjectId)
         surahId: await getSurahObjectId(surahNum),
-      }).select('verseNumber arabicText translation bengaliTranslation audioUrl'),
+      }).select(
+        'verseNumber arabicText translation bengaliTranslation audioUrl',
+      ),
       query,
     )
       .filter()

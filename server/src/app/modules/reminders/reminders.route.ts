@@ -20,16 +20,8 @@ router.patch(
   ReminderController.toggleCompleteIntoDB,
 )
 
-router.get(
-  '/',
-  auth(USER_ROLE.user),
-  ReminderController.getAllIntoDB,
-)
+router.get('/', auth(USER_ROLE.user), ReminderController.getAllIntoDB)
 
-router.delete(
-  '/:id',
-  auth(USER_ROLE.user),
-  ReminderController.deleteAIntoDB,
-)
+router.delete('/:id', auth(USER_ROLE.user), ReminderController.deleteAIntoDB)
 
 export const ReminderRoutes = router

@@ -25,7 +25,10 @@ const getAllMoods = catchAsync(async (req, res) => {
 })
 
 const updateIntoDB = catchAsync(async (req, res) => {
-  const result = await MoodLogsService.updateIntoDB(req.params.id as string, req.body)
+  const result = await MoodLogsService.updateIntoDB(
+    req.params.id as string,
+    req.body,
+  )
 
   sendResponse(res, {
     success: true,

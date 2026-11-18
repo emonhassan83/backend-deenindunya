@@ -106,5 +106,5 @@ export const UserValidation = {
   updateValidationSchema,
   changeStatusValidationSchema,
   updateLocationValidationSchema,
-  updateNotifyValidationSchema
+  updateNotifyValidationSchema,
 }
