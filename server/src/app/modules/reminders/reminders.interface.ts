@@ -6,6 +6,8 @@ export interface TReminder {
   title: string
   logAt: string
   isCompleted: boolean
+  isPermanent?: boolean
+  isDeleted?: boolean
   deleteAt: Date
 }
 

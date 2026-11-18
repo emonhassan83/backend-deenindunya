@@ -4,7 +4,7 @@ import { User } from '../user/user.model'
 import dayjs from 'dayjs'
 import dayOfYear from 'dayjs/plugin/dayOfYear'
 import axios from 'axios'
-import { Reminder } from '../reminders/reminders.models'
+import { ReminderService } from '../reminders/reminders.service'
 import QueryBuilder from '../../builder/QueryBuilder'
 import { USER_ROLE, USER_STATUS } from '../user/user.constant'
 import { Notification } from '../notification/notification.model'
@@ -200,10 +200,7 @@ const userMeta = async (userId: string, query: Record<string, any>) => {
       getVerseOfTheDay(isoDate),
       getAdhkarOfTheDay('morning', isoDate),
       getAdhkarOfTheDay('evening', isoDate),
-      Reminder.find({
-        user: userId,
-        logAt: targetDate,
-      }).lean(),
+      ReminderService.getAllIntoDB(userId, { date: targetDate }),
     ])
 
   return {

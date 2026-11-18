@@ -11,12 +11,21 @@ const reminderSchema = new Schema<TReminder>(
     title: {
       type: String,
       required: true,
+      trim: true,
     },
     logAt: {
       type: String, // Format: YYYY-MM-DD
       required: true,
     },
     isCompleted: {
+      type: Boolean,
+      default: false,
+    },
+    isPermanent: {
+      type: Boolean,
+      default: false,
+    },
+    isDeleted: {
       type: Boolean,
       default: false,
     },
@@ -38,8 +47,9 @@ const reminderSchema = new Schema<TReminder>(
 reminderSchema.index({ deleteAt: 1 }, { expireAfterSeconds: 0 })
 
 // Performance indexes
-reminderSchema.index({ user: 1, logAt: 1 })
+reminderSchema.index({ user: 1, logAt: 1, isDeleted: 1 })
 reminderSchema.index({ user: 1, isCompleted: 1 })
+reminderSchema.index({ user: 1, logAt: 1, isPermanent: 1 })
 
 export const Reminder = model<TReminder, TReminderModel>(
   'Reminder',
