@@ -7,6 +7,7 @@ import { SunnahValidation } from './sunnah.validation'
 
 const router = Router()
 
+// Admin routes
 router.post(
   '/',
   auth(USER_ROLE.admin),
@@ -21,18 +22,34 @@ router.put(
   SunnahController.updateIntoDB,
 )
 
-router.get('/', auth(USER_ROLE.admin), SunnahController.getAllIntoDB)
-
 router.delete('/:id', auth(USER_ROLE.admin), SunnahController.deleteAIntoDB)
 
-// User Logs
-router.patch(
-  '/logs/:id',
-  auth(USER_ROLE.user),
-  zodValidationRequest(SunnahValidation.toggleSunnahLogValidationSchema),
-  SunnahController.toggleLogs,
+// Get User View Sunnahs (todaysSunnah + sunnahList with category filtering & pagination)
+router.get(
+  '/user-view',
+  auth(USER_ROLE.admin, USER_ROLE.user),
+  SunnahController.getUserViewSunnahs,
 )
 
-router.get('/my-sunnah', auth(USER_ROLE.user), SunnahController.getUserSunnahs)
+// Get all Sunnahs (Admin view only - excludes isMemorized & updatedAt)
+router.get(
+  '/',
+  auth(USER_ROLE.admin),
+  SunnahController.getAllIntoDB,
+)
+
+// Get single Sunnah by ID
+router.get(
+  '/:id',
+  auth(USER_ROLE.admin, USER_ROLE.user),
+  SunnahController.getASunnah,
+)
+
+// User Toggle Memorized status
+router.patch(
+  '/memorize/:id',
+  auth(USER_ROLE.user),
+  SunnahController.toggleAsMemorized,
+)
 
 export const SunnahRoutes = router

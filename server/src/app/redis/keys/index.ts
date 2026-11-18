@@ -56,7 +56,9 @@ export const REDIS_KEYS = {
   // Sunnah keys
   SUNNAH_USER: (userId: string, queryString: string) => createRedisKey('sunnah:user', userId, queryString),
   SUNNAH_ADMIN: (queryString: string) => createRedisKey('sunnah:admin', queryString),
-  SUNNAH_USER_PATTERN: (userId: string) => createRedisKey('sunnah:user', userId, '*'),
+  SUNNAH_USER_VIEW: (userId: string, date: string, queryString: string) => createRedisKey('sunnah:user-view', userId, date, queryString),
+  SUNNAH_SINGLE: (id: string, userId: string) => createRedisKey('sunnah:single', id, userId),
+  SUNNAH_USER_PATTERN: (userId: string) => createRedisKey('sunnah:*', userId, '*'),
   SUNNAH_GLOBAL_PATTERN: 'sunnah:*',
 
   // Dua keys

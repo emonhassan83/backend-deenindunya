@@ -3,11 +3,10 @@ import { Types } from 'mongoose'
 import AppError from '../../errors/AppError'
 import { User } from '../user/user.model'
 import QueryBuilder from '../../builder/QueryBuilder'
-import { Sunnah, SunnahLog } from './sunnah.models'
+import { Sunnah, SunnaMemorizedLog } from './sunnah.models'
 import { TSunnah } from './sunnah.interface'
 import { getCache, setCache, deleteCachePattern } from '../../redis/helpers'
 import { REDIS_KEYS } from '../../redis/keys'
-import { isValidDate } from '../../utils/isValidDate'
 
 // Create a new sunnah
 const insertIntoDB = async (payload: TSunnah) => {
@@ -20,9 +19,17 @@ const insertIntoDB = async (payload: TSunnah) => {
     throw new AppError(httpStatus.BAD_REQUEST, 'Sunnah already exists')
   }
 
+  // Sync howToPractise and explanation if one is provided
+  if (payload.howToPractise && !payload.explanation) {
+    payload.explanation = payload.howToPractise
+  } else if (payload.explanation && !payload.howToPractise) {
+    payload.howToPractise = payload.explanation
+  }
+
   const result = await Sunnah.create(payload)
-  if (!result)
+  if (!result) {
     throw new AppError(httpStatus.BAD_REQUEST, 'Sunnah creation failed')
+  }
 
   // Invalidate cache
   await deleteCachePattern(REDIS_KEYS.SUNNAH_GLOBAL_PATTERN)
@@ -30,16 +37,56 @@ const insertIntoDB = async (payload: TSunnah) => {
   return result
 }
 
-// Get all sunnahs with pagination, search, filter, sort and field selection
+// Get all sunnahs for Admin view with pagination, search, filter, sort (excluding updatedAt and without isMemorized)
 const getAllIntoDB = async (query: Record<string, any>) => {
   const cacheKey = REDIS_KEYS.SUNNAH_ADMIN(JSON.stringify(query))
+
   const cachedData = await getCache<any>(cacheKey)
   if (cachedData) {
     return cachedData
   }
 
   const qb = new QueryBuilder(Sunnah.find({ isDeleted: false }), query)
-    .search(['title', 'category', 'subtitle'])
+    .search([
+      'title'
+    ])
+    .filter()
+    .paginate()
+    .sort()
+    .fields()
+
+  const data = await qb.modelQuery.select('-updatedAt').lean()
+  const meta = await qb.countTotal()
+
+  const result = { data, meta }
+  await setCache(cacheKey, result)
+
+  return result
+}
+
+// Get User View Sunnahs (todaysSunnah + sunnahList with category filtering & pagination)
+const getUserViewSunnahs = async (
+  query: Record<string, any>,
+  userId?: string,
+) => {
+  const today = new Date().toISOString().slice(0, 10)
+  const userIdentifier = userId || 'public'
+  const cacheKey = REDIS_KEYS.SUNNAH_USER_VIEW(
+    userIdentifier,
+    today,
+    JSON.stringify(query),
+  )
+
+  const cachedData = await getCache<any>(cacheKey)
+  if (cachedData) {
+    return cachedData
+  }
+
+  // 1. Query for sunnahList
+  const qb = new QueryBuilder(Sunnah.find({ isDeleted: false }), query)
+    .search([
+      'title'
+    ])
     .filter()
     .paginate()
     .sort()
@@ -48,7 +95,95 @@ const getAllIntoDB = async (query: Record<string, any>) => {
   const data = await qb.modelQuery
   const meta = await qb.countTotal()
 
-  const result = { data, meta }
+  // 2. Fetch memorized Sunnah IDs for the user
+  let memorizedSunnahIds = new Set<string>()
+  if (userId) {
+    const logs = await SunnaMemorizedLog.find({ user: userId })
+      .select('sunnah')
+      .lean()
+    memorizedSunnahIds = new Set(logs.map((log) => log.sunnah.toString()))
+  }
+
+  // Map sunnahList to include isMemorized
+  const sunnahList = data.map((item: any) => {
+    const sunnahObj = item.toObject ? item.toObject() : item
+    return {
+      ...sunnahObj,
+      isMemorized: userId
+        ? memorizedSunnahIds.has(sunnahObj._id.toString())
+        : false,
+    }
+  })
+
+  // 3. Determine todaysSunnah (Daily rotating focus)
+  // If category filter is passed, pick from that category. If not, pick from all non-deleted sunnahs.
+  const todayFilter: Record<string, any> = { isDeleted: false }
+  if (query.category) {
+    todayFilter.category = query.category
+  }
+
+  const candidateSunnahs = await Sunnah.find(todayFilter).lean()
+
+  let todaysSunnah: any = null
+  if (candidateSunnahs.length > 0) {
+    const now = new Date()
+    const dayNumber = Math.floor(
+      Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()) /
+      (1000 * 60 * 60 * 24),
+    )
+    const selectedIndex = dayNumber % candidateSunnahs.length
+    const candidate = candidateSunnahs[selectedIndex]
+
+    todaysSunnah = {
+      ...candidate,
+      isMemorized: userId
+        ? memorizedSunnahIds.has(candidate._id.toString())
+        : false,
+    }
+  }
+
+  const result = {
+    data: {
+      todaysSunnah,
+      sunnahList,
+    },
+    meta,
+  }
+
+  await setCache(cacheKey, result)
+
+  return result
+}
+
+// Get single Sunnah by ID
+const getASunnah = async (id: string, userId?: string) => {
+  if (!Types.ObjectId.isValid(id)) {
+    throw new AppError(httpStatus.BAD_REQUEST, 'Invalid Sunnah ID')
+  }
+
+  const userIdentifier = userId || 'public'
+  const cacheKey = REDIS_KEYS.SUNNAH_SINGLE(id, userIdentifier)
+  const cachedData = await getCache<any>(cacheKey)
+  if (cachedData) {
+    return cachedData
+  }
+
+  const sunnah = await Sunnah.findOne({ _id: id, isDeleted: false }).lean()
+  if (!sunnah) {
+    throw new AppError(httpStatus.NOT_FOUND, 'Sunnah not found')
+  }
+
+  let isMemorized = false
+  if (userId) {
+    const log = await SunnaMemorizedLog.exists({ user: userId, sunnah: id })
+    isMemorized = !!log
+  }
+
+  const result = {
+    ...sunnah,
+    isMemorized,
+  }
+
   await setCache(cacheKey, result)
 
   return result
@@ -58,6 +193,12 @@ const updateIntoDB = async (id: string, payload: Partial<TSunnah>) => {
   const exist = await Sunnah.findById(id)
   if (!exist || exist.isDeleted) {
     throw new AppError(httpStatus.NOT_FOUND, 'Sunnah not found')
+  }
+
+  if (payload.howToPractise && !payload.explanation) {
+    payload.explanation = payload.howToPractise
+  } else if (payload.explanation && !payload.howToPractise) {
+    payload.howToPractise = payload.explanation
   }
 
   const result = await Sunnah.findByIdAndUpdate(id, payload, {
@@ -91,28 +232,10 @@ const deleteAIntoDB = async (id: string) => {
   return result
 }
 
-// User: Toggle SunnahLog
-const toggleSunnahLog = async (
-  userId: string,
-  sunnahId: string,
-  completedAt: string,
-) => {
+// Toggle Sunnah as memorized for a user
+const toggleAsMemorized = async (userId: string, sunnahId: string) => {
   if (!Types.ObjectId.isValid(sunnahId)) {
     throw new AppError(httpStatus.BAD_REQUEST, 'Invalid sunnah ID')
-  }
-
-  if (!completedAt || typeof completedAt !== 'string') {
-    throw new AppError(
-      httpStatus.BAD_REQUEST,
-      'completedAt is required. Please provide date in YYYY-MM-DD format',
-    )
-  }
-
-  if (!isValidDate(completedAt)) {
-    throw new AppError(
-      httpStatus.BAD_REQUEST,
-      'Invalid completedAt format. Please use YYYY-MM-DD format',
-    )
   }
 
   const user = await User.findById(userId)
@@ -125,119 +248,41 @@ const toggleSunnahLog = async (
     throw new AppError(httpStatus.NOT_FOUND, 'Sunnah not found')
   }
 
-  // Toggle log
-  const logExist = await SunnahLog.findOne({
+  // Check if memorized log already exists
+  const logExist = await SunnaMemorizedLog.findOne({
     user: userId,
     sunnah: sunnahId,
-    completedAt,
   })
 
-  let logResult
+  let isMemorized = false
   if (logExist) {
-    await SunnahLog.findByIdAndDelete(logExist._id)
-    logResult = { message: 'Logged out successfully' }
+    await SunnaMemorizedLog.findByIdAndDelete(logExist._id)
+    isMemorized = false
   } else {
-    const log = await SunnahLog.create({
+    await SunnaMemorizedLog.create({
       user: userId,
       sunnah: sunnahId,
-      completedAt,
     })
-    logResult = log
+    isMemorized = true
   }
 
-  // Invalidate cache
-  await deleteCachePattern(REDIS_KEYS.SUNNAH_USER_PATTERN(userId))
+  // Invalidate cache for sunnahs
+  await deleteCachePattern(REDIS_KEYS.SUNNAH_GLOBAL_PATTERN)
 
-  return logResult
-}
-
-const getUserSunnahs = async (userId: string, query: Record<string, any>) => {
-  const cacheKey = REDIS_KEYS.SUNNAH_USER(userId, JSON.stringify(query))
-  const cachedData = await getCache<any>(cacheKey)
-  if (cachedData) {
-    return cachedData
+  return {
+    isMemorized,
+    message: isMemorized
+      ? 'Sunnah marked as memorized successfully'
+      : 'Sunnah unmarked from memorized successfully',
   }
-
-  // Build query for Sunnah documents
-  const qb = new QueryBuilder(
-    // @ts-ignore
-    Sunnah.find({ isDeleted: false }).select(
-      'category title subtitle arabicText',
-    ),
-    query,
-  )
-    .search(['title', 'category', 'subtitle'])
-    .filter()
-    .paginate()
-    .sort()
-    .fields()
-
-  // Fetch sunnahs, metadata, and user's logs in parallel
-  const [sunnahs, meta, logs] = await Promise.all([
-    qb.modelQuery,
-    qb.countTotal(),
-    SunnahLog.find({ user: userId }).lean(),
-  ])
-
-  // Map logs by sunnah ID for quick lookup
-  const logMap = new Map(logs.map((l) => [l.sunnah.toString(), l]))
-  const enriched = sunnahs.map((s) => {
-    const log = logMap.get(s._id.toString())
-    return {
-      ...s.toObject(),
-      isMemorized: !!log,
-      memorizedAt: log?.completedAt || null,
-    }
-  })
-
-  // --- Calculate today's memorized count and raw streak ---
-  const today = new Date().toISOString().slice(0, 10) // 'YYYY-MM-DD' UTC
-
-  // Count how many logs were completed today
-  const todayMemorized = logs.filter((log) => log.completedAt === today).length
-
-  // Get unique dates from logs and sort them descending (latest first)
-  const uniqueDates = [...new Set(logs.map((log) => log.completedAt))].sort()
-  const reversedDates = [...uniqueDates].reverse()
-
-  // Calculate consecutive days streak (rawMemorized)
-  let streak = 0
-  let expectedDate = today
-
-  for (const date of reversedDates) {
-    if (date === expectedDate) {
-      streak++
-      // Move to the previous day
-      const prevDate = new Date(date)
-      prevDate.setDate(prevDate.getDate() - 1)
-      expectedDate = prevDate.toISOString().slice(0, 10)
-    } else {
-      break
-    }
-  }
-
-  const rawMemorized = streak
-
-  const result = {
-    data: {
-      totalCompleted: logs.length,
-      todayMemorized,
-      rawMemorized,
-      data: enriched,
-    },
-    meta,
-  }
-
-  await setCache(cacheKey, result)
-
-  return result
 }
 
 export const SunnahService = {
   insertIntoDB,
   getAllIntoDB,
+  getUserViewSunnahs,
+  getASunnah,
   updateIntoDB,
   deleteAIntoDB,
-  toggleSunnahLog,
-  getUserSunnahs,
+  toggleAsMemorized,
 }

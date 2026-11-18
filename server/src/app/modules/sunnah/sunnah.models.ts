@@ -1,8 +1,8 @@
 import { Schema, model } from 'mongoose'
 import {
   TSunnah,
-  TSunnahLog,
-  TSunnahLogModel,
+  TSunnaMemorizedLog,
+  TSunnaMemorizedLogModel,
   TSunnahModel,
 } from './sunnah.interface'
 
@@ -25,6 +25,27 @@ const sunnahSchema = new Schema<TSunnah>(
     },
     arabicText: {
       type: String,
+      trim: true,
+    },
+    transliteration: {
+      type: String,
+      trim: true,
+    },
+    translation: {
+      type: String,
+      trim: true,
+    },
+    reference: {
+      type: String,
+      trim: true,
+    },
+    howToPractise: {
+      type: String,
+      trim: true,
+    },
+    explanation: {
+      type: String,
+      trim: true,
     },
     isDeleted: {
       type: Boolean,
@@ -34,7 +55,16 @@ const sunnahSchema = new Schema<TSunnah>(
   { timestamps: true },
 )
 
-const sunnahLogsSchema = new Schema<TSunnahLog>(
+// Ensure howToPractise and explanation stay in sync
+sunnahSchema.pre('save', function () {
+  if (this.howToPractise && !this.explanation) {
+    this.explanation = this.howToPractise
+  } else if (this.explanation && !this.howToPractise) {
+    this.howToPractise = this.explanation
+  }
+})
+
+const sunnaMemorizedLogSchema = new Schema<TSunnaMemorizedLog>(
   {
     sunnah: {
       type: Schema.Types.ObjectId,
@@ -46,43 +76,19 @@ const sunnahLogsSchema = new Schema<TSunnahLog>(
       ref: 'User',
       required: true,
     },
-    completedAt: {
-      type: String,
-      required: true,
-    },
-
-    // ✅ Auto delete after 365 days
-    deleteAt: {
-      type: Date,
-      required: true,
-      default: () => {
-        const date = new Date()
-        date.setDate(date.getDate() + 365)
-        return date
-      },
-    },
   },
   { timestamps: true },
 )
 
-// expireAfterSeconds: 0 means delete exactly at the deleteAt time
-sunnahLogsSchema.index({ deleteAt: 1 }, { expireAfterSeconds: 0 })
-
-// Pre-save middleware to ensure deleteAt is set (if not provided)
-sunnahLogsSchema.pre('save', function () {
-  if (!this.deleteAt) {
-    const date = new Date()
-    date.setDate(date.getDate() + 365)
-    this.deleteAt = date
-  }
-})
-
-// Optional: Index for faster queries
-sunnahLogsSchema.index({ user: 1, completedAt: -1 })
-sunnahLogsSchema.index({ sunnah: 1, user: 1 })
+// Compound index to ensure uniqueness per user per sunnah
+sunnaMemorizedLogSchema.index({ sunnah: 1, user: 1 }, { unique: true })
+sunnaMemorizedLogSchema.index({ user: 1 })
 
 export const Sunnah = model<TSunnah, TSunnahModel>('Sunnah', sunnahSchema)
-export const SunnahLog = model<TSunnahLog, TSunnahLogModel>(
-  'SunnahLog',
-  sunnahLogsSchema,
-)
+export const SunnaMemorizedLog = model<
+  TSunnaMemorizedLog,
+  TSunnaMemorizedLogModel
+>('SunnaMemorizedLog', sunnaMemorizedLogSchema)
+
+// Backward-compatibility alias
+export const SunnahLog = SunnaMemorizedLog

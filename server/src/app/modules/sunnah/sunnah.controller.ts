@@ -9,7 +9,7 @@ const insertIntoDB = catchAsync(async (req: Request, res: Response) => {
   sendResponse(res, {
     statusCode: 200,
     success: true,
-    message: 'Sunnah insert successfully',
+    message: 'Sunnah inserted successfully',
     data: result,
   })
 })
@@ -26,8 +26,36 @@ const getAllIntoDB = catchAsync(async (req: Request, res: Response) => {
   })
 })
 
+const getUserViewSunnahs = catchAsync(async (req: Request, res: Response) => {
+  const userId = req.user?._id?.toString()
+  const result = await SunnahService.getUserViewSunnahs(req.query, userId)
+
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: 'User view sunnahs retrieved successfully',
+    meta: result.meta,
+    data: result.data,
+  })
+})
+
+const getASunnah = catchAsync(async (req: Request, res: Response) => {
+  const userId = req.user?._id?.toString()
+  const result = await SunnahService.getASunnah(req.params.id as string, userId)
+
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: 'Sunnah retrieved successfully',
+    data: result,
+  })
+})
+
 const updateIntoDB = catchAsync(async (req: Request, res: Response) => {
-  const result = await SunnahService.updateIntoDB(req.params.id as string, req.body)
+  const result = await SunnahService.updateIntoDB(
+    req.params.id as string,
+    req.body,
+  )
 
   sendResponse(res, {
     statusCode: 200,
@@ -48,29 +76,16 @@ const deleteAIntoDB = catchAsync(async (req: Request, res: Response) => {
   })
 })
 
-const getUserSunnahs = catchAsync(async (req: Request, res: Response) => {
-  const result = await SunnahService.getUserSunnahs(req.user._id, req.query)
-
-  sendResponse(res, {
-    statusCode: 200,
-    success: true,
-    message: 'Sunnah logs toggled successfully',
-    meta: result.meta,
-    data: result.data,
-  })
-})
-
-const toggleLogs = catchAsync(async (req: Request, res: Response) => {
-  const result = await SunnahService.toggleSunnahLog(
+const toggleAsMemorized = catchAsync(async (req: Request, res: Response) => {
+  const result = await SunnahService.toggleAsMemorized(
     req.user._id,
     req.params.id as string,
-    req.body.completedAt,
   )
 
   sendResponse(res, {
     statusCode: 200,
     success: true,
-    message: 'Sunnah logs toggled successfully',
+    message: result.message,
     data: result,
   })
 })
@@ -78,8 +93,9 @@ const toggleLogs = catchAsync(async (req: Request, res: Response) => {
 export const SunnahController = {
   insertIntoDB,
   getAllIntoDB,
+  getUserViewSunnahs,
+  getASunnah,
   updateIntoDB,
   deleteAIntoDB,
-  toggleLogs,
-  getUserSunnahs,
+  toggleAsMemorized,
 }
