@@ -26,7 +26,9 @@ const getAllAffirmations = catchAsync(async (req, res) => {
 })
 
 const getSingleAffirmation = catchAsync(async (req, res) => {
-  const result = await AffirmationService.getSingleFromDB(req.params.id as string)
+  const result = await AffirmationService.getSingleFromDB(
+    req.params.id as string,
+  )
 
   sendResponse(res, {
     success: true,
@@ -37,18 +39,21 @@ const getSingleAffirmation = catchAsync(async (req, res) => {
 })
 
 const getARandomAffermation = catchAsync(async (req, res) => {
-  const result = await AffirmationService.getARandomAffermation()
+  const result = await AffirmationService.getARandomAffermation(req.query)
 
   sendResponse(res, {
     success: true,
     statusCode: 200,
-    message: 'Random affirmation retrieved successfully',
+    message: 'Affirmation retrieved successfully',
     data: result,
   })
 })
 
 const updateAffirmation = catchAsync(async (req, res) => {
-  const result = await AffirmationService.updateIntoDB(req.params.id as string, req.body)
+  const result = await AffirmationService.updateIntoDB(
+    req.params.id as string,
+    req.body,
+  )
 
   sendResponse(res, {
     success: true,

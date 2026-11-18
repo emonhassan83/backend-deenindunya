@@ -1,7 +1,7 @@
 import { Model } from 'mongoose'
 
 export type TAffirmation = {
-  __id?: string
+  _id?: string
   arabic_text: string
   transliteration: string
   english_meaning: string

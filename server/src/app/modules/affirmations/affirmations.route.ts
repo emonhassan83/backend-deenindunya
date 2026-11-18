@@ -12,7 +12,7 @@ router.post(
   '/',
   auth(USER_ROLE.admin),
   zodValidationRequest(AffirmationValidation.createValidationSchema),
-  AffirmationControllers.insertIntoDB
+  AffirmationControllers.insertIntoDB,
 )
 
 // Update affirmation (Admin only)
@@ -20,23 +20,31 @@ router.put(
   '/:id',
   auth(USER_ROLE.admin),
   zodValidationRequest(AffirmationValidation.updateValidationSchema),
-  AffirmationControllers.updateAffirmation
+  AffirmationControllers.updateAffirmation,
 )
 
 // Delete affirmation (Admin only)
 router.delete(
   '/:id',
   auth(USER_ROLE.admin),
-  AffirmationControllers.deleteAffirmation
+  AffirmationControllers.deleteAffirmation,
 )
 
-// Get all affirmations (Public)
-router.get('/', AffirmationControllers.getAllAffirmations)
-
-// Get random affirmation (Public)
+// Get random/daily faith-inspired affirmation (Accessible for users to start each day)
 router.get('/random', AffirmationControllers.getARandomAffermation)
 
-// Get single affirmation (Public)
-router.get('/:id', AffirmationControllers.getSingleAffirmation)
+// Get all affirmations (Admin view only)
+router.get(
+  '/',
+  auth(USER_ROLE.admin),
+  AffirmationControllers.getAllAffirmations,
+)
+
+// Get single affirmation by ID (Admin view only)
+router.get(
+  '/:id',
+  auth(USER_ROLE.admin),
+  AffirmationControllers.getSingleAffirmation,
+)
 
 export const AffirmationRoutes = router

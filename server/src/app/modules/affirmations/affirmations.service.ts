@@ -15,7 +15,7 @@ const insertIntoDB = async (payload: TAffirmation): Promise<TAffirmation> => {
   if (existing) {
     throw new AppError(
       httpStatus.CONFLICT,
-      'Affirmation with same Arabic text already exists'
+      'Affirmation with same Arabic text already exists',
     )
   }
 
@@ -28,6 +28,7 @@ const insertIntoDB = async (payload: TAffirmation): Promise<TAffirmation> => {
   return result
 }
 
+// Admin only: Get all affirmations with search, pagination, and sorting
 const getAllFromDB = async (query: Record<string, unknown>) => {
   const cacheKey = REDIS_KEYS.AFFIRMATION_ALL(JSON.stringify(query))
   const cachedData = await getCache<any>(cacheKey)
@@ -47,7 +48,9 @@ const getAllFromDB = async (query: Record<string, unknown>) => {
   const skip = (Number(page) - 1) * Number(limit)
 
   const result = await Affirmation.find(filter)
-    .select('arabic_text transliteration english_meaning reference audio_url createdAt')
+    .select(
+      'arabic_text transliteration english_meaning reference audio_url createdAt',
+    )
     .skip(skip)
     .limit(Number(limit))
     .sort({ createdAt: -1 })
@@ -70,6 +73,7 @@ const getAllFromDB = async (query: Record<string, unknown>) => {
   return finalResult
 }
 
+// Admin only: Get single affirmation by ID
 const getSingleFromDB = async (id: string): Promise<TAffirmation> => {
   const cacheKey = REDIS_KEYS.AFFIRMATION_SINGLE(id)
   const cachedData = await getCache<any>(cacheKey)
@@ -78,7 +82,9 @@ const getSingleFromDB = async (id: string): Promise<TAffirmation> => {
   }
 
   const result = await Affirmation.findById(id)
-    .select('arabic_text transliteration english_meaning reference audio_url createdAt')
+    .select(
+      'arabic_text transliteration english_meaning reference audio_url createdAt',
+    )
     .lean()
 
   if (!result || result.isDeleted) {
@@ -90,32 +96,69 @@ const getSingleFromDB = async (id: string): Promise<TAffirmation> => {
   return result
 }
 
-const getARandomAffermation = async (): Promise<TAffirmation> => {
-  const [result] = await Affirmation.aggregate([
-    { $match: { isDeleted: false } },
-    { $sample: { size: 1 } },
-    {
-      $project: {
-        arabic_text: 1,
-        transliteration: 1,
-        english_meaning: 1,
-        reference: 1,
-        audio_url: 1,
-        createdAt: 1,
-      },
-    },
-  ])
+// Daily faith-inspired affirmation of the day / on-demand shuffle for users
+const getARandomAffermation = async (
+  query: Record<string, any> = {},
+): Promise<TAffirmation> => {
+  const isShuffle = query.shuffle === 'true' || query.random === 'true'
 
-  if (!result) {
+  // If user explicitly asks for a new random shuffle
+  if (isShuffle) {
+    const [randomItem] = await Affirmation.aggregate([
+      { $match: { isDeleted: false } },
+      { $sample: { size: 1 } },
+      {
+        $project: {
+          arabic_text: 1,
+          transliteration: 1,
+          english_meaning: 1,
+          reference: 1,
+          audio_url: 1,
+          createdAt: 1,
+        },
+      },
+    ])
+
+    if (!randomItem) {
+      throw new AppError(httpStatus.NOT_FOUND, 'Affirmation not found!')
+    }
+
+    return randomItem
+  }
+
+  // Otherwise, return the consistent Daily Affirmation of the Day (rotates every midnight)
+  const today = new Date().toISOString().slice(0, 10)
+  const cacheKey = `affirmation:daily:${today}`
+  const cached = await getCache<TAffirmation>(cacheKey)
+  if (cached) {
+    return cached
+  }
+
+  const allAffirmations = await Affirmation.find({ isDeleted: false })
+    .select(
+      'arabic_text transliteration english_meaning reference audio_url createdAt',
+    )
+    .lean()
+
+  if (allAffirmations.length === 0) {
     throw new AppError(httpStatus.NOT_FOUND, 'Affirmation not found!')
   }
 
-  return result
+  const now = new Date()
+  const dayIndex = Math.floor(
+    Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()) /
+      (1000 * 60 * 60 * 24),
+  )
+  const selected = allAffirmations[dayIndex % allAffirmations.length]
+
+  await setCache(cacheKey, selected, 86400) // 24 hours TTL
+
+  return selected
 }
 
 const updateIntoDB = async (
   id: string,
-  payload: Partial<TAffirmation>
+  payload: Partial<TAffirmation>,
 ): Promise<TAffirmation> => {
   // Check if affirmation exists
   const existing = await Affirmation.findById(id)
@@ -134,7 +177,7 @@ const updateIntoDB = async (
     if (duplicate) {
       throw new AppError(
         httpStatus.CONFLICT,
-        'Another affirmation with the same Arabic text already exists'
+        'Another affirmation with the same Arabic text already exists',
       )
     }
   }
@@ -158,7 +201,7 @@ const deleteFromDB = async (id: string): Promise<TAffirmation> => {
   const result = await Affirmation.findByIdAndUpdate(
     id,
     { isDeleted: true },
-    { returnDocument: 'after' }
+    { returnDocument: 'after' },
   ).lean()
 
   if (!result) {
