@@ -1,8 +1,12 @@
+const toEnglishDigits = (str: string): string =>
+  str ? str.replace(/[٠-٩]/g, (d) => '٠١٢٣٤٥٦٧٨٩'.indexOf(d).toString()) : str
+
 export const getOtpEmailTemplate = (
   name: string,
   otp: string,
   expiresAt: string,
 ): string => {
+  const formattedExpiresAt = toEnglishDigits(expiresAt)
   return `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px;">
       <div style="text-align: left; padding: 10px 20px;">
@@ -14,7 +18,7 @@ export const getOtpEmailTemplate = (
             ${otp}
           </span>
         </div>
-        <p style="color: #555;">This OTP is valid until: <strong>${expiresAt}</strong></p>
+        <p style="color: #555;">This OTP is valid until: <strong>${formattedExpiresAt}</strong></p>
         <p style="color: #555;">If you did not request this OTP, please ignore this email.</p>
         <p style="color: #555;">Thank you,<br/>Deenindunya App Team</p>
       </div>

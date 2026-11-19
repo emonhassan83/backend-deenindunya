@@ -117,7 +117,7 @@ const resendOtp = async (email: string) => {
       email: user.email,
       name: user.name,
       otp,
-      expiresAt: expiresAt.format('LT'),
+      expiresAt: expiresAt.locale('en').format('hh:mm A'),
     },
     { priority: 1, attempts: 3, backoff: { type: 'exponential', delay: 2000 } },
   )

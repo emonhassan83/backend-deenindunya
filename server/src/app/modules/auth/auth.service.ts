@@ -349,7 +349,7 @@ const forgetPassword = async (email: string) => {
       email: user.email,
       name: user.name,
       otp,
-      expiresAt: moment().add(5, 'minute').format('LT'),
+      expiresAt: moment().add(5, 'minute').locale('en').format('hh:mm A'),
     },
     { priority: 1, attempts: 3, backoff: { type: 'exponential', delay: 2000 } },
   )
