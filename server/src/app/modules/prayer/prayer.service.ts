@@ -6,6 +6,7 @@ import { TPrayer } from './prayer.interface'
 import {
   calculatePrayerTimes,
   getNotifyAtTime,
+  getNotifyAtISO,
   getTodayInTimezone,
   resolvePrayerTimezone,
 } from '../../utils/prayerTimes'
@@ -462,6 +463,7 @@ export const buildReminderPayload = (
       offsetMinutes: number
       prayerTime: string
       notifyAt: string
+      notifyTime?: string
       title: string
       body: string
     }
@@ -475,7 +477,13 @@ export const buildReminderPayload = (
       enabled: pref.enabled,
       offsetMinutes: pref.offsetMinutes,
       prayerTime,
-      notifyAt: getNotifyAtTime(prayerTime, pref.offsetMinutes, date, timezone),
+      notifyAt: getNotifyAtISO(prayerTime, pref.offsetMinutes, date, timezone),
+      notifyTime: getNotifyAtTime(
+        prayerTime,
+        pref.offsetMinutes,
+        date,
+        timezone,
+      ),
       title: copy.title,
       body: copy.body,
     }

@@ -82,12 +82,24 @@ export const initializeNotificationWorker = () => {
                     body: description || message,
                   },
                   data: dataPayload,
+                  android: {
+                    priority: 'high',
+                    notification: {
+                      sound: 'default',
+                      priority: 'high',
+                    },
+                  },
                   apns: {
                     headers: {
                       'apns-push-type': 'alert',
+                      'apns-priority': '10',
                     },
                     payload: {
                       aps: {
+                        alert: {
+                          title: message,
+                          body: description || message,
+                        },
                         badge: 1,
                         sound: 'default',
                       },
@@ -98,6 +110,18 @@ export const initializeNotificationWorker = () => {
                 console.log(
                   `[Notification Worker] FCM push success=${response.successCount} failure=${response.failureCount} for user ${receiver}`,
                 )
+
+                response.responses.forEach((res, idx) => {
+                  if (res.success) {
+                    console.log(
+                      `[Notification Worker] FCM delivery success [token #${idx + 1}] Message ID: ${res.messageId}`,
+                    )
+                  } else {
+                    console.error(
+                      `[Notification Worker] FCM delivery failure [token #${idx + 1}]: Code=${res.error?.code}, Message=${res.error?.message}`,
+                    )
+                  }
+                })
               } catch (firebaseError) {
                 console.warn(
                   `[Notification Worker] Firebase FCM send failed:`,

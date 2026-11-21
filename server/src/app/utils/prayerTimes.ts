@@ -68,3 +68,18 @@ export const getNotifyAtTime = (
     .locale('en')
     .format('HH:mm')
 }
+
+/** Subtract offset from HH:mm in a timezone; returns full ISO 8601 with timezone offset (e.g., 2026-11-21T13:57:00+06:00). */
+export const getNotifyAtISO = (
+  prayerTime: string,
+  offsetMinutes: number,
+  date: string,
+  timezone?: string | null,
+) => {
+  const tz = resolvePrayerTimezone(timezone)
+  return moment
+    .tz(`${date} ${prayerTime}`, 'YYYY-MM-DD HH:mm', tz)
+    .subtract(offsetMinutes, 'minutes')
+    .locale('en')
+    .format()
+}
